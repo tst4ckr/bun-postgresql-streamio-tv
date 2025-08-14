@@ -56,7 +56,7 @@ export class StreamHandler {
   }
 
   /**
-   * Maneja la petición de stream
+   * Maneja la petición de stream de Stremio
    * @private
    * @param {Object} args - Argumentos de la petición
    * @returns {Promise<Object>}
