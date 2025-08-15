@@ -12,15 +12,13 @@ export class Channel {
   };
 
   static GENRES = {
-    NOTICIAS: 'Noticias',
-    DEPORTES: 'Deportes',
-    ENTRETENIMIENTO: 'Entretenimiento',
-    INFANTIL: 'Infantil',
-    PELICULAS: 'Películas',
-    SERIES: 'Series',
-    MUSICA: 'Música',
-    DOCUMENTALES: 'Documentales',
-    CULTURA: 'Cultura',
+    NEWS: 'News',
+    SPORTS: 'Sports', 
+    ENTERTAINMENT: 'Entertainment',
+    MUSIC: 'Music',
+    MOVIES: 'Movies',
+    KIDS: 'Kids',
+    DOCUMENTARY: 'Documentary',
     GENERAL: 'General'
   };
 
@@ -329,7 +327,7 @@ export class Channel {
   }
 
   /**
-   * Convierte a stream para Stremio
+   * Convierte a stream optimizado para Stremio TV
    * @returns {Object}
    */
   toStream() {
@@ -339,20 +337,23 @@ export class Channel {
       url: this.#streamUrl
     };
 
-    // Configurar hints de comportamiento según el tipo de stream
+    // Configurar hints de comportamiento para TV en vivo
     const behaviorHints = {};
 
-    // Para streams RTMP o no-HTTP
-    if (this.#streamUrl.startsWith('rtmp') || !this.#streamUrl.startsWith('http')) {
+    // Para streams RTMP o no-HTTPS (común en IPTV)
+    if (this.#streamUrl.startsWith('rtmp') || 
+        this.#streamUrl.startsWith('http://') || 
+        !this.#streamUrl.startsWith('https://')) {
       behaviorHints.notWebReady = true;
     }
 
-    // Restricciones geográficas si están configuradas
+    // Restricciones geográficas básicas
     const allowedCountries = process.env.ALLOWED_COUNTRIES?.split(',').map(c => c.trim().toLowerCase());
     if (allowedCountries?.length > 0) {
       behaviorHints.countryWhitelist = allowedCountries;
     }
 
+    // Agregar behaviorHints si hay configuraciones
     if (Object.keys(behaviorHints).length > 0) {
       stream.behaviorHints = behaviorHints;
     }
@@ -379,6 +380,28 @@ export class Channel {
   }
 
   /**
+   * Mapea géneros del español al inglés estándar de Stremio
+   * @static
+   * @private
+   * @param {string} genre 
+   * @returns {string}
+   */
+  static #mapGenreToStandard(genre) {
+    const genreMap = {
+      'Noticias': 'News',
+      'Deportes': 'Sports',
+      'Entretenimiento': 'Entertainment',
+      'Música': 'Music',
+      'Películas': 'Movies',
+      'Infantil': 'Kids',
+      'Documentales': 'Documentary',
+      'General': 'General'
+    };
+
+    return genreMap[genre] || genre;
+  }
+
+  /**
    * Crea instancia desde datos CSV
    * @static
    * @param {Object} csvRow 
@@ -390,7 +413,7 @@ export class Channel {
       name: csvRow.name,
       logo: csvRow.logo,
       streamUrl: csvRow.stream_url,
-      genre: csvRow.genre || Channel.GENRES.GENERAL,
+      genre: Channel.#mapGenreToStandard(csvRow.genre || 'General'),
       country: csvRow.country || 'Internacional',
       language: csvRow.language || 'es',
       quality: csvRow.quality || StreamQuality.QUALITIES.AUTO,

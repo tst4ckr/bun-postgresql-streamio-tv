@@ -231,11 +231,11 @@ export class TVAddonConfig {
   }
 
   /**
-   * Genera el manifest de Stremio
+   * Genera el manifest de Stremio optimizado para TV
    * @returns {Object}
    */
   generateManifest() {
-    const { addon, filters, streaming } = this.#config;
+    const { addon, streaming } = this.#config;
 
     return {
       id: addon.id,
@@ -243,50 +243,53 @@ export class TVAddonConfig {
       name: addon.name,
       description: addon.description,
       
-      // CRÍTICO: Usar tipos 'tv' y 'channel' para TV en vivo
-      types: [Channel.TYPES.TV, Channel.TYPES.CHANNEL],
+      // CRÍTICO: Usar solo tipos 'tv' y 'channel' para máxima compatibilidad
+      types: ['tv', 'channel'],
       
-      // Recursos que maneja el addon
+      // Recursos esenciales para TV en vivo
       resources: ['catalog', 'meta', 'stream'],
       
-      // Catálogos de canales
-      catalogs: this.#generateCatalogs(),
+      // Catálogos optimizados para TV
+      catalogs: this.#generateTVCatalogs(),
       
-      // Prefijos de ID para canales
+      // Prefijos de ID específicos para canales de TV
       idPrefixes: ['tv_', 'ch_'],
       
-      // Hints de comportamiento
+      // Hints de comportamiento optimizados para streaming en vivo
       behaviorHints: {
-        adult: streaming.enableAdultChannels,
+        adult: false, // Mantener simple y seguro
         p2p: false,
-        configurable: addon.enableUserConfig,
+        configurable: false, // Deshabilitado para estabilidad
         configurationRequired: false
       },
       
-      // Configuración de usuario (si está habilitada)
-      config: addon.enableUserConfig ? this.#generateUserConfig() : undefined,
-      
-      // Información de contacto
+      // Información de contacto opcional
       contactEmail: addon.contactEmail || undefined
     };
   }
 
   /**
-   * Genera los catálogos del manifest
+   * Genera catálogos optimizados para TV
    * @private
    * @returns {Array}
    */
-  #generateCatalogs() {
+  #generateTVCatalogs() {
     return [
+      // Catálogo principal de canales TV
       {
-        type: Channel.TYPES.TV,
-        id: 'tv-live',
-        name: 'TV en Vivo',
+        type: 'tv',
+        id: 'tv_channels',
+        name: 'Canales de TV',
         extra: [
           {
             name: 'genre',
-            options: Object.values(Channel.GENRES),
-            isRequired: false
+            isRequired: false,
+            options: ['News', 'Sports', 'Entertainment', 'Music', 'Movies', 'Kids', 'Documentary']
+          },
+          {
+            name: 'country',
+            isRequired: false,
+            options: ['ES', 'MX', 'AR', 'CO', 'US', 'FR', 'DE', 'IT']
           },
           {
             name: 'search',
@@ -298,15 +301,16 @@ export class TVAddonConfig {
           }
         ]
       },
+      // Catálogo de canales por género
       {
-        type: Channel.TYPES.CHANNEL,
-        id: 'channels-by-country',
-        name: 'Canales por País',
+        type: 'channel',
+        id: 'channels_by_genre',
+        name: 'Canales por Género',
         extra: [
           {
-            name: 'country',
-            options: ['México', 'España', 'Argentina', 'Colombia', 'Internacional'],
-            isRequired: false
+            name: 'genre',
+            isRequired: true,
+            options: ['News', 'Sports', 'Entertainment', 'Music', 'Movies', 'Kids', 'Documentary']
           },
           {
             name: 'skip',
