@@ -35,7 +35,7 @@ git commit -m "Preparar para despliegue en Beamup"
 git push origin main
 ```
 
-### Paso 3: Desplegar con beamup-cli
+### Paso 3: Desplegar con beamup-cli a
 
 ```bash
 # Inicializar despliegue
