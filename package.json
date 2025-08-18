@@ -12,7 +12,11 @@
     "update-logos": "bun run scripts/update-logos.js",
     "deploy": "./scripts/deploy.sh",
     "test": "bun test",
-    "lint": "eslint src/ --ext .js"
+    "lint": "eslint src/ --ext .js",
+    "publish-addon": "bun run scripts/publish-addon.js",
+    "build": "bun install --frozen-lockfile",
+    "preview": "bun run start:prod",
+    "beamup-deploy": "bunx beamup-cli deploy"
   },
   "keywords": [
     "stremio",
