@@ -107,12 +107,7 @@ export class RemoteM3UChannelRepository extends ChannelRepository {
       if (isBlocked) return false;
     }
 
-    // Idiomas soportados
-    if (filters.supportedLanguages.length > 0) {
-      if (!filters.supportedLanguages.includes(channel.language)) {
-        return false;
-      }
-    }
+    // Nota: no filtramos por supportedLanguages para permitir "Idioma: ninguno" en Stremio
 
     // Adultos
     if (!streaming.enableAdultChannels) {

@@ -169,12 +169,7 @@ export class CSVChannelRepository extends ChannelRepository {
       }
     }
 
-    // Filtro por idiomas soportados
-    if (filters.supportedLanguages.length > 0) {
-      if (!filters.supportedLanguages.includes(channel.language)) {
-        return false;
-      }
-    }
+    // Nota: no filtramos por supportedLanguages aquí para permitir "Idioma: ninguno" en Stremio
 
     // Filtro de canales adultos
     if (!this.#config.streaming.enableAdultChannels) {
