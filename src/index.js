@@ -12,6 +12,7 @@ import { TVAddonConfig } from './infrastructure/config/TVAddonConfig.js';
 
 // Servicios de infraestructura
 import { M3UParserService } from './infrastructure/parsers/M3UParserService.js';
+import { StreamHealthService } from './infrastructure/services/StreamHealthService.js';
 
 // Handlers de aplicación
 import { StreamHandler } from './application/handlers/StreamHandler.js';
@@ -31,6 +32,7 @@ class TVIPTVAddon {
   #logger;
   #channelRepository;
   #channelService;
+  #healthService;
   #addonBuilder;
   #isInitialized = false;
 
@@ -201,6 +203,9 @@ class TVIPTVAddon {
     };
 
     this.#logger.info('Servicios de aplicación inicializados');
+
+    // Servicio de salud de streams
+    this.#healthService = new StreamHealthService(this.#config, this.#logger);
   }
 
   /**
@@ -369,10 +374,9 @@ class TVIPTVAddon {
     this.#logger.info('Validando streams al inicio...');
     
     try {
-      // Implementar lógica de validación
-      // Por ahora solo log
-      const totalChannels = await this.#channelRepository.getChannelsCount();
-      this.#logger.info(`Validación completada para ${totalChannels} canales`);
+      const channels = await this.#channelRepository.getChannelsPaginated(0, 50);
+      const report = await this.#healthService.checkChannels(channels, 10);
+      this.#logger.info(`Streams OK: ${report.ok}/${report.total}, Fails: ${report.fail}`);
       
     } catch (error) {
       this.#logger.error('Error validando streams:', error);
@@ -412,8 +416,9 @@ class TVIPTVAddon {
         this.#logger.info('Ejecutando validación periódica de streams...');
         
         try {
-          // Implementar validación periódica
-          this.#logger.info('Validación periódica completada');
+          const sample = await this.#channelRepository.getChannelsPaginated(0, 30);
+          const report = await this.#healthService.checkChannels(sample, 10);
+          this.#logger.info(`Validación periódica: OK ${report.ok}/${report.total}, Fails ${report.fail}`);
         } catch (error) {
           this.#logger.error('Error en validación periódica:', error);
         }
