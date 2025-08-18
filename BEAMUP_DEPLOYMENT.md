@@ -1,7 +1,7 @@
 # 🚀 Despliegue en Stremio Beamup
 
 Esta guía te ayudará a desplegar tu addon de TV IPTV usando **Stremio Beamup**, la plataforma oficial para addons de Stremio.
-
+  
 ## 📋 ¿Qué es Stremio Beamup?
 
 [Stremio Beamup](https://github.com/Stremio/stremio-beamup) es una plataforma como servicio (PaaS) específicamente diseñada para hospedar addons de Stremio. Es tan fácil como Heroku pero sin restricciones y optimizada para streaming.
