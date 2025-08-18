@@ -4,6 +4,7 @@
  */
 
 import { config } from 'dotenv';
+import crypto from 'crypto';
 import { Channel } from '../../domain/entities/Channel.js';
 
 // Cargar variables de entorno
@@ -237,9 +238,14 @@ export class TVAddonConfig {
   generateManifest() {
     const { addon, streaming } = this.#config;
 
+    // Incluir una firma de la configuración para invalidar caché del cliente
+    // cuando cambie `config.env` (evita que Stremio persista estado viejo).
+    const configSignature = this.getConfigSignature().slice(0, 8);
+    const versionWithSignature = `${addon.version}+${configSignature}`;
+
     return {
       id: addon.id,
-      version: addon.version,
+      version: versionWithSignature,
       name: addon.name,
       description: addon.description,
       
@@ -266,6 +272,34 @@ export class TVAddonConfig {
       // Información de contacto opcional
       contactEmail: addon.contactEmail || undefined
     };
+  }
+
+  /**
+   * Calcula una firma estable de la configuración relevante.
+   * Cambia si se modifica `config.env` y se usa para bustear caché del cliente.
+   * @returns {string} hash hex (sha256)
+   */
+  getConfigSignature() {
+    // Solo los campos que impactan el comportamiento del addon hacia el cliente
+    const relevant = {
+      server: {
+        port: this.#config.server.port,
+        nodeEnv: this.#config.server.nodeEnv
+      },
+      dataSources: {
+        channelsSource: this.#config.dataSources.channelsSource,
+        channelsFile: this.#config.dataSources.channelsFile,
+        m3uUrl: this.#config.dataSources.m3uUrl,
+        backupM3uUrl: this.#config.dataSources.backupM3uUrl
+      },
+      streaming: this.#config.streaming,
+      filters: this.#config.filters,
+      cache: this.#config.cache,
+      validation: this.#config.validation
+    };
+
+    const json = JSON.stringify(relevant);
+    return crypto.createHash('sha256').update(json).digest('hex');
   }
 
   /**
