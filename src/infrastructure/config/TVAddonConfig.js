@@ -327,28 +327,19 @@ export class TVAddonConfig {
   }
 
   /**
-   * Genera catálogos optimizados para TV
+   * Genera catálogos optimizados para TV sin filtros
+   * Eliminados los filtros de género y país para mostrar todos los canales
    * @private
    * @returns {Array}
    */
   #generateTVCatalogs() {
     return [
-      // Catálogo principal de canales TV
+      // Catálogo principal de canales TV - Sin filtros para mostrar todos los canales
       {
         type: 'tv',
         id: 'tv_channels',
         name: 'Canales de TV',
         extra: [
-          {
-            name: 'genre',
-            isRequired: false,
-            options: ['News', 'Sports', 'Entertainment', 'Music', 'Movies', 'Kids', 'Documentary']
-          },
-          {
-            name: 'country',
-            isRequired: false,
-            options: ['ES', 'MX', 'AR', 'CO', 'US', 'FR', 'DE', 'IT']
-          },
           {
             name: 'search',
             isRequired: false
@@ -359,16 +350,15 @@ export class TVAddonConfig {
           }
         ]
       },
-      // Catálogo de canales por género
+      // Catálogo de canales simplificado
       {
         type: 'channel',
-        id: 'channels_by_genre',
-        name: 'Canales por Género',
+        id: 'all_channels',
+        name: 'Todos los Canales',
         extra: [
           {
-            name: 'genre',
-            isRequired: true,
-            options: ['News', 'Sports', 'Entertainment', 'Music', 'Movies', 'Kids', 'Documentary']
+            name: 'search',
+            isRequired: false
           },
           {
             name: 'skip',

@@ -87,43 +87,13 @@ export class RemoteM3UChannelRepository extends ChannelRepository {
   }
 
   #passesConfigFilters(channel) {
-    const { filters, streaming } = this.#config;
+    const { streaming } = this.#config;
 
-    // Países permitidos
-    if (filters.allowedCountries.length > 0) {
-      const channelCountry = (channel.country || '').toUpperCase();
-      
-      // Aceptar canales internacionales por defecto
-      if (channelCountry === 'INTERNACIONAL' || channelCountry === 'INTERNATIONAL' || channelCountry === '') {
-        console.log(`✅ Canal internacional aceptado por defecto: ${channel.name} (País: '${channelCountry}')`);
-        // Continuar con otros filtros, no retornar aquí
-      } else {
-        // Aplicar filtro de países solo para canales con país específico
-        const isAllowed = filters.allowedCountries.some(country => 
-          channelCountry.includes(country) || country.includes(channelCountry)
-        );
-        if (!isAllowed) {
-          console.log(`❌ Canal rechazado por país: ${channel.name} (País: '${channelCountry}')`);
-          return false;
-        }
-      }
-    }
+    // FILTROS ELIMINADOS: Se han removido todos los filtros de países
+    // para garantizar que se muestren todos los canales disponibles
+    // sin restricciones geográficas o de idioma
 
-    // Países bloqueados
-    if (filters.blockedCountries.length > 0) {
-      const channelCountry = (channel.country || '').toUpperCase();
-      const isBlocked = filters.blockedCountries.some(country => 
-        channelCountry.includes(country) || country.includes(channelCountry)
-      );
-      if (isBlocked) {
-        console.log(`❌ Canal rechazado por país bloqueado: ${channel.name}`);
-        return false;
-      }
-    }
-
-    // Nota: no filtramos por supportedLanguages para permitir "Idioma: ninguno" en Stremio
-
-    // Adultos
+    // Solo mantener filtro de contenido adulto si está configurado
     if (!streaming.enableAdultChannels) {
       const adultGenres = ['adulto', 'adult', 'xxx', '+18'];
       if (adultGenres.some(g => channel.genre.toLowerCase().includes(g))) {
@@ -132,6 +102,7 @@ export class RemoteM3UChannelRepository extends ChannelRepository {
       }
     }
 
+    // Aceptar todos los demás canales sin filtros
     console.log(`✅ Canal aceptado: ${channel.name}`);
     return true;
   }

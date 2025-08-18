@@ -340,27 +340,17 @@ class TVIPTVAddon {
     if (extra.search) {
       channels = await this.#channelService.searchChannels(extra.search);
     }
-    // Manejar filtro por género
-    else if (extra.genre) {
-      channels = await this.#channelService.getChannelsByGenre(extra.genre);
-    }
-    // Manejar filtro por país
-    else if (extra.country) {
-      channels = await this.#channelService.getChannelsByCountry(extra.country);
-    }
-    // Catálogo general - Cargar todos los canales para mostrar la lista completa
+    // Catálogo general - Cargar todos los canales sin filtros
     else {
-      // Para el catálogo principal, mostrar todos los canales disponibles
-      // Esto asegura que Stremio muestre la lista completa de canales
+      // Mostrar todos los canales disponibles sin filtros de género o país
+      // Esto garantiza que se muestren todos los canales en Stremio
       channels = await this.#channelService.getAllChannels();
       
-      // Si hay demasiados canales, aplicar paginación solo si es necesario
+      // Aplicar paginación para mejorar el rendimiento
       const skip = parseInt(extra.skip) || 0;
-      if (skip > 0) {
-        const limit = 100; // Aumentar el límite para mejor experiencia
-        const endIndex = skip + limit;
-        channels = channels.slice(skip, endIndex);
-      }
+      const limit = 100; // Límite generoso para mostrar más canales por página
+      const endIndex = skip + limit;
+      channels = channels.slice(skip, endIndex);
     }
 
     // Filtrar por tipo
