@@ -92,12 +92,20 @@ export class RemoteM3UChannelRepository extends ChannelRepository {
     // Países permitidos
     if (filters.allowedCountries.length > 0) {
       const channelCountry = (channel.country || '').toUpperCase();
-      const isAllowed = filters.allowedCountries.some(country => 
-        channelCountry.includes(country) || country.includes(channelCountry)
-      );
-      if (!isAllowed) {
-        console.log(`❌ Canal rechazado por país: ${channel.name} (País: '${channelCountry}')`);
-        return false;
+      
+      // Aceptar canales internacionales por defecto
+      if (channelCountry === 'INTERNACIONAL' || channelCountry === 'INTERNATIONAL' || channelCountry === '') {
+        console.log(`✅ Canal internacional aceptado por defecto: ${channel.name} (País: '${channelCountry}')`);
+        // Continuar con otros filtros, no retornar aquí
+      } else {
+        // Aplicar filtro de países solo para canales con país específico
+        const isAllowed = filters.allowedCountries.some(country => 
+          channelCountry.includes(country) || country.includes(channelCountry)
+        );
+        if (!isAllowed) {
+          console.log(`❌ Canal rechazado por país: ${channel.name} (País: '${channelCountry}')`);
+          return false;
+        }
       }
     }
 

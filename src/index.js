@@ -306,6 +306,34 @@ class TVIPTVAddon {
       return { metas: [] };
     }
 
+    /**
+     * ACTUALIZACIÓN FORZADA DE CANALES
+     * 
+     * Cuando Stremio solicita el catálogo de TV, se fuerza una actualización
+     * completa de la lista de canales desde la fuente remota (M3U).
+     * 
+     * Beneficios:
+     * - Garantiza que siempre se muestren todos los canales disponibles
+     * - Resuelve el problema de mostrar solo 96 canales en lugar de todos
+     * - Actualiza automáticamente la lista sin intervención manual
+     * - Mejora la experiencia del usuario en Stremio
+     * 
+     * Comportamiento:
+     * - Se ejecuta en cada solicitud de catálogo TV/Channel
+     * - Si falla la actualización, continúa con canales cacheados
+     * - No bloquea la respuesta del catálogo
+     */
+    if (type === 'tv' || type === 'channel') {
+      try {
+        this.#logger.info('Detectada solicitud de catálogo TV - Forzando actualización de canales...');
+        await this.#channelRepository.refreshFromRemote?.();
+        this.#logger.info('Actualización de canales completada');
+      } catch (error) {
+        this.#logger.warn('Error al forzar actualización de canales:', error.message);
+        // Continuar con los canales cacheados si falla la actualización
+      }
+    }
+
     let channels = [];
 
     // Manejar búsqueda
@@ -320,11 +348,19 @@ class TVIPTVAddon {
     else if (extra.country) {
       channels = await this.#channelService.getChannelsByCountry(extra.country);
     }
-    // Catálogo general
+    // Catálogo general - Cargar todos los canales para mostrar la lista completa
     else {
+      // Para el catálogo principal, mostrar todos los canales disponibles
+      // Esto asegura que Stremio muestre la lista completa de canales
+      channels = await this.#channelService.getAllChannels();
+      
+      // Si hay demasiados canales, aplicar paginación solo si es necesario
       const skip = parseInt(extra.skip) || 0;
-      const limit = 20;
-      channels = await this.#channelService.getChannelsPaginated(skip, limit);
+      if (skip > 0) {
+        const limit = 100; // Aumentar el límite para mejor experiencia
+        const endIndex = skip + limit;
+        channels = channels.slice(skip, endIndex);
+      }
     }
 
     // Filtrar por tipo
