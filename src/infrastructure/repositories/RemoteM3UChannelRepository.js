@@ -88,11 +88,38 @@ export class RemoteM3UChannelRepository extends ChannelRepository {
 
   #passesConfigFilters(channel) {
     const { filters, streaming } = this.#config;
-    // ... (lógica de filtros idéntica a CSVChannelRepository)
+
+    // Países permitidos
+    if (filters.allowedCountries.length > 0) {
+      const channelCountry = (channel.country || '').toUpperCase();
+      const isAllowed = filters.allowedCountries.some(country => 
+        channelCountry.includes(country) || country.includes(channelCountry)
+      );
+      if (!isAllowed) return false;
+    }
+
+    // Países bloqueados
+    if (filters.blockedCountries.length > 0) {
+      const channelCountry = (channel.country || '').toUpperCase();
+      const isBlocked = filters.blockedCountries.some(country => 
+        channelCountry.includes(country) || country.includes(channelCountry)
+      );
+      if (isBlocked) return false;
+    }
+
+    // Idiomas soportados
+    if (filters.supportedLanguages.length > 0) {
+      if (!filters.supportedLanguages.includes(channel.language)) {
+        return false;
+      }
+    }
+
+    // Adultos
     if (!streaming.enableAdultChannels) {
       const adultGenres = ['adulto', 'adult', 'xxx', '+18'];
       if (adultGenres.some(g => channel.genre.toLowerCase().includes(g))) return false;
     }
+
     return true;
   }
   
@@ -131,6 +158,11 @@ export class RemoteM3UChannelRepository extends ChannelRepository {
   async getChannelsByCountry(country) {
     await this.#refreshIfNeeded();
     return this.#channels.filter(ch => ch.country.toLowerCase().includes(country.toLowerCase()));
+  }
+
+  async getChannelsByLanguage(language) {
+    await this.#refreshIfNeeded();
+    return this.#channels.filter(ch => ch.language.toLowerCase() === language.toLowerCase());
   }
 
   async searchChannels(searchTerm) {

@@ -50,6 +50,13 @@ export class TVAddonConfig {
    * @returns {Object}
    */
   #loadConfiguration() {
+    const envSourceRaw = process.env.CHANNELS_SOURCE;
+    const normalizedSource = this.#normalizeChannelSource(envSourceRaw);
+    // Preferir automáticamente remote_m3u si no se especificó fuente pero hay M3U_URL
+    const finalSource = (!envSourceRaw || envSourceRaw.trim() === '') && process.env.M3U_URL
+      ? 'remote_m3u'
+      : (normalizedSource || 'csv');
+
     return {
       // Configuración del servidor
       server: {
@@ -75,7 +82,7 @@ export class TVAddonConfig {
 
       // Configuración de fuentes de datos
       dataSources: {
-        channelsSource: process.env.CHANNELS_SOURCE || 'csv',
+        channelsSource: finalSource,
         channelsFile: process.env.CHANNELS_FILE || 'data/channels.csv',
         m3uUrl: process.env.M3U_URL || null,
         backupM3uUrl: process.env.BACKUP_M3U_URL || null,
@@ -197,6 +204,22 @@ export class TVAddonConfig {
     if (dataSources.channelsSource.includes('m3u') && !dataSources.m3uUrl) {
       throw new Error('URL de M3U es requerida para fuentes remotas');
     }
+  }
+
+  /**
+   * Normaliza el valor de CHANNELS_SOURCE para evitar typos (remote_m3u, remote_m3U, REMOTE_M3U, etc.)
+   * @private
+   * @param {string} source
+   * @returns {string}
+   */
+  #normalizeChannelSource(source) {
+    if (!source) return 'csv';
+    const s = String(source).toLowerCase().trim();
+    if (s === 'remote_m3u' || s === 'remote-m3u' || s === 'remotem3u') return 'remote_m3u';
+    if (s === 'm3u' || s === 'local_m3u' || s === 'local-m3u') return 'm3u';
+    if (s === 'csv') return 'csv';
+    if (s === 'hybrid' || s === 'mixed') return 'hybrid';
+    return s;
   }
 
   /**
