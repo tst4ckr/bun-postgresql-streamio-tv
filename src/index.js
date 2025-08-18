@@ -330,8 +330,12 @@ class TVIPTVAddon {
     // Filtrar por tipo
     channels = channels.filter(channel => channel.type === type);
 
-    // Convertir a meta previews
-    const metas = channels.map(channel => channel.toMetaPreview());
+    // Convertir a meta previews (filtrar canales inactivos según tracker)
+    const metas = channels
+      .filter(ch => this.#healthService?.isChannelActive?.(ch.id) ?? true)
+      .map(channel => channel.toMetaPreview({
+        fallbackLogo: this.#config.assets.fallbackLogo
+      }));
 
     return {
       metas,
@@ -359,8 +363,16 @@ class TVIPTVAddon {
       return { meta: null };
     }
 
+    // Si el tracker señala canal inactivo, devolver meta pero con cache corto
+    if (this.#healthService && !this.#healthService.isChannelActive(channel.id)) {
+      return {
+        meta: channel.toMetaDetail({ fallbackLogo: this.#config.assets.fallbackLogo }),
+        cacheMaxAge: 60
+      };
+    }
+
     return {
-      meta: channel.toMetaDetail(),
+      meta: channel.toMetaDetail({ fallbackLogo: this.#config.assets.fallbackLogo }),
       cacheMaxAge: this.#config.cache.metaCacheMaxAge
     };
   }

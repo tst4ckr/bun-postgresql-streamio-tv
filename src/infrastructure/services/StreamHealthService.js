@@ -7,6 +7,8 @@ import axios from 'axios';
 export class StreamHealthService {
   #config;
   #logger;
+  #failCounts = new Map(); // channelId -> consecutive fails
+  #lastStatus = new Map(); // channelId -> { ok, at }
 
   constructor(config, logger = console) {
     this.#config = config;
@@ -52,12 +54,14 @@ export class StreamHealthService {
    */
   async checkChannel(channel) {
     const result = await this.checkStream(channel.streamUrl);
-    return {
+    const record = {
       id: channel.id,
       name: channel.name,
       ok: result.ok,
       meta: result
     };
+    this.recordResult(record.id, record.ok);
+    return record;
   }
 
   /**
@@ -89,6 +93,39 @@ export class StreamHealthService {
     const ok = results.filter(r => r.ok).length;
     const fail = results.length - ok;
     return { ok, fail, total: results.length, results };
+  }
+
+  /**
+   * Registra un resultado para contabilidad de fallos consecutivos
+   * @param {string} channelId
+   * @param {boolean} ok
+   */
+  recordResult(channelId, ok) {
+    const current = this.#failCounts.get(channelId) || 0;
+    const next = ok ? 0 : current + 1;
+    this.#failCounts.set(channelId, next);
+    this.#lastStatus.set(channelId, { ok, at: new Date() });
+  }
+
+  /**
+   * Indica si un canal debe considerarse activo según fallos consecutivos
+   * @param {string} channelId
+   * @returns {boolean}
+   */
+  isChannelActive(channelId) {
+    const threshold = this.#config.validation.maxConsecutiveFailures || 3;
+    const fails = this.#failCounts.get(channelId) || 0;
+    return fails < threshold;
+  }
+
+  /**
+   * Estadísticas del tracker
+   */
+  getTrackerStats() {
+    const threshold = this.#config.validation.maxConsecutiveFailures || 3;
+    const entries = Array.from(this.#failCounts.entries()).map(([id, fails]) => ({ id, fails, deactivated: fails >= threshold }));
+    const deactivated = entries.filter(e => e.deactivated).length;
+    return { threshold, tracked: entries.length, deactivated, entries };
   }
 }
 

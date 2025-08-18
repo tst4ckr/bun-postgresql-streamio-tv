@@ -129,7 +129,8 @@ export class TVAddonConfig {
         validateStreamsOnStartup: process.env.VALIDATE_STREAMS_ON_STARTUP === 'true',
         validateStreamsIntervalHours: parseInt(process.env.VALIDATE_STREAMS_INTERVAL_HOURS) || 6,
         removeInvalidStreams: process.env.REMOVE_INVALID_STREAMS === 'true',
-        streamValidationTimeout: parseInt(process.env.STREAM_VALIDATION_TIMEOUT) || 10
+        streamValidationTimeout: parseInt(process.env.STREAM_VALIDATION_TIMEOUT) || 10,
+        maxConsecutiveFailures: parseInt(process.env.MAX_CONSECUTIVE_FAILURES) || 3
       },
 
       // Configuración de logs
@@ -430,9 +431,11 @@ export class TVAddonConfig {
    */
   getBaseUrl() {
     const { server } = this.#config;
+    const port = process.env.PORT || server.port;
     const protocol = server.nodeEnv === 'production' ? 'https' : 'http';
-    const host = server.host === '0.0.0.0' ? 'localhost' : server.host;
-    return `${protocol}://${host}:${server.port}`;
+    const hostEnv = process.env.PUBLIC_HOST || process.env.HOSTNAME || server.host;
+    const host = hostEnv === '0.0.0.0' ? 'localhost' : hostEnv;
+    return `${protocol}://${host}:${port}`;
   }
 
   /**

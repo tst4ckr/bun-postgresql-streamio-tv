@@ -270,12 +270,13 @@ export class Channel {
    * Convierte a meta preview para catálogos de Stremio
    * @returns {Object}
    */
-  toMetaPreview() {
+  toMetaPreview(options = {}) {
+    const { fallbackLogo } = options;
     return {
       id: this.#id,
       type: this.#type,
       name: this.#name,
-      poster: this.#logo || process.env.FALLBACK_LOGO,
+      poster: this.#logo || fallbackLogo || undefined,
       posterShape: 'square',
       genres: [this.#genre],
       description: `Canal ${this.#name} - ${this.#country}`,
@@ -294,12 +295,13 @@ export class Channel {
    * Convierte a meta completo para detalles de Stremio
    * @returns {Object}
    */
-  toMetaDetail() {
+  toMetaDetail(options = {}) {
+    const { fallbackLogo } = options;
     return {
       id: this.#id,
       type: this.#type,
       name: this.#name,
-      poster: this.#logo || process.env.FALLBACK_LOGO,
+      poster: this.#logo || fallbackLogo || undefined,
       posterShape: 'square',
       background: this.#logo,
       genres: [this.#genre],

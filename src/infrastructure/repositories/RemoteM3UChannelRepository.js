@@ -168,7 +168,9 @@ export class RemoteM3UChannelRepository extends ChannelRepository {
   
   async getChannelsPaginated(skip = 0, limit = 20) {
     await this.#refreshIfNeeded();
-    return this.#channels.slice(skip, skip + limit);
+    const startIndex = Math.max(0, skip);
+    const boundedLimit = Math.max(1, Math.min(200, limit));
+    return this.#channels.slice(startIndex, startIndex + boundedLimit);
   }
 
   async getAvailableGenres() {
