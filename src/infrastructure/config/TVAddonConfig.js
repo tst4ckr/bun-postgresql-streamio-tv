@@ -130,7 +130,16 @@ export class TVAddonConfig {
         validateStreamsIntervalHours: parseInt(process.env.VALIDATE_STREAMS_INTERVAL_HOURS) || 6,
         removeInvalidStreams: process.env.REMOVE_INVALID_STREAMS === 'true',
         streamValidationTimeout: parseInt(process.env.STREAM_VALIDATION_TIMEOUT) || 10,
-        maxConsecutiveFailures: parseInt(process.env.MAX_CONSECUTIVE_FAILURES) || 3
+        maxConsecutiveFailures: parseInt(process.env.MAX_CONSECUTIVE_FAILURES) || 3,
+        
+        // Configuración de validación profunda M3U8/HLS
+        enableDeepValidation: process.env.ENABLE_DEEP_VALIDATION === 'true',
+        enableSegmentValidation: process.env.ENABLE_SEGMENT_VALIDATION === 'true',
+        maxSegmentsToValidate: parseInt(process.env.MAX_SEGMENTS_TO_VALIDATE) || 3,
+        segmentValidationTimeout: parseInt(process.env.SEGMENT_VALIDATION_TIMEOUT) || 5,
+        minSegmentValidityRatio: parseFloat(process.env.MIN_SEGMENT_VALIDITY_RATIO) || 0.6,
+        enableFormatDetection: process.env.ENABLE_FORMAT_DETECTION === 'true',
+        enableContentTypeAnalysis: process.env.ENABLE_CONTENT_TYPE_ANALYSIS === 'true'
       },
 
       // Configuración de logs
