@@ -95,7 +95,10 @@ export class RemoteM3UChannelRepository extends ChannelRepository {
       const isAllowed = filters.allowedCountries.some(country => 
         channelCountry.includes(country) || country.includes(channelCountry)
       );
-      if (!isAllowed) return false;
+      if (!isAllowed) {
+        console.log(`❌ Canal rechazado por país: ${channel.name} (País: '${channelCountry}')`);
+        return false;
+      }
     }
 
     // Países bloqueados
@@ -104,7 +107,10 @@ export class RemoteM3UChannelRepository extends ChannelRepository {
       const isBlocked = filters.blockedCountries.some(country => 
         channelCountry.includes(country) || country.includes(channelCountry)
       );
-      if (isBlocked) return false;
+      if (isBlocked) {
+        console.log(`❌ Canal rechazado por país bloqueado: ${channel.name}`);
+        return false;
+      }
     }
 
     // Nota: no filtramos por supportedLanguages para permitir "Idioma: ninguno" en Stremio
@@ -112,9 +118,13 @@ export class RemoteM3UChannelRepository extends ChannelRepository {
     // Adultos
     if (!streaming.enableAdultChannels) {
       const adultGenres = ['adulto', 'adult', 'xxx', '+18'];
-      if (adultGenres.some(g => channel.genre.toLowerCase().includes(g))) return false;
+      if (adultGenres.some(g => channel.genre.toLowerCase().includes(g))) {
+        console.log(`❌ Canal rechazado por contenido adulto: ${channel.name} (Género: '${channel.genre}')`);
+        return false;
+      }
     }
 
+    console.log(`✅ Canal aceptado: ${channel.name}`);
     return true;
   }
   

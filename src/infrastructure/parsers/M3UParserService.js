@@ -483,21 +483,22 @@ export class M3UParserService {
    * @returns {Channel[]}
    */
   #validateAndFilterChannels(channels) {
-    const validChannels = channels.filter(channel => {
+    console.log(`Iniciando validación de ${channels.length} canales parseados`);
+    
+    const validChannels = channels.filter((channel, index) => {
       try {
         // Verificar que el canal sea válido
         if (!channel.isValidStream()) {
-          console.warn(`Canal con stream inválido ignorado: ${channel.name}`);
+          console.warn(`Canal ${index + 1} con stream inválido ignorado: ${channel.name} - URL: ${channel.streamUrl}`);
           return false;
         }
-
         return true;
       } catch (error) {
-        console.warn(`Canal inválido ignorado: ${error.message}`);
+        console.warn(`Canal ${index + 1} inválido ignorado: ${error.message} - ${channel.name}`);
         return false;
       }
     });
-
+  
     console.log(`M3U parseado: ${validChannels.length} canales válidos de ${channels.length} totales`);
     
     return validChannels;
