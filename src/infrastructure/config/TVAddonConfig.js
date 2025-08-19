@@ -8,7 +8,7 @@ import crypto from 'crypto';
 import { Channel } from '../../domain/entities/Channel.js';
 
 // Cargar variables de entorno
-config({ path: 'config.env' });
+config({ path: '.env' });
 
 /**
  * Configuración centralizada del addon de TV IPTV
