@@ -191,6 +191,81 @@ export class ErrorHandler {
   }
 
   /**
+   * Maneja errores en handlers del addon de Stremio
+   * @param {Error} error - Error ocurrido
+   * @param {string} handlerType - Tipo de handler (catalog, meta, stream)
+   * @param {Object} args - Argumentos del handler
+   * @param {number} startTime - Tiempo de inicio para calcular duración
+   * @returns {Object} Respuesta de error segura para Stremio
+   */
+  handleAddonError(error, handlerType, args, startTime) {
+    const duration = Date.now() - startTime;
+    
+    this.#logger.error(`${handlerType} request failed in ${duration}ms:`, {
+      error: error.message,
+      stack: this.#config.isDevelopment() ? error.stack : undefined,
+      args: args
+    });
+    
+    this.#trackError(handlerType, error);
+    
+    // Respuestas seguras según especificaciones del SDK de Stremio
+    switch (handlerType) {
+      case 'catalog':
+        return {
+          metas: [],
+          cacheMaxAge: Math.min(this.#config.cache.catalogCacheMaxAge, 300)
+        };
+      case 'meta':
+        return {
+          meta: null,
+          cacheMaxAge: Math.min(this.#config.cache.metaCacheMaxAge, 300)
+        };
+      case 'stream':
+        return {
+          streams: [],
+          cacheMaxAge: Math.min(this.#config.cache.streamCacheMaxAge || 300, 300)
+        };
+      default:
+        return this.#createErrorResponse(error, handlerType);
+    }
+  }
+
+  /**
+   * Crea un wrapper seguro para handlers del addon
+   * @param {Function} handler - Handler original
+   * @param {string} handlerType - Tipo de handler
+   * @returns {Function} Handler envuelto con manejo de errores
+   */
+  wrapAddonHandler(handler, handlerType) {
+    return async (args) => {
+      const startTime = Date.now();
+      
+      try {
+        // Validar argumentos de entrada
+        if (!args || typeof args !== 'object') {
+          throw new ValidationError(`Argumentos de ${handlerType} inválidos`);
+        }
+
+        this.#logger.debug(`${handlerType} request: ${JSON.stringify(args)}`);
+        
+        const result = await handler(args);
+        
+        const duration = Date.now() - startTime;
+        this.#logger.debug(`${handlerType} request completed in ${duration}ms`);
+        
+        // Validar respuesta antes de enviar
+        this.#validateAddonResponse(result, handlerType);
+        
+        return result;
+        
+      } catch (error) {
+        return this.handleAddonError(error, handlerType, args, startTime);
+      }
+    };
+  }
+
+  /**
    * Obtiene estadísticas de errores
    * @returns {Object} Estadísticas de errores
    */
@@ -240,6 +315,37 @@ export class ErrorHandler {
       timestamp: new Date().toISOString(),
       ...(this.#config.isDevelopment() && { stack: error.stack })
     };
+  }
+
+  /**
+   * Valida respuestas del addon según especificaciones del SDK
+   * @private
+   * @param {Object} result - Resultado a validar
+   * @param {string} handlerType - Tipo de handler
+   * @throws {ValidationError} Si la respuesta es inválida
+   */
+  #validateAddonResponse(result, handlerType) {
+    if (!result || typeof result !== 'object') {
+      throw new ValidationError(`Respuesta de ${handlerType} inválida: debe ser un objeto`);
+    }
+
+    switch (handlerType) {
+      case 'catalog':
+        if (!Array.isArray(result.metas)) {
+          throw new ValidationError('Respuesta de catálogo inválida: metas debe ser un array');
+        }
+        break;
+      case 'meta':
+        if (result.meta !== null && typeof result.meta !== 'object') {
+          throw new ValidationError('Respuesta de metadatos inválida: meta debe ser objeto o null');
+        }
+        break;
+      case 'stream':
+        if (!Array.isArray(result.streams)) {
+          throw new ValidationError('Respuesta de stream inválida: streams debe ser un array');
+        }
+        break;
+    }
   }
 
   /**

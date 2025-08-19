@@ -5,9 +5,6 @@
 
 import pkg from 'stremio-addon-sdk';
 const { addonBuilder, serveHTTP } = pkg;
-import helmet from 'helmet';
-import cors from 'cors';
-import rateLimit from 'express-rate-limit';
 
 // Configuración
 import { TVAddonConfig } from './infrastructure/config/TVAddonConfig.js';
@@ -15,6 +12,10 @@ import { TVAddonConfig } from './infrastructure/config/TVAddonConfig.js';
 // Servicios de infraestructura
 import { M3UParserService } from './infrastructure/parsers/M3UParserService.js';
 import { StreamHealthService } from './infrastructure/services/StreamHealthService.js';
+
+// Middleware y manejo de errores
+import { SecurityMiddleware } from './infrastructure/middleware/SecurityMiddleware.js';
+import { ErrorHandler } from './infrastructure/error/ErrorHandler.js';
 
 // Handlers de aplicación
 import { StreamHandler } from './application/handlers/StreamHandler.js';
@@ -36,11 +37,15 @@ class TVIPTVAddon {
   #channelService;
   #healthService;
   #addonBuilder;
+  #securityMiddleware;
+  #errorHandler;
   #isInitialized = false;
 
   constructor() {
     this.#config = TVAddonConfig.getInstance();
     this.#logger = this.#createLogger();
+    this.#errorHandler = new ErrorHandler(this.#logger, this.#config);
+    this.#securityMiddleware = new SecurityMiddleware(this.#config, this.#logger);
     this.#logger.info('Inicializando TV IPTV Addon...');
   }
 
@@ -92,117 +97,13 @@ class TVIPTVAddon {
       await this.initialize();
     }
 
-    const { server } = this.#config;
     const addonInterface = this.#addonBuilder.getInterface();
+    const { server } = this.#config;
 
     this.#logger.info(`Iniciando servidor en puerto ${server.port}...`);
 
-    // Configurar middleware según la documentación del SDK
-    const middlewares = [];
-    
-    if (server.enableHelmet) {
-      middlewares.push(helmet({
-        contentSecurityPolicy: {
-          directives: {
-            defaultSrc: ["'self'"],
-            styleSrc: ["'self'", "'unsafe-inline'"],
-            scriptSrc: ["'self'"],
-            imgSrc: ["'self'", "data:", "https:"],
-            connectSrc: ["'self'", "https:"],
-            fontSrc: ["'self'", "https:", "data:"],
-            objectSrc: ["'none'"],
-            mediaSrc: ["'self'", "https:", "http:"],
-            frameSrc: ["'none'"]
-          },
-        },
-        crossOriginEmbedderPolicy: false,
-        hsts: {
-          maxAge: 31536000,
-          includeSubDomains: true,
-          preload: true
-        },
-        noSniff: true,
-        frameguard: { action: 'deny' },
-        xssFilter: true
-      }));
-      this.#logger.info('Helmet configurado con políticas de seguridad avanzadas');
-    }
-
-    if (server.enableCors) {
-      middlewares.push(cors({
-        origin: (origin, callback) => {
-          // Permitir requests sin origin (aplicaciones móviles, Postman, etc.)
-          if (!origin) return callback(null, true);
-          
-          // Permitir dominios de Stremio
-          const allowedOrigins = [
-            'https://app.strem.io',
-            'https://web.strem.io',
-            'https://staging.strem.io'
-          ];
-          
-          // Agregar origen personalizado si está configurado
-          if (server.corsOrigin && server.corsOrigin !== '*') {
-            allowedOrigins.push(server.corsOrigin);
-          }
-          
-          // En desarrollo, permitir localhost
-          if (this.#config.isDevelopment()) {
-            allowedOrigins.push(/^http:\/\/localhost(:\d+)?$/);
-            allowedOrigins.push(/^http:\/\/127\.0\.0\.1(:\d+)?$/);
-          }
-          
-          // Verificar si el origen está permitido
-          const isAllowed = allowedOrigins.some(allowed => {
-            if (typeof allowed === 'string') return allowed === origin;
-            if (allowed instanceof RegExp) return allowed.test(origin);
-            return false;
-          });
-          
-          callback(null, isAllowed || server.corsOrigin === '*');
-        },
-        methods: ['GET', 'HEAD', 'OPTIONS'],
-        allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-        credentials: false,
-        maxAge: 86400 // Cache preflight por 24 horas
-      }));
-      this.#logger.info('CORS configurado con políticas de origen seguras');
-    }
-
-    // Configurar rate limiting para prevenir abuso
-    if (server.rateLimitRequestsPerMinute > 0) {
-      middlewares.push(rateLimit({
-        windowMs: 60 * 1000, // 1 minuto
-        max: server.rateLimitRequestsPerMinute,
-        message: {
-          error: 'Demasiadas solicitudes desde esta IP, intenta de nuevo en un minuto.',
-          retryAfter: 60
-        },
-        standardHeaders: true,
-        legacyHeaders: false,
-        // Permitir más requests para endpoints de manifest
-        skip: (req) => {
-          return req.path === '/manifest.json' || req.path.endsWith('/manifest.json');
-        },
-        // Headers personalizados para debugging
-        keyGenerator: (req) => {
-          return req.ip || req.connection.remoteAddress || 'unknown';
-        }
-      }));
-      this.#logger.info(`Rate limiting configurado: ${server.rateLimitRequestsPerMinute} requests/minuto`);
-    }
-
-    // Configurar opciones del servidor según SDK
-    const serverOptions = {
-      port: server.port,
-      cacheMaxAge: this.#config.cache.catalogCacheMaxAge,
-      static: '/static'
-    };
-
-    // Aplicar middleware si existe
-    if (middlewares.length > 0) {
-      serverOptions.middleware = middlewares;
-    }
+    // Configurar opciones del servidor usando SecurityMiddleware
+    const serverOptions = this.#securityMiddleware.configureServerOptions();
 
     // Iniciar servidor usando la interfaz del addon
     serveHTTP(addonInterface, serverOptions);
@@ -326,85 +227,21 @@ class TVIPTVAddon {
   #configureHandlers() {
     this.#logger.info('Configurando handlers...');
 
-    // Handler de catálogos según mejores prácticas del SDK
-    this.#addonBuilder.defineCatalogHandler(async (args) => {
-      const startTime = Date.now();
-      
-      try {
-        // Validar argumentos de entrada
-        if (!args || typeof args !== 'object') {
-          throw new Error('Argumentos de catálogo inválidos');
-        }
+    // Handler de catálogos usando ErrorHandler
+    this.#addonBuilder.defineCatalogHandler(
+      this.#errorHandler.wrapAddonHandler(
+        this.#handleCatalogRequest.bind(this),
+        'catalog'
+      )
+    );
 
-        this.#logger.debug(`Catalog request: ${JSON.stringify(args)}`);
-        
-        const result = await this.#handleCatalogRequest(args);
-        
-        const duration = Date.now() - startTime;
-        this.#logger.debug(`Catalog request completed in ${duration}ms`);
-        
-        // Validar respuesta antes de enviar
-        if (!result || !Array.isArray(result.metas)) {
-          throw new Error('Respuesta de catálogo inválida');
-        }
-        
-        return result;
-        
-      } catch (error) {
-        const duration = Date.now() - startTime;
-        this.#logger.error(`Catalog request failed in ${duration}ms:`, {
-          error: error.message,
-          stack: error.stack,
-          args: args
-        });
-        
-        // Respuesta segura según especificaciones del SDK
-        return {
-          metas: [],
-          cacheMaxAge: Math.min(this.#config.cache.catalogCacheMaxAge, 300) // Máximo 5 minutos para errores
-        };
-      }
-    });
-
-    // Handler de metadatos según mejores prácticas del SDK
-    this.#addonBuilder.defineMetaHandler(async (args) => {
-      const startTime = Date.now();
-      
-      try {
-        // Validar argumentos de entrada
-        if (!args || typeof args !== 'object' || !args.type || !args.id) {
-          throw new Error('Argumentos de metadatos inválidos');
-        }
-
-        this.#logger.debug(`Meta request: ${JSON.stringify(args)}`);
-        
-        const result = await this.#handleMetaRequest(args);
-        
-        const duration = Date.now() - startTime;
-        this.#logger.debug(`Meta request completed in ${duration}ms`);
-        
-        // Validar respuesta antes de enviar
-        if (!result || (result.meta !== null && typeof result.meta !== 'object')) {
-          throw new Error('Respuesta de metadatos inválida');
-        }
-        
-        return result;
-        
-      } catch (error) {
-        const duration = Date.now() - startTime;
-        this.#logger.error(`Meta request failed in ${duration}ms:`, {
-          error: error.message,
-          stack: error.stack,
-          args: args
-        });
-        
-        // Respuesta segura según especificaciones del SDK
-        return {
-          meta: null,
-          cacheMaxAge: Math.min(this.#config.cache.metaCacheMaxAge, 300) // Máximo 5 minutos para errores
-        };
-      }
-    });
+    // Handler de metadatos usando ErrorHandler
+    this.#addonBuilder.defineMetaHandler(
+      this.#errorHandler.wrapAddonHandler(
+        this.#handleMetaRequest.bind(this),
+        'meta'
+      )
+    );
 
     // Handler de streams
     const streamHandler = new StreamHandler(
@@ -572,27 +409,7 @@ async function main() {
   }
 }
 
-// Manejar señales del sistema para cierre limpio
-process.on('SIGINT', () => {
-  console.log('\n🛑 Cerrando addon...');
-  process.exit(0);
-});
-
-process.on('SIGTERM', () => {
-  console.log('\n🛑 Cerrando addon...');
-  process.exit(0);
-});
-
-// Manejar errores no capturados
-process.on('uncaughtException', (error) => {
-  console.error('❌ Error no capturado:', error);
-  process.exit(1);
-});
-
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('❌ Promesa rechazada no manejada:', reason);
-  process.exit(1);
-});
+// Los manejadores globales de errores están centralizados en ErrorHandler
 
 // Ejecutar si es el módulo principal
 console.log('🔍 Verificando si es módulo principal...');

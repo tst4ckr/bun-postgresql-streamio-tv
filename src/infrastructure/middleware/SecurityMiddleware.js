@@ -1,6 +1,7 @@
 /**
  * @fileoverview Middleware de seguridad para el addon de Stremio
  * Implementa configuración centralizada de Helmet, CORS y Rate Limiting
+ * Maneja toda la configuración de seguridad del servidor según el SDK de Stremio
  */
 
 import helmet from 'helmet';
@@ -9,7 +10,7 @@ import rateLimit from 'express-rate-limit';
 
 /**
  * Clase responsable de configurar y gestionar middleware de seguridad
- * Aplica principio de responsabilidad única
+ * Aplica principio de responsabilidad única y Clean Architecture
  */
 export class SecurityMiddleware {
   #config;
@@ -43,6 +44,28 @@ export class SecurityMiddleware {
     }
 
     return middlewares;
+  }
+
+  /**
+   * Configura las opciones del servidor según el SDK de Stremio
+   * @returns {Object} Opciones del servidor configuradas
+   */
+  configureServerOptions() {
+    const middlewares = this.getMiddlewares();
+    
+    const serverOptions = {
+      port: this.#config.server.port,
+      cacheMaxAge: this.#config.cache.catalogCacheMaxAge,
+      static: '/static'
+    };
+
+    // Aplicar middleware si existe
+    if (middlewares.length > 0) {
+      serverOptions.middleware = middlewares;
+    }
+
+    this.#logger.info(`Opciones del servidor configuradas para puerto ${serverOptions.port}`);
+    return serverOptions;
   }
 
   /**
