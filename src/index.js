@@ -264,7 +264,7 @@ class TVIPTVAddon {
         return;
       }
       
-      const { ok, fail, total } = await this.#healthService.checkChannels(channels, 10);
+      const { ok, fail, total } = await this.#healthService.checkChannels(channels, 10, true);
       const successRate = total > 0 ? ((ok / total) * 100).toFixed(1) : '0.0';
       const duration = ((Date.now() - startTime) / 1000).toFixed(1);
       
@@ -304,7 +304,7 @@ class TVIPTVAddon {
         
         try {
           const sample = await this.#channelRepository.getChannelsPaginated(0, 30);
-          const report = await this.#healthService.checkChannels(sample, 10);
+          const report = await this.#healthService.checkChannels(sample, 10, false);
           this.#logger.info(`Validación periódica: OK ${report.ok}/${report.total}, Fails ${report.fail}`);
         } catch (error) {
           this.#logger.error('Error en validación periódica:', error); // ERROR: Fallo validación periódica

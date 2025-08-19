@@ -64,21 +64,58 @@ export class StreamHealthService {
    * Verifica múltiples canales con límite de concurrencia
    * @param {Array<import('../../domain/entities/Channel.js').Channel>} channels
    * @param {number} concurrency
+   * @param {boolean} showProgress - Mostrar progreso en tiempo real
    * @returns {Promise<{ok:number,fail:number,total:number,results:Array}>}
    */
-  async checkChannels(channels, concurrency = 10) {
+  async checkChannels(channels, concurrency = 10, showProgress = true) {
     const limit = Math.max(1, Math.min(concurrency, this.#config.streaming.maxConcurrentStreams || 20));
     const queue = [...channels];
     const results = [];
+    const total = channels.length;
+    let completed = 0;
+    let ok = 0;
+    let fail = 0;
+
+    if (showProgress) {
+      this.#logger.info(`🔍 Iniciando validación de ${total} canales con ${limit} workers concurrentes...`);
+    }
 
     const worker = async () => {
       while (queue.length > 0) {
         const channel = queue.shift();
+        if (!channel) break;
+        
         try {
           const res = await this.checkChannel(channel);
           results.push(res);
+          
+          completed++;
+          if (res.ok) {
+            ok++;
+          } else {
+            fail++;
+          }
+
+          // Show progress every 100 channels or at the end
+          if (showProgress && (completed % 100 === 0 || completed === total)) {            
+            const percentage = ((completed / total) * 100).toFixed(1);
+            const successRate = ((ok / completed) * 100).toFixed(1);
+            this.#logger.info(`📊 Progreso: ${completed}/${total} (${percentage}%) - Éxito: ${ok} (${successRate}%) - Fallos: ${fail}`);
+          }
+          
         } catch (error) {
-          results.push({ id: channel.id, name: channel.name, ok: false, meta: { reason: error.message } });
+          completed++;
+          fail++;
+          results.push({ 
+            id: channel.id, 
+            name: channel.name, 
+            ok: false, 
+            meta: { reason: error.message } 
+          });
+          
+          if (showProgress && (completed % 100 === 0 || completed === total)) {
+            this.#logger.info(`❌ [${completed}/${total}] ${channel.name} - ERROR: ${error.message}`);
+          }
         }
       }
     };
@@ -86,12 +123,9 @@ export class StreamHealthService {
     const workers = Array.from({ length: limit }, () => worker());
     await Promise.all(workers);
 
-    const ok = results.filter(r => r.ok).length;
-    const fail = results.length - ok;
     return { ok, fail, total: results.length, results };
   }
 }
-
 export default StreamHealthService;
 
 
