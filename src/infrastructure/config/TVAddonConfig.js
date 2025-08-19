@@ -255,7 +255,7 @@ export class TVAddonConfig {
   }
 
   /**
-   * Genera el manifest de Stremio optimizado para TV
+   * Genera el manifest de Stremio optimizado para TV según especificaciones del SDK
    * @returns {Object}
    */
   generateManifest() {
@@ -266,35 +266,48 @@ export class TVAddonConfig {
     const configSignature = this.getConfigSignature().slice(0, 8);
     const versionWithSignature = `${addon.version}+${configSignature}`;
 
-    return {
+    const manifest = {
+      // Campos obligatorios según SDK
       id: addon.id,
       version: versionWithSignature,
       name: addon.name,
       description: addon.description,
       
-      // CRÍTICO: Usar solo tipos 'tv' y 'channel' para máxima compatibilidad
-      types: ['tv', 'channel'],
+      // Tipos de contenido soportados - usar 'tv' para canales en vivo
+      types: ['tv'],
       
-      // Recursos esenciales para TV en vivo
+      // Recursos que el addon puede manejar
       resources: ['catalog', 'meta', 'stream'],
       
-      // Catálogos optimizados para TV
+      // Catálogos disponibles
       catalogs: this.#generateTVCatalogs(),
       
-      // Prefijos de ID específicos para canales de TV
-      idPrefixes: ['tv_', 'ch_'],
+      // Prefijos de ID para identificar contenido del addon
+      idPrefixes: ['tv_'],
       
-      // Hints de comportamiento optimizados para streaming en vivo
+      // Configuración de comportamiento
       behaviorHints: {
-        adult: false, // Mantener simple y seguro
+        adult: false,
         p2p: false,
-        configurable: false, // Deshabilitado para estabilidad
+        configurable: false,
         configurationRequired: false
-      },
-      
-      // Información de contacto opcional
-      contactEmail: addon.contactEmail || undefined
+      }
     };
+
+    // Agregar campos opcionales solo si están definidos
+    if (addon.contactEmail) {
+      manifest.contactEmail = addon.contactEmail;
+    }
+
+    if (addon.logo) {
+      manifest.logo = addon.logo;
+    }
+
+    if (addon.background) {
+      manifest.background = addon.background;
+    }
+
+    return manifest;
   }
 
   /**
@@ -330,6 +343,11 @@ export class TVAddonConfig {
    * @private
    * @returns {Array}
    */
+  /**
+   * Genera catálogos según especificaciones del SDK de Stremio
+   * @private
+   * @returns {Array}
+   */
   #generateTVCatalogs() {
     return [
       // Catálogo principal de canales TV
@@ -339,18 +357,13 @@ export class TVAddonConfig {
         name: 'Canales de TV',
         extra: [
           {
-            name: 'genre',
-            isRequired: false,
-            options: ['News', 'Sports', 'Entertainment', 'Music', 'Movies', 'Kids', 'Documentary']
-          },
-          {
-            name: 'country',
-            isRequired: false,
-            options: ['ES', 'MX', 'AR', 'CO', 'US', 'FR', 'DE', 'IT']
-          },
-          {
             name: 'search',
             isRequired: false
+          },
+          {
+            name: 'genre',
+            isRequired: false,
+            options: ['News', 'Sports', 'Entertainment', 'Music', 'Movies', 'Kids', 'Documentary', 'General']
           },
           {
             name: 'skip',
@@ -358,16 +371,15 @@ export class TVAddonConfig {
           }
         ]
       },
-      // Catálogo de canales por género
+      // Catálogo de canales por país
       {
-        type: 'channel',
-        id: 'channels_by_genre',
-        name: 'Canales por Género',
+        type: 'tv',
+        id: 'tv_by_country',
+        name: 'Canales por País',
         extra: [
           {
-            name: 'genre',
-            isRequired: true,
-            options: ['News', 'Sports', 'Entertainment', 'Music', 'Movies', 'Kids', 'Documentary']
+            name: 'search',
+            isRequired: false
           },
           {
             name: 'skip',

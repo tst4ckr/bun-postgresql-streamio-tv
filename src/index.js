@@ -95,25 +95,51 @@ class TVIPTVAddon {
 
     this.#logger.info(`Iniciando servidor en puerto ${server.port}...`);
 
-    // Configurar middleware de seguridad
+    // Configurar middleware según la documentación del SDK
+    const middlewares = [];
+    
     if (server.enableHelmet) {
-      this.#logger.info('Helmet habilitado para seguridad');
+      middlewares.push(helmet({
+        contentSecurityPolicy: {
+          directives: {
+            defaultSrc: ["'self'"],
+            styleSrc: ["'self'", "'unsafe-inline'"],
+            scriptSrc: ["'self'"],
+            imgSrc: ["'self'", "data:", "https:"],
+          },
+        },
+      }));
+      this.#logger.info('Helmet configurado para seguridad');
     }
 
     if (server.enableCors) {
-      this.#logger.info(`CORS habilitado para origen: ${server.corsOrigin}`);
+      middlewares.push(cors({
+        origin: server.corsOrigin || '*',
+        methods: ['GET', 'HEAD', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization'],
+        credentials: false
+      }));
+      this.#logger.info(`CORS configurado para origen: ${server.corsOrigin || '*'}`);
     }
 
-    // Iniciar servidor
-    const options = {
+    // Configurar opciones del servidor según SDK
+    const serverOptions = {
       port: server.port,
-      cacheMaxAge: this.#config.cache.catalogCacheMaxAge
+      cacheMaxAge: this.#config.cache.catalogCacheMaxAge,
+      static: '/static'
     };
 
-    serveHTTP(addonInterface, options);
+    // Aplicar middleware si existe
+    if (middlewares.length > 0) {
+      serverOptions.middleware = middlewares;
+    }
+
+    // Iniciar servidor usando la interfaz del addon
+    serveHTTP(addonInterface, serverOptions);
 
     this.#logger.info(`✅ Addon iniciado en: ${this.#config.getBaseUrl()}`);
     this.#logger.info(`📺 Manifest: ${this.#config.getBaseUrl()}/manifest.json`);
+    this.#logger.info(`🔗 Instalar addon: ${this.#config.getBaseUrl()}/manifest.json`);
     
     // Programar tareas de mantenimiento
     this.#scheduleMaintenanceTasks();
