@@ -7,6 +7,8 @@
 import helmet from 'helmet';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
+import fs from 'fs';
+import path from 'path';
 
 /**
  * Clase responsable de configurar y gestionar middleware de seguridad
@@ -55,9 +57,17 @@ export class SecurityMiddleware {
     
     const serverOptions = {
       port: this.#config.server.port,
-      cacheMaxAge: this.#config.cache.catalogCacheMaxAge,
-      static: '/static'
+      cacheMaxAge: this.#config.cache.catalogCacheMaxAge
     };
+
+    // Configurar directorio static solo si existe
+    const staticDir = path.join(process.cwd(), 'static');
+    if (fs.existsSync(staticDir)) {
+      serverOptions.static = '/static';
+      this.#logger.info('Directorio static configurado para servir archivos estáticos');
+    } else {
+      this.#logger.info('Directorio static no encontrado, omitiendo configuración de archivos estáticos');
+    }
 
     // Aplicar middleware si existe
     if (middlewares.length > 0) {
