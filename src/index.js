@@ -3,7 +3,8 @@
  * Implementa Clean Architecture con inyección de dependencias y configuración dinámica
  */
 
-import { addonBuilder, serveHTTP } from 'stremio-addon-sdk';
+import pkg from 'stremio-addon-sdk';
+const { addonBuilder, serveHTTP } = pkg;
 import helmet from 'helmet';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
@@ -559,11 +560,14 @@ class TVIPTVAddon {
  */
 async function main() {
   try {
+    console.log('📦 Creando instancia del addon...');
     const addon = new TVIPTVAddon();
+    console.log('🔧 Iniciando addon...');
     await addon.start();
-    
+    console.log('✅ Addon iniciado exitosamente');
   } catch (error) {
-    console.error('❌ Error fatal iniciando addon:', error);
+    console.error('❌ Error fatal al iniciar el addon:', error);
+    console.error('Stack trace:', error.stack);
     process.exit(1);
   }
 }
@@ -591,7 +595,16 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 // Ejecutar si es el módulo principal
+console.log('🔍 Verificando si es módulo principal...');
+console.log('import.meta.url:', import.meta.url);
+console.log('process.argv[1]:', process.argv[1]);
+console.log('file://' + process.argv[1] + ':', `file://${process.argv[1]}`);
+
 if (import.meta.url === `file://${process.argv[1]}`) {
+  console.log('✅ Es módulo principal, ejecutando main...');
+  main();
+} else {
+  console.log('⚠️ No es módulo principal, ejecutando main de todas formas...');
   main();
 }
 
