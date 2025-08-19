@@ -1,36 +1,19 @@
-/**
- * @fileoverview Punto de entrada principal del addon de TV IPTV para Stremio
- * Implementa Clean Architecture con inyección de dependencias y configuración dinámica
- */
+// Addon principal TV IPTV para Stremio
 
 import pkg from 'stremio-addon-sdk';
 const { addonBuilder, serveHTTP } = pkg;
 
-// Configuración
 import { TVAddonConfig } from './infrastructure/config/TVAddonConfig.js';
-
-// Servicios de infraestructura
 import { M3UParserService } from './infrastructure/parsers/M3UParserService.js';
 import { StreamHealthService } from './infrastructure/services/StreamHealthService.js';
-
-// Middleware y manejo de errores
 import { SecurityMiddleware } from './infrastructure/middleware/SecurityMiddleware.js';
 import { ErrorHandler } from './infrastructure/error/ErrorHandler.js';
-
-// Handlers de aplicación
 import { StreamHandler } from './application/handlers/StreamHandler.js';
-
-// Repositorios (implementaciones concretas se crearán dinámicamente)
 import { ChannelRepositoryFactory } from './infrastructure/factories/ChannelRepositoryFactory.js';
 
-/**
- * Clase principal del addon
- * Orquesta la inicialización y configuración de todos los componentes
- */
+// Clase principal del addon
 class TVIPTVAddon {
-  /**
-   * @private
-   */
+
   #config;
   #logger;
   #channelRepository;
@@ -49,10 +32,7 @@ class TVIPTVAddon {
     this.#logger.info('Inicializando TV IPTV Addon...');
   }
 
-  /**
-   * Inicializa el addon
-   * @returns {Promise<void>}
-   */
+
   async initialize() {
     if (this.#isInitialized) {
       this.#logger.warn('Addon ya inicializado');
@@ -62,19 +42,10 @@ class TVIPTVAddon {
     try {
       this.#logger.info('Configuración cargada:', this.#config.toJSON());
 
-      // 1. Inicializar repositorio de canales
       await this.#initializeChannelRepository();
-
-      // 2. Inicializar servicios de aplicación
       await this.#initializeServices();
-
-      // 3. Crear builder del addon
       this.#createAddonBuilder();
-
-      // 4. Configurar handlers
       this.#configureHandlers();
-
-      // 5. Validar streams si está configurado
       if (this.#config.validation.validateStreamsOnStartup) {
         await this.#validateStreamsOnStartup();
       }
@@ -83,15 +54,12 @@ class TVIPTVAddon {
       this.#logger.info('Addon inicializado correctamente');
 
     } catch (error) {
-      this.#logger.error('Error inicializando addon:', error);
+      this.#logger.error('Error inicializando addon:', error); // ERROR: Fallo en inicialización
       throw error;
     }
   }
 
-  /**
-   * Inicia el servidor del addon
-   * @returns {Promise<void>}
-   */
+
   async start() {
     if (!this.#isInitialized) {
       await this.initialize();
@@ -102,29 +70,22 @@ class TVIPTVAddon {
 
     this.#logger.info(`Iniciando servidor en puerto ${server.port}...`);
 
-    // Configurar opciones del servidor usando SecurityMiddleware
     const serverOptions = this.#securityMiddleware.configureServerOptions();
-
-    // Iniciar servidor usando la interfaz del addon
     serveHTTP(addonInterface, serverOptions);
 
     this.#logger.info(`✅ Addon iniciado en: ${this.#config.getBaseUrl()}`);
     this.#logger.info(`📺 Manifest: ${this.#config.getBaseUrl()}/manifest.json`);
     this.#logger.info(`🔗 Instalar addon: ${this.#config.getBaseUrl()}/manifest.json`);
     
-    // Programar tareas de mantenimiento
+
     this.#scheduleMaintenanceTasks();
   }
 
-  /**
-   * Crea el logger configurado
-   * @private
-   * @returns {Object}
-   */
+
   #createLogger() {
     const { logging } = this.#config;
     
-    // Logger básico - en producción se podría usar winston o similar
+
     return {
       info: (message, ...args) => {
         if (['info', 'debug'].includes(logging.logLevel)) {
@@ -147,25 +108,17 @@ class TVIPTVAddon {
     };
   }
 
-  /**
-   * Inicializa el repositorio de canales según la configuración
-   * @private
-   * @returns {Promise<void>}
-   */
+
   async #initializeChannelRepository() {
     this.#logger.info(`Inicializando repositorio a través de Factory...`);
     this.#channelRepository = await ChannelRepositoryFactory.createRepository(this.#config, this.#logger);
   }
 
-  /**
-   * Inicializa los servicios de aplicación
-   * @private
-   * @returns {Promise<void>}
-   */
+
   async #initializeServices() {
     this.#logger.info('Inicializando servicios de aplicación...');
 
-    // Crear servicio de canales (se implementaría en application/services/)
+
     this.#channelService = {
       getChannelById: async (id) => {
         return await this.#channelRepository.getChannelById(id);
@@ -192,23 +145,18 @@ class TVIPTVAddon {
       },
 
       getChannelsFromCustomM3U: async (m3uUrl) => {
-        // Implementar lógica para parsear M3U personalizado del usuario
         const parser = new M3UParserService(this.#config.filters);
-        // Aquí se haría fetch del M3U y se parsearía
         return [];
       }
     };
 
     this.#logger.info('Servicios de aplicación inicializados');
 
-    // Servicio de salud de streams
+
     this.#healthService = new StreamHealthService(this.#config, this.#logger);
   }
 
-  /**
-   * Crea el builder del addon de Stremio
-   * @private
-   */
+
   #createAddonBuilder() {
     this.#logger.info('Creando builder del addon...');
 
@@ -220,14 +168,9 @@ class TVIPTVAddon {
     this.#logger.info(`Addon builder creado: ${manifest.name} v${manifest.version}`);
   }
 
-  /**
-   * Configura los handlers del addon
-   * @private
-   */
   #configureHandlers() {
     this.#logger.info('Configurando handlers...');
 
-    // Handler de catálogos usando ErrorHandler
     this.#addonBuilder.defineCatalogHandler(
       this.#errorHandler.wrapAddonHandler(
         this.#handleCatalogRequest.bind(this),
@@ -235,7 +178,6 @@ class TVIPTVAddon {
       )
     );
 
-    // Handler de metadatos usando ErrorHandler
     this.#addonBuilder.defineMetaHandler(
       this.#errorHandler.wrapAddonHandler(
         this.#handleMetaRequest.bind(this),
@@ -243,7 +185,6 @@ class TVIPTVAddon {
       )
     );
 
-    // Handler de streams
     const streamHandler = new StreamHandler(
       this.#channelService,
       this.#config,
@@ -255,45 +196,37 @@ class TVIPTVAddon {
     this.#logger.info('Handlers configurados correctamente');
   }
 
-  /**
-   * Maneja peticiones de catálogo
-   * @private
-   * @param {Object} args 
-   * @returns {Promise<Object>}
-   */
+
   async #handleCatalogRequest(args) {
     const { type, id, extra = {} } = args;
 
-    // Validar tipo soportado
+
     if (type !== 'tv') {
       return { metas: [] };
     }
 
     let channels = [];
 
-    // Manejar búsqueda
     if (extra.search) {
       channels = await this.#channelService.searchChannels(extra.search);
     }
-    // Manejar filtro por género
+
     else if (extra.genre) {
       channels = await this.#channelService.getChannelsByGenre(extra.genre);
     }
-    // Manejar filtro por país
+
     else if (extra.country) {
       channels = await this.#channelService.getChannelsByCountry(extra.country);
     }
-    // Catálogo general
+
     else {
       const skip = parseInt(extra.skip) || 0;
       const limit = 20;
       channels = await this.#channelService.getChannelsPaginated(skip, limit);
     }
 
-    // Filtrar por tipo
     channels = channels.filter(channel => channel.type === type);
 
-    // Convertir a meta previews
     const metas = channels.map(channel => channel.toMetaPreview());
 
     return {
@@ -302,16 +235,9 @@ class TVIPTVAddon {
     };
   }
 
-  /**
-   * Maneja peticiones de metadatos
-   * @private
-   * @param {Object} args 
-   * @returns {Promise<Object>}
-   */
   async #handleMetaRequest(args) {
     const { type, id } = args;
 
-    // Validar tipo soportado
     if (type !== 'tv') {
       return { meta: null };
     }
@@ -328,32 +254,31 @@ class TVIPTVAddon {
     };
   }
 
-  /**
-   * Valida streams al inicio si está configurado
-   * @private
-   * @returns {Promise<void>}
-   */
   async #validateStreamsOnStartup() {
-    this.#logger.info('Validando streams al inicio...');
-    
+    const startTime = Date.now();    
     try {
-      const channels = await this.#channelRepository.getChannelsPaginated(0, 50);
-      const report = await this.#healthService.checkChannels(channels, 10);
-      this.#logger.info(`Streams OK: ${report.ok}/${report.total}, Fails: ${report.fail}`);
+      const channels = await this.#channelRepository.getAllChannels();
+      
+      if (!channels?.length) {
+        this.#logger.warn('No se encontraron canales para validar');
+        return;
+      }
+      
+      const { ok, fail, total } = await this.#healthService.checkChannels(channels, 10);
+      const successRate = total > 0 ? ((ok / total) * 100).toFixed(1) : '0.0';
+      const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+      
+      this.#logger.info(`Validación completada: ${ok}/${total} OK (${successRate}%) en ${duration}s`);
       
     } catch (error) {
-      this.#logger.error('Error validando streams:', error);
+      console.log(`Error: ${error.message}`);
+      this.#logger.error('Error validando streams:', error); // ERROR: Fallo en validación
     }
   }
 
-  /**
-   * Programa tareas de mantenimiento
-   * @private
-   */
   #scheduleMaintenanceTasks() {
     const { dataSources, validation } = this.#config;
 
-    // Auto-actualización de datos
     if (dataSources.enableAutoUpdate && dataSources.updateIntervalHours > 0) {
       const intervalMs = dataSources.updateIntervalHours * 60 * 60 * 1000;
       
@@ -364,14 +289,13 @@ class TVIPTVAddon {
           await this.#channelRepository.refreshFromRemote?.();
           this.#logger.info('Auto-actualización completada');
         } catch (error) {
-          this.#logger.error('Error en auto-actualización:', error);
+          this.#logger.error('Error en auto-actualización:', error); // ERROR: Fallo auto-actualización
         }
       }, intervalMs);
 
       this.#logger.info(`Auto-actualización programada cada ${dataSources.updateIntervalHours} horas`);
     }
 
-    // Validación periódica de streams
     if (validation.validateStreamsIntervalHours > 0) {
       const intervalMs = validation.validateStreamsIntervalHours * 60 * 60 * 1000;
       
@@ -383,7 +307,7 @@ class TVIPTVAddon {
           const report = await this.#healthService.checkChannels(sample, 10);
           this.#logger.info(`Validación periódica: OK ${report.ok}/${report.total}, Fails ${report.fail}`);
         } catch (error) {
-          this.#logger.error('Error en validación periódica:', error);
+          this.#logger.error('Error en validación periódica:', error); // ERROR: Fallo validación periódica
         }
       }, intervalMs);
 
@@ -392,9 +316,7 @@ class TVIPTVAddon {
   }
 }
 
-/**
- * Punto de entrada principal
- */
+
 async function main() {
   try {
     console.log('📦 Creando instancia del addon...');
@@ -403,15 +325,12 @@ async function main() {
     await addon.start();
     console.log('✅ Addon iniciado exitosamente');
   } catch (error) {
-    console.error('❌ Error fatal al iniciar el addon:', error);
+    console.error('❌ Error fatal al iniciar el addon:', error); // ERROR: Fallo crítico
     console.error('Stack trace:', error.stack);
     process.exit(1);
   }
 }
 
-// Los manejadores globales de errores están centralizados en ErrorHandler
-
-// Ejecutar si es el módulo principal
 console.log('🔍 Verificando si es módulo principal...');
 console.log('import.meta.url:', import.meta.url);
 console.log('process.argv[1]:', process.argv[1]);
