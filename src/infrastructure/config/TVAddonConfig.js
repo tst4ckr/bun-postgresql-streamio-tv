@@ -115,13 +115,21 @@ export class TVAddonConfig {
         supportedLanguages: this.#parseLanguageList(process.env.SUPPORTED_LANGUAGES)
       },
 
-      // Configuración de cache
+      // Configuración de cache optimizada para streams en vivo según SDK
       cache: {
-        streamCacheMaxAge: parseInt(process.env.STREAM_CACHE_MAX_AGE) || 300,
-        streamStaleRevalidate: parseInt(process.env.STREAM_STALE_REVALIDATE) || 600,
-        streamStaleError: parseInt(process.env.STREAM_STALE_ERROR) || 1800,
-        catalogCacheMaxAge: parseInt(process.env.CATALOG_CACHE_MAX_AGE) || 3600,
-        metaCacheMaxAge: parseInt(process.env.META_CACHE_MAX_AGE) || 1800
+        // Cache corto para streams en vivo (recomendación SDK: 0-600 segundos)
+        streamCacheMaxAge: parseInt(process.env.STREAM_CACHE_MAX_AGE) || 120, // 2 minutos
+        streamStaleRevalidate: parseInt(process.env.STREAM_STALE_REVALIDATE) || 300, // 5 minutos
+        streamStaleError: parseInt(process.env.STREAM_STALE_ERROR) || 900, // 15 minutos
+        
+        // Cache medio para catálogos (recomendación SDK: 1800-7200 segundos)
+        catalogCacheMaxAge: parseInt(process.env.CATALOG_CACHE_MAX_AGE) || 1800, // 30 minutos
+        
+        // Cache medio para metadatos (recomendación SDK: 3600-86400 segundos)
+        metaCacheMaxAge: parseInt(process.env.META_CACHE_MAX_AGE) || 3600, // 1 hora
+        
+        // Cache adicional para manifest (recomendación SDK: 86400 segundos)
+        manifestCacheMaxAge: parseInt(process.env.MANIFEST_CACHE_MAX_AGE) || 86400 // 24 horas
       },
 
       // Configuración de validación

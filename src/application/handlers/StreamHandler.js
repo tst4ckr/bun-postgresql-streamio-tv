@@ -124,7 +124,7 @@ export class StreamHandler {
    */
   #isSupportedType(type) {
     // Solo tipos oficiales de Stremio para TV
-    const supportedTypes = ['tv', 'channel'];
+    const supportedTypes = ['tv'];
     return supportedTypes.includes(type);
   }
 

@@ -6,6 +6,7 @@
 import { addonBuilder, serveHTTP } from 'stremio-addon-sdk';
 import helmet from 'helmet';
 import cors from 'cors';
+import rateLimit from 'express-rate-limit';
 
 // Configuración
 import { TVAddonConfig } from './infrastructure/config/TVAddonConfig.js';
@@ -106,20 +107,88 @@ class TVIPTVAddon {
             styleSrc: ["'self'", "'unsafe-inline'"],
             scriptSrc: ["'self'"],
             imgSrc: ["'self'", "data:", "https:"],
+            connectSrc: ["'self'", "https:"],
+            fontSrc: ["'self'", "https:", "data:"],
+            objectSrc: ["'none'"],
+            mediaSrc: ["'self'", "https:", "http:"],
+            frameSrc: ["'none'"]
           },
         },
+        crossOriginEmbedderPolicy: false,
+        hsts: {
+          maxAge: 31536000,
+          includeSubDomains: true,
+          preload: true
+        },
+        noSniff: true,
+        frameguard: { action: 'deny' },
+        xssFilter: true
       }));
-      this.#logger.info('Helmet configurado para seguridad');
+      this.#logger.info('Helmet configurado con políticas de seguridad avanzadas');
     }
 
     if (server.enableCors) {
       middlewares.push(cors({
-        origin: server.corsOrigin || '*',
+        origin: (origin, callback) => {
+          // Permitir requests sin origin (aplicaciones móviles, Postman, etc.)
+          if (!origin) return callback(null, true);
+          
+          // Permitir dominios de Stremio
+          const allowedOrigins = [
+            'https://app.strem.io',
+            'https://web.strem.io',
+            'https://staging.strem.io'
+          ];
+          
+          // Agregar origen personalizado si está configurado
+          if (server.corsOrigin && server.corsOrigin !== '*') {
+            allowedOrigins.push(server.corsOrigin);
+          }
+          
+          // En desarrollo, permitir localhost
+          if (this.#config.isDevelopment()) {
+            allowedOrigins.push(/^http:\/\/localhost(:\d+)?$/);
+            allowedOrigins.push(/^http:\/\/127\.0\.0\.1(:\d+)?$/);
+          }
+          
+          // Verificar si el origen está permitido
+          const isAllowed = allowedOrigins.some(allowed => {
+            if (typeof allowed === 'string') return allowed === origin;
+            if (allowed instanceof RegExp) return allowed.test(origin);
+            return false;
+          });
+          
+          callback(null, isAllowed || server.corsOrigin === '*');
+        },
         methods: ['GET', 'HEAD', 'OPTIONS'],
-        allowedHeaders: ['Content-Type', 'Authorization'],
-        credentials: false
+        allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+        credentials: false,
+        maxAge: 86400 // Cache preflight por 24 horas
       }));
-      this.#logger.info(`CORS configurado para origen: ${server.corsOrigin || '*'}`);
+      this.#logger.info('CORS configurado con políticas de origen seguras');
+    }
+
+    // Configurar rate limiting para prevenir abuso
+    if (server.rateLimitRequestsPerMinute > 0) {
+      middlewares.push(rateLimit({
+        windowMs: 60 * 1000, // 1 minuto
+        max: server.rateLimitRequestsPerMinute,
+        message: {
+          error: 'Demasiadas solicitudes desde esta IP, intenta de nuevo en un minuto.',
+          retryAfter: 60
+        },
+        standardHeaders: true,
+        legacyHeaders: false,
+        // Permitir más requests para endpoints de manifest
+        skip: (req) => {
+          return req.path === '/manifest.json' || req.path.endsWith('/manifest.json');
+        },
+        // Headers personalizados para debugging
+        keyGenerator: (req) => {
+          return req.ip || req.connection.remoteAddress || 'unknown';
+        }
+      }));
+      this.#logger.info(`Rate limiting configurado: ${server.rateLimitRequestsPerMinute} requests/minuto`);
     }
 
     // Configurar opciones del servidor según SDK
@@ -256,11 +325,16 @@ class TVIPTVAddon {
   #configureHandlers() {
     this.#logger.info('Configurando handlers...');
 
-    // Handler de catálogos
+    // Handler de catálogos según mejores prácticas del SDK
     this.#addonBuilder.defineCatalogHandler(async (args) => {
       const startTime = Date.now();
       
       try {
+        // Validar argumentos de entrada
+        if (!args || typeof args !== 'object') {
+          throw new Error('Argumentos de catálogo inválidos');
+        }
+
         this.#logger.debug(`Catalog request: ${JSON.stringify(args)}`);
         
         const result = await this.#handleCatalogRequest(args);
@@ -268,24 +342,39 @@ class TVIPTVAddon {
         const duration = Date.now() - startTime;
         this.#logger.debug(`Catalog request completed in ${duration}ms`);
         
+        // Validar respuesta antes de enviar
+        if (!result || !Array.isArray(result.metas)) {
+          throw new Error('Respuesta de catálogo inválida');
+        }
+        
         return result;
         
       } catch (error) {
         const duration = Date.now() - startTime;
-        this.#logger.error(`Catalog request failed in ${duration}ms:`, error);
+        this.#logger.error(`Catalog request failed in ${duration}ms:`, {
+          error: error.message,
+          stack: error.stack,
+          args: args
+        });
         
+        // Respuesta segura según especificaciones del SDK
         return {
           metas: [],
-          cacheMaxAge: this.#config.cache.catalogCacheMaxAge
+          cacheMaxAge: Math.min(this.#config.cache.catalogCacheMaxAge, 300) // Máximo 5 minutos para errores
         };
       }
     });
 
-    // Handler de metadatos
+    // Handler de metadatos según mejores prácticas del SDK
     this.#addonBuilder.defineMetaHandler(async (args) => {
       const startTime = Date.now();
       
       try {
+        // Validar argumentos de entrada
+        if (!args || typeof args !== 'object' || !args.type || !args.id) {
+          throw new Error('Argumentos de metadatos inválidos');
+        }
+
         this.#logger.debug(`Meta request: ${JSON.stringify(args)}`);
         
         const result = await this.#handleMetaRequest(args);
@@ -293,15 +382,25 @@ class TVIPTVAddon {
         const duration = Date.now() - startTime;
         this.#logger.debug(`Meta request completed in ${duration}ms`);
         
+        // Validar respuesta antes de enviar
+        if (!result || (result.meta !== null && typeof result.meta !== 'object')) {
+          throw new Error('Respuesta de metadatos inválida');
+        }
+        
         return result;
         
       } catch (error) {
         const duration = Date.now() - startTime;
-        this.#logger.error(`Meta request failed in ${duration}ms:`, error);
+        this.#logger.error(`Meta request failed in ${duration}ms:`, {
+          error: error.message,
+          stack: error.stack,
+          args: args
+        });
         
+        // Respuesta segura según especificaciones del SDK
         return {
           meta: null,
-          cacheMaxAge: this.#config.cache.metaCacheMaxAge
+          cacheMaxAge: Math.min(this.#config.cache.metaCacheMaxAge, 300) // Máximo 5 minutos para errores
         };
       }
     });
@@ -328,7 +427,7 @@ class TVIPTVAddon {
     const { type, id, extra = {} } = args;
 
     // Validar tipo soportado
-    if (!['tv', 'channel'].includes(type)) {
+    if (type !== 'tv') {
       return { metas: [] };
     }
 
@@ -375,7 +474,7 @@ class TVIPTVAddon {
     const { type, id } = args;
 
     // Validar tipo soportado
-    if (!['tv', 'channel'].includes(type)) {
+    if (type !== 'tv') {
       return { meta: null };
     }
 
