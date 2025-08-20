@@ -140,6 +140,43 @@ export class TVAddonConfig {
         streamValidationTimeout: parseInt(process.env.STREAM_VALIDATION_TIMEOUT) || 10
       },
 
+      // Configuración de validación de calidad avanzada
+      qualityValidation: {
+        enableQualityValidation: process.env.ENABLE_QUALITY_VALIDATION !== 'false',
+        audioValidationEnabled: process.env.AUDIO_VALIDATION_ENABLED !== 'false',
+        videoValidationEnabled: process.env.VIDEO_VALIDATION_ENABLED !== 'false',
+        validationTimeout: parseInt(process.env.QUALITY_VALIDATION_TIMEOUT) || 15000,
+        sampleDuration: parseInt(process.env.QUALITY_SAMPLE_DURATION) || 5000,
+        minAudioBitrate: parseInt(process.env.MIN_AUDIO_BITRATE) || 32000,
+        minVideoBitrate: parseInt(process.env.MIN_VIDEO_BITRATE) || 100000,
+        maxValidationRetries: parseInt(process.env.MAX_VALIDATION_RETRIES) || 2,
+        validationCacheHours: parseInt(process.env.VALIDATION_CACHE_HOURS) || 1
+      },
+
+      // Configuración de monitoreo continuo
+      monitoring: {
+        enableContinuousMonitoring: process.env.ENABLE_CONTINUOUS_MONITORING === 'true',
+        monitoringInterval: parseInt(process.env.MONITORING_INTERVAL) || 60000,
+        alertThreshold: parseInt(process.env.MONITORING_ALERT_THRESHOLD) || 3,
+        failureRateThreshold: parseFloat(process.env.MONITORING_FAILURE_RATE_THRESHOLD) || 0.5,
+        alertCooldownMinutes: parseInt(process.env.MONITORING_ALERT_COOLDOWN_MINUTES) || 10,
+        maxConcurrentMonitoring: parseInt(process.env.MAX_CONCURRENT_MONITORING) || 50,
+        monitoringTimeout: parseInt(process.env.MONITORING_TIMEOUT) || 30000,
+        cleanupIntervalHours: parseInt(process.env.MONITORING_CLEANUP_INTERVAL_HOURS) || 24
+      },
+
+      // Configuración de sistema de fallback
+      fallback: {
+        enableFallback: process.env.ENABLE_FALLBACK !== 'false',
+        maxFallbackAttempts: parseInt(process.env.MAX_FALLBACK_ATTEMPTS) || 3,
+        fallbackTimeout: parseInt(process.env.FALLBACK_TIMEOUT) || 15000,
+        fallbackCooldownMinutes: parseInt(process.env.FALLBACK_COOLDOWN_MINUTES) || 5,
+        preferOriginalStream: process.env.PREFER_ORIGINAL_STREAM !== 'false',
+        fallbackQualityOrder: this.#parseFallbackQualityOrder(process.env.FALLBACK_QUALITY_ORDER),
+        enableFallbackLogging: process.env.ENABLE_FALLBACK_LOGGING !== 'false',
+        fallbackStatsCacheHours: parseInt(process.env.FALLBACK_STATS_CACHE_HOURS) || 6
+      },
+
       // Configuración de logs
       logging: {
         logLevel: process.env.LOG_LEVEL || 'info',
@@ -177,6 +214,17 @@ export class TVAddonConfig {
   #parseLanguageList(languageList) {
     if (!languageList) return [];
     return languageList.split(',').map(l => l.trim().toLowerCase()).filter(l => l.length > 0);
+  }
+
+  /**
+   * Parsea el orden de calidad para fallback
+   * @private
+   * @param {string} qualityOrder 
+   * @returns {string[]}
+   */
+  #parseFallbackQualityOrder(qualityOrder) {
+    if (!qualityOrder) return ['HD', 'SD', 'Auto'];
+    return qualityOrder.split(',').map(q => q.trim()).filter(q => q.length > 0);
   }
 
   /**
@@ -251,6 +299,9 @@ export class TVAddonConfig {
   get filters() { return { ...this.#config.filters }; }
   get cache() { return { ...this.#config.cache }; }
   get validation() { return { ...this.#config.validation }; }
+  get qualityValidation() { return { ...this.#config.qualityValidation }; }
+  get monitoring() { return { ...this.#config.monitoring }; }
+  get fallback() { return { ...this.#config.fallback }; }
   get logging() { return { ...this.#config.logging }; }
   get advanced() { return { ...this.#config.advanced }; }
 

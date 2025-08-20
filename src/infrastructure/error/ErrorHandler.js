@@ -40,6 +40,38 @@ export class ValidationError extends AddonError {
   }
 }
 
+export class MonitoringError extends AddonError {
+  constructor(message, monitoringId = null) {
+    super(message, 'MONITORING_ERROR', 500);
+    this.name = 'MonitoringError';
+    this.monitoringId = monitoringId;
+  }
+}
+
+export class FallbackError extends AddonError {
+  constructor(message, channelId = null) {
+    super(message, 'FALLBACK_ERROR', 503);
+    this.name = 'FallbackError';
+    this.channelId = channelId;
+  }
+}
+
+export class M3UParseError extends AddonError {
+  constructor(message, lineNumber = null) {
+    super(message, 'M3U_PARSE_ERROR', 422);
+    this.name = 'M3UParseError';
+    this.lineNumber = lineNumber;
+  }
+}
+
+export class RepositoryError extends AddonError {
+  constructor(message, operation = null) {
+    super(message, 'REPOSITORY_ERROR', 500);
+    this.name = 'RepositoryError';
+    this.operation = operation;
+  }
+}
+
 /**
  * Clase responsable del manejo centralizado de errores
  */

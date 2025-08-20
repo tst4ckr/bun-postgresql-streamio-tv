@@ -13,6 +13,14 @@ Un addon profesional de Stremio para canales de TV en vivo usando streams IPTV, 
 - ✅ **Auto-actualización** de listas de canales
 - ✅ **Validación automática** de streams
 
+### 🔊 **Validación Avanzada de Audio/Video**
+- 🎵 **Detección de audio** en tiempo real
+- 🎬 **Validación de video** continua
+- 🔄 **Sistema de fallback** automático
+- 📊 **Monitoreo continuo** de calidad
+- ⚠️ **Alertas inteligentes** por problemas de stream
+- 🛡️ **Recuperación automática** ante fallos de audio/video
+
 ### 🏗️ **Arquitectura Sólida**
 - 🔧 **Clean Architecture** con separación en capas
 - 🎯 **Domain-Driven Design** con entidades y value objects
@@ -87,7 +95,43 @@ STREAM_CACHE_MAX_AGE=300     # Cache de streams (5 min)
 CATALOG_CACHE_MAX_AGE=3600   # Cache de catálogos (1 hora)
 ```
 
-Ver `config.env` para todas las opciones disponibles.
+#### 🔊 Validación Avanzada de Audio/Video
+```bash
+# Habilitar validación de calidad
+ENABLE_QUALITY_VALIDATION=true
+AUDIO_VALIDATION_ENABLED=true
+VIDEO_VALIDATION_ENABLED=true
+
+# Configuración de timeouts
+QUALITY_VALIDATION_TIMEOUT=15000
+QUALITY_SAMPLE_DURATION=5000
+
+# Bitrates mínimos
+MIN_AUDIO_BITRATE=32000
+MIN_VIDEO_BITRATE=100000
+```
+
+#### 📊 Monitoreo Continuo
+```bash
+# Habilitar monitoreo continuo
+ENABLE_CONTINUOUS_MONITORING=false
+MONITORING_INTERVAL=60000
+
+# Umbrales de alerta
+MONITORING_ALERT_THRESHOLD=3
+MONITORING_FAILURE_RATE_THRESHOLD=0.5
+```
+
+#### 🔄 Sistema de Fallback
+```bash
+# Habilitar fallback automático
+ENABLE_FALLBACK=true
+MAX_FALLBACK_ATTEMPTS=3
+FALLBACK_TIMEOUT=15000
+FALLBACK_QUALITY_ORDER=HD,SD,Auto
+```
+
+Ver `.env.example` para todas las opciones disponibles.
 
 ## 📊 Fuentes de Datos Soportadas
 
@@ -138,6 +182,31 @@ Combina múltiples fuentes para máxima flexibilidad.
 - ✅ **HTTP directos** - Streams simples
 - ✅ **YouTube Live** - Con `ytId` automático
 
+#### 🔊 **Validación de Audio/Video en Stremio**
+
+El addon incluye un sistema avanzado de validación que **previene problemas de audio intermitente** y garantiza la calidad de los streams:
+
+##### ✨ **Características Principales**
+- 🎵 **Detección automática de audio**: Verifica que el stream contenga datos de audio válidos
+- 🎬 **Validación de video**: Confirma la presencia de contenido de video
+- 🔄 **Fallback inteligente**: Cambia automáticamente a streams alternativos si detecta problemas
+- 📊 **Monitoreo en tiempo real**: Supervisa continuamente la calidad del stream
+- ⚠️ **Indicadores visuales**: Muestra ✓ para streams validados y ⚠️ para streams con problemas
+
+##### 🛡️ **Cómo Funciona**
+1. **Validación previa**: Antes de mostrar un stream, el addon verifica su calidad
+2. **Análisis de contenido**: Examina muestras del stream para detectar audio/video
+3. **Fallback automático**: Si un stream falla, busca alternativas automáticamente
+4. **Monitoreo continuo**: Supervisa streams activos para detectar problemas
+5. **Recuperación inteligente**: Intenta recuperar streams problemáticos
+
+##### 🎯 **Beneficios para el Usuario**
+- ❌ **Elimina cortes de audio** inesperados durante la reproducción
+- ⚡ **Streams más estables** con menos interrupciones
+- 🔄 **Cambio automático** a streams de respaldo cuando es necesario
+- 📱 **Experiencia fluida** sin intervención manual
+- 🎵 **Garantía de audio** en todos los canales reproducidos
+
 ## 🏗️ Arquitectura del Proyecto
 
 ```
@@ -155,7 +224,14 @@ src/
 │   ├── config/           # Configuración centralizada
 │   ├── repositories/     # Implementaciones concretas
 │   ├── parsers/         # Parsers M3U/CSV
-│   └── services/        # Servicios de infraestructura
+│   ├── services/        # Servicios de infraestructura
+│   │   ├── StreamHealthService.js      # Validación básica de streams
+│   │   ├── StreamQualityValidator.js   # Validación avanzada audio/video
+│   │   ├── StreamMonitoringService.js  # Monitoreo continuo
+│   │   └── StreamFallbackService.js    # Sistema de fallback automático
+│   ├── error/           # Manejo centralizado de errores
+│   ├── factories/       # Factories para repositorios
+│   └── middleware/      # Middleware de seguridad
 │
 └── index.js              # 🚀 Punto de entrada
 ```
