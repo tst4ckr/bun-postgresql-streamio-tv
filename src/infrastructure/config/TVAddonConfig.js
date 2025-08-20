@@ -101,8 +101,8 @@ export class TVAddonConfig {
 
       // Configuración de assets
       assets: {
-        logoCdnUrl: process.env.LOGO_CDN_URL || 'https://cdn.example.com/logos/',
-        fallbackLogo: process.env.FALLBACK_LOGO || 'https://example.com/default-tv-logo.png',
+        logoCdnUrl: process.env.LOGO_CDN_URL || null,
+        fallbackLogo: process.env.FALLBACK_LOGO || null,
         logoCacheHours: parseInt(process.env.LOGO_CACHE_HOURS) || 24,
         autoFetchLogos: process.env.AUTO_FETCH_LOGOS === 'true'
       },
@@ -175,7 +175,7 @@ export class TVAddonConfig {
    * @returns {string[]}
    */
   #parseLanguageList(languageList) {
-    if (!languageList) return ['es', 'en'];
+    if (!languageList) return [];
     return languageList.split(',').map(l => l.trim().toLowerCase()).filter(l => l.length > 0);
   }
 
@@ -203,7 +203,7 @@ export class TVAddonConfig {
     }
 
     // Validar fuente de datos
-    const validSources = ['csv', 'm3u', 'remote_m3u', 'hybrid'];
+    const validSources = (process.env.VALID_SOURCES || 'csv,m3u,remote_m3u,hybrid').split(',');
     if (!validSources.includes(dataSources.channelsSource)) {
       throw new Error(`Fuente de canales inválida. Valores válidos: ${validSources.join(', ')}`);
     }
@@ -357,6 +357,7 @@ export class TVAddonConfig {
    * @returns {Array}
    */
   #generateTVCatalogs() {
+    const genres = process.env.GENRES ? process.env.GENRES.split(',').map(g => g.trim()) : [];
     return [
       // Catálogo principal de canales TV
       {
@@ -371,7 +372,7 @@ export class TVAddonConfig {
           {
             name: 'genre',
             isRequired: false,
-            options: ['News', 'Sports', 'Entertainment', 'Music', 'Movies', 'Kids', 'Documentary', 'General']
+            options: genres.length > 0 ? genres : undefined
           },
           {
             name: 'skip',
@@ -403,29 +404,9 @@ export class TVAddonConfig {
    * @private
    * @returns {Array}
    */
-  #generateUserConfig() {
-    return [
-      {
-        key: 'm3u_url',
-        type: 'text',
-        title: 'URL de lista M3U',
-        required: false
-      },
-      {
-        key: 'preferred_quality',
-        type: 'select',
-        title: 'Calidad preferida',
-        options: ['HD', 'SD', 'Auto'],
-        default: 'Auto'
-      },
-      {
-        key: 'preferred_language',
-        type: 'select',
-        title: 'Idioma preferido',
-        options: this.#config.filters.supportedLanguages.map(l => l.toUpperCase()),
-        default: this.#config.filters.defaultLanguage.toUpperCase()
-      }
-    ];
+  getConfig(section) {
+    if (!section) return this.getAll();
+    return { ...this.#config[section] };
   }
 
   /**
