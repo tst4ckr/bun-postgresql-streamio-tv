@@ -1,17 +1,26 @@
-// Addon principal TV IPTV para Stremio
+/**
+ * Addon principal TV IPTV para Stremio
+ * Implementa una arquitectura limpia con separación de responsabilidades
+ */
 
 import pkg from 'stremio-addon-sdk';
 const { addonBuilder, serveHTTP } = pkg;
 
+// Configuración e infraestructura
 import { TVAddonConfig } from './infrastructure/config/TVAddonConfig.js';
 import { M3UParserService } from './infrastructure/parsers/M3UParserService.js';
 import { StreamHealthService } from './infrastructure/services/StreamHealthService.js';
 import { SecurityMiddleware } from './infrastructure/middleware/SecurityMiddleware.js';
 import { ErrorHandler } from './infrastructure/error/ErrorHandler.js';
+
+// Capa de aplicación
 import { StreamHandler } from './application/handlers/StreamHandler.js';
 import { ChannelRepositoryFactory } from './infrastructure/factories/ChannelRepositoryFactory.js';
 
-// Clase principal del addon
+/**
+ * Clase principal del addon TV IPTV para Stremio
+ * Implementa el patrón Singleton y maneja el ciclo de vida completo del addon
+ */
 class TVIPTVAddon {
 
   #config;
@@ -317,32 +326,28 @@ class TVIPTVAddon {
 }
 
 
+/**
+ * Función principal de inicialización del addon
+ * Maneja la creación e inicio del addon con manejo robusto de errores
+ */
 async function main() {
   try {
-    console.log('📦 Creando instancia del addon...');
     const addon = new TVIPTVAddon();
-    console.log('🔧 Iniciando addon...');
     await addon.start();
-    console.log('✅ Addon iniciado exitosamente');
   } catch (error) {
-    console.error('❌ Error fatal al iniciar el addon:', error); // ERROR: Fallo crítico
-    console.error('Stack trace:', error.stack);
+    console.error('❌ Error fatal al iniciar el addon:', error.message || error);
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Stack trace:', error.stack);
+    }
     process.exit(1);
   }
 }
 
-console.log('🔍 Verificando si es módulo principal...');
-console.log('import.meta.url:', import.meta.url);
-console.log('process.argv[1]:', process.argv[1]);
-console.log('file://' + process.argv[1] + ':', `file://${process.argv[1]}`);
-
-if (import.meta.url === `file://${process.argv[1]}`) {
-  console.log('✅ Es módulo principal, ejecutando main...');
-  main();
-} else {
-  console.log('⚠️ No es módulo principal, ejecutando main de todas formas...');
+// Ejecutar si es módulo principal o directamente importado
+if (import.meta.url === `file://${process.argv[1]}` || process.argv[1]?.endsWith('index.js')) {
   main();
 }
 
+// Exports principales
 export { TVIPTVAddon };
 export default main;
