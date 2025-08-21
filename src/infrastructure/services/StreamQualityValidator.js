@@ -171,15 +171,31 @@ class StreamQualityValidator {
                 return result;
             }
 
-            // Analizar contenido de la muestra
-            const analysis = this._analyzeStreamSample(streamSample);
+            // Detectar si es un playlist HLS
+            const isHLSPlaylist = this._isHLSPlaylist(streamSample);
             
-            if (checkAudio) {
-                result.audioStatus = this._validateAudioContent(analysis);
-            }
+            if (isHLSPlaylist) {
+                // Para playlists HLS, validar estructura y segmentos
+                const hlsAnalysis = this._analyzeHLSPlaylist(streamSample, streamUrl);
+                
+                if (checkAudio) {
+                    result.audioStatus = this._validateHLSAudioContent(hlsAnalysis);
+                }
 
-            if (checkVideo) {
-                result.videoStatus = this._validateVideoContent(analysis);
+                if (checkVideo) {
+                    result.videoStatus = this._validateHLSVideoContent(hlsAnalysis);
+                }
+            } else {
+                // Para streams binarios, usar análisis tradicional
+                const analysis = this._analyzeStreamSample(streamSample);
+                
+                if (checkAudio) {
+                    result.audioStatus = this._validateAudioContent(analysis);
+                }
+
+                if (checkVideo) {
+                    result.videoStatus = this._validateVideoContent(analysis);
+                }
             }
 
             return result;
@@ -289,6 +305,148 @@ class StreamQualityValidator {
         analysis.dataConsistency = this._checkDataConsistency(sampleBuffer);
 
         return analysis;
+    }
+
+    /**
+     * Detecta si el contenido es un playlist HLS
+     * @private
+     */
+    _isHLSPlaylist(buffer) {
+        if (!buffer || buffer.length === 0) return false;
+        
+        const content = buffer.toString('utf8', 0, Math.min(buffer.length, 1024));
+        return content.includes('#EXTM3U') || content.includes('#EXT-X-VERSION');
+    }
+
+    /**
+     * Analiza un playlist HLS
+     * @private
+     */
+    _analyzeHLSPlaylist(buffer, baseUrl) {
+        const content = buffer.toString('utf8');
+        const lines = content.split('\n').map(line => line.trim()).filter(line => line);
+        
+        const analysis = {
+            isValidPlaylist: false,
+            hasSegments: false,
+            hasAudioTracks: false,
+            hasVideoTracks: false,
+            segmentCount: 0,
+            audioCodecs: [],
+            videoCodecs: [],
+            issues: []
+        };
+
+        // Verificar estructura básica del playlist
+        if (!lines[0] || !lines[0].includes('#EXTM3U')) {
+            analysis.issues.push('Invalid HLS playlist format');
+            return analysis;
+        }
+        
+        analysis.isValidPlaylist = true;
+        
+        // Analizar líneas del playlist
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            
+            // Detectar segmentos
+            if (line.startsWith('#EXTINF:')) {
+                analysis.hasSegments = true;
+                analysis.segmentCount++;
+            }
+            
+            // Detectar información de codecs
+            if (line.includes('CODECS=')) {
+                const codecMatch = line.match(/CODECS="([^"]+)"/i);
+                if (codecMatch) {
+                    const codecs = codecMatch[1].split(',').map(c => c.trim());
+                    
+                    codecs.forEach(codec => {
+                        // Detectar codecs de video
+                        if (codec.startsWith('avc1') || codec.startsWith('hev1') || codec.startsWith('hvc1')) {
+                            analysis.hasVideoTracks = true;
+                            if (!analysis.videoCodecs.includes(codec)) {
+                                analysis.videoCodecs.push(codec);
+                            }
+                        }
+                        // Detectar codecs de audio
+                        else if (codec.startsWith('mp4a') || codec.startsWith('ac-3') || codec.startsWith('ec-3')) {
+                            analysis.hasAudioTracks = true;
+                            if (!analysis.audioCodecs.includes(codec)) {
+                                analysis.audioCodecs.push(codec);
+                            }
+                        }
+                    });
+                }
+            }
+            
+            // Detectar streams de audio específicos
+            if (line.includes('TYPE=AUDIO')) {
+                analysis.hasAudioTracks = true;
+            }
+            
+            // Detectar streams de video específicos
+            if (line.includes('TYPE=VIDEO')) {
+                analysis.hasVideoTracks = true;
+            }
+        }
+        
+        // Validaciones adicionales
+        if (!analysis.hasSegments && !lines.some(line => line.startsWith('http'))) {
+            analysis.issues.push('No segments or sub-playlists found');
+        }
+        
+        return analysis;
+    }
+
+    /**
+     * Valida contenido de audio para HLS
+     * @private
+     */
+    _validateHLSAudioContent(hlsAnalysis) {
+        const status = {
+            isPresent: hlsAnalysis.hasAudioTracks || hlsAnalysis.audioCodecs.length > 0,
+            isConsistent: hlsAnalysis.isValidPlaylist && hlsAnalysis.hasSegments,
+            issues: []
+        };
+
+        if (!status.isPresent) {
+            status.issues.push('No audio tracks detected in HLS playlist');
+        }
+        
+        if (!status.isConsistent) {
+            status.issues.push('HLS playlist structure issues detected');
+        }
+        
+        // Agregar issues específicos del análisis HLS
+        status.issues.push(...hlsAnalysis.issues);
+
+        return status;
+    }
+
+    /**
+     * Valida contenido de video para HLS
+     * @private
+     */
+    _validateHLSVideoContent(hlsAnalysis) {
+        const status = {
+            isPresent: hlsAnalysis.hasVideoTracks || hlsAnalysis.videoCodecs.length > 0,
+            isConsistent: hlsAnalysis.isValidPlaylist && hlsAnalysis.hasSegments,
+            issues: []
+        };
+
+        if (!status.isPresent) {
+            status.issues.push('No video tracks detected in HLS playlist');
+        }
+        
+        if (!status.isConsistent) {
+            status.issues.push('HLS playlist structure issues detected');
+        }
+        
+        // Agregar issues específicos del análisis HLS
+        status.issues.push(...hlsAnalysis.issues);
+
+        return status;
     }
 
     /**

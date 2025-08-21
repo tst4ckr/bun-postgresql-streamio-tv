@@ -232,6 +232,34 @@ class StreamFallbackService extends EventEmitter {
         
         const issues = validationResult.issues || [];
         const errorMessage = validationResult.error || '';
+        const audioStatus = validationResult.audioStatus;
+        const videoStatus = validationResult.videoStatus;
+        
+        // Detectar problemas de contenido multimedia específicos
+        if (audioStatus && videoStatus) {
+            const noAudioMarkers = audioStatus.issues?.some(issue => 
+                issue.includes('No audio markers detected')
+            );
+            const noVideoMarkers = videoStatus.issues?.some(issue => 
+                issue.includes('No video markers detected')
+            );
+            const inconsistentAudio = audioStatus.issues?.some(issue => 
+                issue.includes('Inconsistent audio data pattern')
+            );
+            const inconsistentVideo = videoStatus.issues?.some(issue => 
+                issue.includes('Inconsistent video data pattern')
+            );
+            
+            // Si no hay marcadores de audio/video pero el stream responde, es un problema de contenido
+            if ((noAudioMarkers || noVideoMarkers) && validationResult.metadata?.contentType) {
+                return 'content-invalid';
+            }
+            
+            // Si hay inconsistencias en los datos
+            if (inconsistentAudio || inconsistentVideo) {
+                return 'content-corrupted';
+            }
+        }
         
         // Detectar errores de geo-bloqueo con mayor precisión
         if (issues.some(issue => 
@@ -327,6 +355,12 @@ class StreamFallbackService extends EventEmitter {
               case 'server-error':
                   specificTimeout = this.config.fallback?.serverErrorTimeout || 10000;
                   break;
+              case 'content-invalid':
+                  specificTimeout = this.config.fallback?.contentInvalidTimeout || 5000;
+                  break;
+              case 'content-corrupted':
+                  specificTimeout = this.config.fallback?.contentCorruptedTimeout || 7000;
+                  break;
               default:
                   specificTimeout = baseTimeout;
           }
@@ -360,6 +394,14 @@ class StreamFallbackService extends EventEmitter {
         
         if (lastErrorType === 'access-denied') {
             return `Acceso denegado para canal: ${channelName}. El servidor rechazó la conexión.`;
+        }
+        
+        if (lastErrorType === 'content-invalid') {
+            return `Contenido inválido para canal: ${channelName}. El stream no contiene datos de audio/video válidos.`;
+        }
+        
+        if (lastErrorType === 'content-corrupted') {
+            return `Contenido corrupto para canal: ${channelName}. Los datos de audio/video están dañados o incompletos.`;
         }
         
         if (timeoutCount > 0 || lastErrorType === 'timeout') {

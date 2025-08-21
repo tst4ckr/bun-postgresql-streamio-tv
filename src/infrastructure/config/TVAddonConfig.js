@@ -187,11 +187,18 @@ export class TVAddonConfig {
         accessDeniedMaxRetries: parseInt(process.env.ACCESS_DENIED_MAX_RETRIES) || 1,
         timeoutErrorMaxRetries: parseInt(process.env.TIMEOUT_ERROR_MAX_RETRIES) || 2,
         networkErrorMaxRetries: parseInt(process.env.NETWORK_ERROR_MAX_RETRIES) || 3,
+        // Configuración para contenido inválido o corrupto
+        contentInvalidTimeout: parseInt(process.env.CONTENT_INVALID_TIMEOUT) || 5000,
+        contentInvalidMaxRetries: parseInt(process.env.CONTENT_INVALID_MAX_RETRIES) || 1,
+        contentCorruptedTimeout: parseInt(process.env.CONTENT_CORRUPTED_TIMEOUT) || 7000,
+        contentCorruptedMaxRetries: parseInt(process.env.CONTENT_CORRUPTED_MAX_RETRIES) || 2,
         // Configuración de cooldown por tipo de error (en minutos)
         geoBlockedCooldown: parseInt(process.env.GEO_BLOCKED_COOLDOWN) || 15,
         serverErrorCooldown: parseInt(process.env.SERVER_ERROR_COOLDOWN) || 5,
         networkErrorCooldown: parseInt(process.env.NETWORK_ERROR_COOLDOWN) || 3,
-        timeoutErrorCooldown: parseInt(process.env.TIMEOUT_ERROR_COOLDOWN) || 2
+        timeoutErrorCooldown: parseInt(process.env.TIMEOUT_ERROR_COOLDOWN) || 2,
+        contentInvalidCooldown: parseInt(process.env.CONTENT_INVALID_COOLDOWN) || 1,
+        contentCorruptedCooldown: parseInt(process.env.CONTENT_CORRUPTED_COOLDOWN) || 2
       },
 
       // Configuración de logs
