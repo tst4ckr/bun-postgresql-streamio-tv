@@ -40,6 +40,10 @@ class StreamFallbackService extends EventEmitter {
                 throw new FallbackError(`No streams available for channel: ${channel.name}`);
             }
 
+            let lastError = null;
+            let geoBlockedCount = 0;
+            let timeoutCount = 0;
+
             // Intentar cada stream hasta encontrar uno válido
             for (let attempt = 0; attempt < Math.min(maxAttempts, availableStreams.length); attempt++) {
                 const stream = availableStreams[attempt];
@@ -47,10 +51,13 @@ class StreamFallbackService extends EventEmitter {
                 try {
                     // Validar calidad si está habilitado
                     if (validateQuality) {
+                        // Analizar errores previos para determinar timeout adaptativo
+                        const previousErrorType = lastError ? this._analyzeErrorType(lastError) : 'unknown';
+                        
                         const validationResult = await this.validator.validateStreamQuality(stream.url, {
                             checkAudio: true,
                             checkVideo: true,
-                            timeout: timeout / 2
+                            timeout: this._getAdaptiveTimeout(stream, attempt, timeout, previousErrorType)
                         });
 
                         if (validationResult.isValid) {
@@ -63,7 +70,17 @@ class StreamFallbackService extends EventEmitter {
                                 validationResult
                             };
                         } else {
-                            this._recordFailedAttempt(channel.id, stream, validationResult);
+                            // Analizar tipo de error para estrategias específicas
+                            const errorType = this._analyzeErrorType(validationResult);
+                            this._recordFailedAttempt(channel.id, stream, validationResult, errorType);
+                            
+                            if (errorType === 'geo-blocked') {
+                                geoBlockedCount++;
+                            } else if (errorType === 'timeout') {
+                                timeoutCount++;
+                            }
+                            
+                            lastError = validationResult;
                             continue;
                         }
                     } else {
@@ -77,13 +94,16 @@ class StreamFallbackService extends EventEmitter {
                         };
                     }
                 } catch (error) {
-                    this._recordFailedAttempt(channel.id, stream, { error: error.message });
+                    const errorType = this._analyzeErrorType({ error: error.message });
+                    this._recordFailedAttempt(channel.id, stream, { error: error.message }, errorType);
+                    lastError = { error: error.message };
                     continue;
                 }
             }
 
-            // Si llegamos aquí, todos los streams fallaron
-            throw new FallbackError(`All fallback attempts failed for channel: ${channel.name}`);
+            // Generar mensaje de error específico según el patrón de fallos
+            const errorMessage = this._generateSpecificErrorMessage(channel.name, geoBlockedCount, timeoutCount, lastError);
+            throw new FallbackError(errorMessage);
 
         } catch (error) {
             ErrorHandler.logError('StreamFallbackService', error);
@@ -204,10 +224,169 @@ class StreamFallbackService extends EventEmitter {
     }
 
     /**
+     * Analiza el tipo de error para aplicar estrategias específicas
+     * @private
+     */
+    _analyzeErrorType(validationResult) {
+        if (!validationResult) return 'unknown';
+        
+        const issues = validationResult.issues || [];
+        const errorMessage = validationResult.error || '';
+        
+        // Detectar errores de geo-bloqueo con mayor precisión
+        if (issues.some(issue => 
+            issue.includes('403') || 
+            issue.includes('Forbidden') ||
+            issue.includes('geo') ||
+            issue.includes('blocked') ||
+            issue.includes('region') ||
+            issue.includes('country') ||
+            issue.includes('location') ||
+            issue.includes('territory')
+        ) || errorMessage.includes('403')) {
+            // Verificar si es específicamente geo-blocking
+            if (issues.some(issue => 
+                issue.includes('geo') || 
+                issue.includes('blocked') ||
+                issue.includes('region') ||
+                issue.includes('country') ||
+                issue.includes('location') ||
+                issue.includes('territory')
+            ) || this.config.fallback?.enableGeoBlockDetection) {
+                return 'geo-blocked';
+            }
+            return 'access-denied';
+        }
+        
+        // Detectar timeouts específicos
+        if (issues.some(issue => 
+            issue.includes('timeout') ||
+            issue.includes('timed out') ||
+            issue.includes('ECONNRESET') ||
+            issue.includes('ETIMEDOUT') ||
+            issue.includes('exceeded') ||
+            issue.includes('slow response')
+        ) || errorMessage.includes('timeout')) {
+            return 'timeout';
+        }
+        
+        // Detectar errores de red específicos
+        if (issues.some(issue => 
+            issue.includes('ENOTFOUND') ||
+            issue.includes('ECONNREFUSED') ||
+            issue.includes('network') ||
+            issue.includes('connection') ||
+            issue.includes('unreachable') ||
+            issue.includes('refused') ||
+            issue.includes('reset') ||
+            issue.includes('aborted')
+        )) {
+            return 'network';
+        }
+        
+        // Detectar errores de servidor
+        if (issues.some(issue => 
+            issue.includes('500') ||
+            issue.includes('502') ||
+            issue.includes('503') ||
+            issue.includes('504') ||
+            issue.includes('internal server error')
+        )) {
+            return 'server-error';
+        }
+        
+        return 'unknown';
+    }
+
+    /**
+     * Calcula timeout adaptativo basado en el historial del stream
+     * @private
+     * @param {Object} stream
+     * @param {number} attempt
+     * @param {number} baseTimeout
+     * @param {string} errorType
+     * @returns {number}
+     */
+    _getAdaptiveTimeout(stream, attempt, baseTimeout, errorType = 'unknown') {
+         // Timeout específico por tipo de error usando configuración
+         let specificTimeout = baseTimeout;
+         
+         switch (errorType) {
+              case 'geo-blocked':
+                  specificTimeout = this.config.fallback?.geoBlockedTimeout || 8000;
+                  break;
+              case 'access-denied':
+                  specificTimeout = this.config.fallback?.accessDeniedTimeout || 6000;
+                  break;
+              case 'timeout':
+                  specificTimeout = this.config.fallback?.networkErrorTimeout || 12000;
+                  break;
+              case 'network':
+                  specificTimeout = this.config.fallback?.networkErrorTimeout || 12000;
+                  break;
+              case 'server-error':
+                  specificTimeout = this.config.fallback?.serverErrorTimeout || 10000;
+                  break;
+              default:
+                  specificTimeout = baseTimeout;
+          }
+         
+         // Ajustar basado en tasa de éxito
+         const successRate = this._getStreamSuccessRate(stream.url);
+         const successMultiplier = successRate > 0.7 ? 1.2 : (successRate < 0.3 ? 0.8 : 1.0);
+         
+         // Incrementar timeout con cada intento
+         const attemptMultiplier = 1 + (attempt * 0.3);
+         
+         return Math.round(specificTimeout * successMultiplier * attemptMultiplier);
+     }
+
+    /**
+     * Genera mensaje de error específico según patrones de fallo
+     * @private
+     * @param {string} channelName
+     * @param {number} geoBlockedCount
+     * @param {number} timeoutCount
+     * @param {Object} lastError
+     * @returns {string}
+     */
+    _generateSpecificErrorMessage(channelName, geoBlockedCount, timeoutCount, lastError) {
+        // Analizar el último error para obtener más contexto
+        const lastErrorType = lastError ? this._analyzeErrorType(lastError) : 'unknown';
+        
+        if (geoBlockedCount > 0 || lastErrorType === 'geo-blocked') {
+            return `Stream geo-bloqueado para canal: ${channelName}. Este contenido no está disponible en tu región.`;
+        }
+        
+        if (lastErrorType === 'access-denied') {
+            return `Acceso denegado para canal: ${channelName}. El servidor rechazó la conexión.`;
+        }
+        
+        if (timeoutCount > 0 || lastErrorType === 'timeout') {
+            return `Timeout en streams para canal: ${channelName}. Los servidores están respondiendo lentamente.`;
+        }
+        
+        if (lastErrorType === 'network') {
+            return `Error de red para canal: ${channelName}. Problemas de conectividad con el servidor.`;
+        }
+        
+        if (lastErrorType === 'server-error') {
+            return `Error del servidor para canal: ${channelName}. El servidor está experimentando problemas técnicos.`;
+        }
+        
+        if (lastError && lastError.issues) {
+            const mainIssue = lastError.issues[0] || 'Unknown error';
+            return `All streams failed for channel "${channelName}": ${mainIssue}`;
+        }
+        
+        return `All fallback attempts failed for channel: ${channelName}`;
+    }
+
+    /**
      * Registra un intento fallido
      * @private
      */
-    _recordFailedAttempt(channelId, stream, validationResult) {
+    _recordFailedAttempt(channelId, stream, validationResult, errorType = 'unknown') {
         const cacheKey = this._generateCacheKey(stream.url);
         const cached = this.fallbackCache.get(cacheKey) || {
             url: stream.url,
@@ -215,12 +394,19 @@ class StreamFallbackService extends EventEmitter {
             successes: 0,
             failures: 0,
             lastSuccess: null,
-            lastFailure: null
+            lastFailure: null,
+            errorTypes: {}
         };
 
         cached.attempts++;
         cached.failures++;
         cached.lastFailure = Date.now();
+        
+        // Registrar tipo de error para estadísticas
+        if (!cached.errorTypes[errorType]) {
+            cached.errorTypes[errorType] = 0;
+        }
+        cached.errorTypes[errorType]++;
         
         this.fallbackCache.set(cacheKey, cached);
         
@@ -228,7 +414,8 @@ class StreamFallbackService extends EventEmitter {
             channelId,
             stream,
             validationResult,
-            successRate: cached.successes / cached.attempts
+            errorType,
+            attempt: cached.attempts
         });
     }
 

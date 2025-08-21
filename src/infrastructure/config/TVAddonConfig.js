@@ -169,12 +169,29 @@ export class TVAddonConfig {
       fallback: {
         enableFallback: process.env.ENABLE_FALLBACK !== 'false',
         maxFallbackAttempts: parseInt(process.env.MAX_FALLBACK_ATTEMPTS) || 3,
-        fallbackTimeout: parseInt(process.env.FALLBACK_TIMEOUT) || 15000,
+        fallbackTimeout: parseInt(process.env.FALLBACK_TIMEOUT) || 20000,
         fallbackCooldownMinutes: parseInt(process.env.FALLBACK_COOLDOWN_MINUTES) || 5,
         preferOriginalStream: process.env.PREFER_ORIGINAL_STREAM !== 'false',
         fallbackQualityOrder: this.#parseFallbackQualityOrder(process.env.FALLBACK_QUALITY_ORDER),
         enableFallbackLogging: process.env.ENABLE_FALLBACK_LOGGING !== 'false',
-        fallbackStatsCacheHours: parseInt(process.env.FALLBACK_STATS_CACHE_HOURS) || 6
+        fallbackStatsCacheHours: parseInt(process.env.FALLBACK_STATS_CACHE_HOURS) || 6,
+        // Configuración específica para manejo de errores
+        geoBlockedTimeout: parseInt(process.env.GEO_BLOCKED_TIMEOUT) || 8000,
+        networkErrorTimeout: parseInt(process.env.NETWORK_ERROR_TIMEOUT) || 12000,
+        geoBlockedMaxRetries: parseInt(process.env.GEO_BLOCKED_MAX_RETRIES) || 1,
+        enableGeoBlockDetection: process.env.ENABLE_GEO_BLOCK_DETECTION === 'true',
+        // Estrategias específicas por tipo de error
+        serverErrorTimeout: parseInt(process.env.SERVER_ERROR_TIMEOUT) || 10000,
+        serverErrorMaxRetries: parseInt(process.env.SERVER_ERROR_MAX_RETRIES) || 2,
+        accessDeniedTimeout: parseInt(process.env.ACCESS_DENIED_TIMEOUT) || 6000,
+        accessDeniedMaxRetries: parseInt(process.env.ACCESS_DENIED_MAX_RETRIES) || 1,
+        timeoutErrorMaxRetries: parseInt(process.env.TIMEOUT_ERROR_MAX_RETRIES) || 2,
+        networkErrorMaxRetries: parseInt(process.env.NETWORK_ERROR_MAX_RETRIES) || 3,
+        // Configuración de cooldown por tipo de error (en minutos)
+        geoBlockedCooldown: parseInt(process.env.GEO_BLOCKED_COOLDOWN) || 15,
+        serverErrorCooldown: parseInt(process.env.SERVER_ERROR_COOLDOWN) || 5,
+        networkErrorCooldown: parseInt(process.env.NETWORK_ERROR_COOLDOWN) || 3,
+        timeoutErrorCooldown: parseInt(process.env.TIMEOUT_ERROR_COOLDOWN) || 2
       },
 
       // Configuración de logs
