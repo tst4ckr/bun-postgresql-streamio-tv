@@ -408,7 +408,6 @@ export class TVAddonConfig {
    * @returns {Array}
    */
   #generateTVCatalogs() {
-    const genres = process.env.GENRES ? process.env.GENRES.split(',').map(g => g.trim()) : [];
     return [
       // Catálogo principal de canales TV
       {
@@ -422,8 +421,7 @@ export class TVAddonConfig {
           },
           {
             name: 'genre',
-            isRequired: false,
-            options: genres.length > 0 ? genres : undefined
+            isRequired: false
           },
           {
             name: 'skip',
