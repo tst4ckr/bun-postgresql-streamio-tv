@@ -21,6 +21,8 @@ export class RemoteM3UChannelRepository extends ChannelRepository {
   #channelMap = new Map();
   #isInitialized = false;
   #lastLoadTime = null;
+  #deactivatedChannels = new Set();
+  #validatedChannels = new Map(); // channelId -> timestamp
 
   constructor(m3uUrl, parser, config, logger = console) {
     super();
@@ -135,51 +137,64 @@ export class RemoteM3UChannelRepository extends ChannelRepository {
   // Implementación de métodos del contrato ChannelRepository
   async getAllChannels() {
     await this.#refreshIfNeeded();
-    return [...this.#channels];
+    return this.#filterActiveChannels([...this.#channels]);
   }
 
   async getChannelById(id) {
     await this.#refreshIfNeeded();
     const channel = this.#channelMap.get(id);
     if (!channel) throw new ChannelNotFoundError(id);
+    
+    // Verificar si el canal está desactivado
+    if (this.#config.validation.removeInvalidStreams && this.#deactivatedChannels.has(id)) {
+      throw new ChannelNotFoundError(id);
+    }
+    
     return channel;
   }
 
   async getChannelsByGenre(genre) {
     await this.#refreshIfNeeded();
-    return this.#channels.filter(ch => ch.genre.toLowerCase() === genre.toLowerCase());
+    const channels = this.#channels.filter(ch => ch.genre.toLowerCase() === genre.toLowerCase());
+    return this.#filterActiveChannels(channels);
   }
   
   async getChannelsByCountry(country) {
     await this.#refreshIfNeeded();
-    return this.#channels.filter(ch => ch.country.toLowerCase().includes(country.toLowerCase()));
+    const channels = this.#channels.filter(ch => ch.country.toLowerCase().includes(country.toLowerCase()));
+    return this.#filterActiveChannels(channels);
   }
 
   async getChannelsByLanguage(language) {
     await this.#refreshIfNeeded();
-    return this.#channels.filter(ch => ch.language.toLowerCase() === language.toLowerCase());
+    const channels = this.#channels.filter(ch => ch.language.toLowerCase() === language.toLowerCase());
+    return this.#filterActiveChannels(channels);
   }
 
   async searchChannels(searchTerm) {
     await this.#refreshIfNeeded();
     const term = searchTerm.toLowerCase();
-    return this.#channels.filter(ch => ch.name.toLowerCase().includes(term) || ch.genre.toLowerCase().includes(term));
+    const channels = this.#channels.filter(ch => ch.name.toLowerCase().includes(term) || ch.genre.toLowerCase().includes(term));
+    return this.#filterActiveChannels(channels);
   }
   
   async getChannelsPaginated(skip = 0, limit = 20) {
     await this.#refreshIfNeeded();
-    return this.#channels.slice(skip, skip + limit);
+    const activeChannels = this.#filterActiveChannels([...this.#channels]);
+    return activeChannels.slice(skip, skip + limit);
   }
 
   async getAvailableGenres() {
     await this.#refreshIfNeeded();
-    const genres = new Set(this.#channels.map(ch => ch.genre));
+    const activeChannels = this.#filterActiveChannels([...this.#channels]);
+    const genres = new Set(activeChannels.map(ch => ch.genre));
     return Array.from(genres).sort();
   }
   
   async getChannelsCount() {
     await this.#refreshIfNeeded();
-    return this.#channels.length;
+    const activeChannels = this.#filterActiveChannels([...this.#channels]);
+    return activeChannels.length;
   }
 
   async refreshFromRemote() {
@@ -190,6 +205,56 @@ export class RemoteM3UChannelRepository extends ChannelRepository {
   // Métodos no aplicables para un repo remoto de solo lectura
   async updateChannel(channel) {
     throw new RepositoryError('El repositorio M3U remoto es de solo lectura.');
+  }
+
+  /**
+   * Filtra canales activos según configuración
+   * @private
+   * @param {Array<Channel>} channels
+   * @returns {Array<Channel>}
+   */
+  #filterActiveChannels(channels) {
+    if (!this.#config.validation.removeInvalidStreams) {
+      return channels;
+    }
+    
+    return channels.filter(channel => !this.#deactivatedChannels.has(channel.id));
+  }
+
+  /**
+   * @override
+   */
+  async markChannelAsValidated(id) {
+    if (!this.#channelMap.has(id)) {
+      throw new ChannelNotFoundError(id);
+    }
+
+    this.#validatedChannels.set(id, new Date());
+    this.#logger.debug(`Canal marcado como validado: ${id}`);
+    
+    const channel = this.#channelMap.get(id);
+    return channel.markAsValidated();
+  }
+
+  /**
+   * @override
+   */
+  async deactivateChannel(id) {
+    if (!this.#channelMap.has(id)) {
+      throw new ChannelNotFoundError(id);
+    }
+
+    // Solo desactivar si la configuración lo permite
+    if (!this.#config.validation.removeInvalidStreams) {
+      this.#logger.debug(`Desactivación de canal ${id} omitida (REMOVE_INVALID_STREAMS=false)`);
+      return this.#channelMap.get(id);
+    }
+
+    this.#deactivatedChannels.add(id);
+    this.#logger.info(`Canal desactivado: ${id}`);
+    
+    const channel = this.#channelMap.get(id);
+    return channel.deactivate();
   }
 }
 

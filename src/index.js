@@ -16,6 +16,7 @@ import { ErrorHandler } from './infrastructure/error/ErrorHandler.js';
 // Capa de aplicación
 import { StreamHandler } from './application/handlers/StreamHandler.js';
 import { ChannelRepositoryFactory } from './infrastructure/factories/ChannelRepositoryFactory.js';
+import { InvalidChannelManagementService } from './application/services/InvalidChannelManagementService.js';
 
 /**
  * Clase principal del addon TV IPTV para Stremio
@@ -28,6 +29,7 @@ class TVIPTVAddon {
   #channelRepository;
   #channelService;
   #healthService;
+  #invalidChannelService;
   #addonBuilder;
   #securityMiddleware;
   #errorHandler;
@@ -163,6 +165,11 @@ class TVIPTVAddon {
 
 
     this.#healthService = new StreamHealthService(this.#config, this.#logger);
+    this.#invalidChannelService = new InvalidChannelManagementService(
+      this.#channelRepository,
+      this.#config,
+      this.#logger
+    );
   }
 
 
@@ -314,6 +321,12 @@ class TVIPTVAddon {
         try {
           const sample = await this.#channelRepository.getChannelsPaginated(0, 30);
           const report = await this.#healthService.checkChannels(sample, 10, false);
+          
+          // Procesar resultados y desactivar canales inválidos si está configurado
+          if (report.results) {
+            await this.#invalidChannelService.processValidationResults(report.results);
+          }
+          
           this.#logger.info(`Validación periódica: OK ${report.ok}/${report.total}, Fails ${report.fail}`);
         } catch (error) {
           this.#logger.error('Error en validación periódica:', error); // ERROR: Fallo validación periódica
@@ -323,6 +336,8 @@ class TVIPTVAddon {
       this.#logger.info(`Validación periódica programada cada ${validation.validateStreamsIntervalHours} horas`);
     }
   }
+
+
 }
 
 

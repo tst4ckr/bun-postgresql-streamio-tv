@@ -24,6 +24,8 @@ export class CSVChannelRepository extends ChannelRepository {
   #channelMap = new Map();
   #isInitialized = false;
   #lastLoadTime = null;
+  #deactivatedChannels = new Set();
+  #validatedChannels = new Map(); // channelId -> timestamp
 
   /**
    * @param {string} filePath - Ruta al archivo CSV
@@ -221,7 +223,7 @@ export class CSVChannelRepository extends ChannelRepository {
    */
   async getAllChannels() {
     await this.#refreshIfNeeded();
-    return [...this.#channels];
+    return this.#filterActiveChannels([...this.#channels]);
   }
 
   /**
@@ -235,6 +237,11 @@ export class CSVChannelRepository extends ChannelRepository {
       throw new ChannelNotFoundError(id);
     }
     
+    // Verificar si el canal está desactivado
+    if (this.#config.validation.removeInvalidStreams && this.#deactivatedChannels.has(id)) {
+      throw new ChannelNotFoundError(id);
+    }
+    
     return channel;
   }
 
@@ -244,9 +251,10 @@ export class CSVChannelRepository extends ChannelRepository {
   async getChannelsByGenre(genre) {
     await this.#refreshIfNeeded();
     
-    return this.#channels.filter(channel => 
+    const channels = this.#channels.filter(channel => 
       channel.genre.toLowerCase() === genre.toLowerCase()
     );
+    return this.#filterActiveChannels(channels);
   }
 
   /**
@@ -255,10 +263,11 @@ export class CSVChannelRepository extends ChannelRepository {
   async getChannelsByCountry(country) {
     await this.#refreshIfNeeded();
     
-    return this.#channels.filter(channel => 
+    const channels = this.#channels.filter(channel => 
       channel.country.toLowerCase().includes(country.toLowerCase()) ||
       country.toLowerCase().includes(channel.country.toLowerCase())
     );
+    return this.#filterActiveChannels(channels);
   }
 
   /**
@@ -267,9 +276,10 @@ export class CSVChannelRepository extends ChannelRepository {
   async getChannelsByLanguage(language) {
     await this.#refreshIfNeeded();
     
-    return this.#channels.filter(channel => 
+    const channels = this.#channels.filter(channel => 
       channel.language.toLowerCase() === language.toLowerCase()
     );
+    return this.#filterActiveChannels(channels);
   }
 
   /**
@@ -284,11 +294,12 @@ export class CSVChannelRepository extends ChannelRepository {
 
     const term = searchTerm.toLowerCase().trim();
     
-    return this.#channels.filter(channel => {
+    const channels = this.#channels.filter(channel => {
       return channel.name.toLowerCase().includes(term) ||
              channel.genre.toLowerCase().includes(term) ||
              channel.country.toLowerCase().includes(term);
     });
+    return this.#filterActiveChannels(channels);
   }
 
   /**
@@ -297,10 +308,11 @@ export class CSVChannelRepository extends ChannelRepository {
   async getChannelsPaginated(skip = 0, limit = 20) {
     await this.#refreshIfNeeded();
     
+    const activeChannels = this.#filterActiveChannels([...this.#channels]);
     const startIndex = Math.max(0, skip);
-    const endIndex = Math.min(this.#channels.length, startIndex + limit);
+    const endIndex = Math.min(activeChannels.length, startIndex + limit);
     
-    return this.#channels.slice(startIndex, endIndex);
+    return activeChannels.slice(startIndex, endIndex);
   }
 
   /**
@@ -346,7 +358,8 @@ export class CSVChannelRepository extends ChannelRepository {
     const skip = Math.max(0, filters.skip || 0);
     const limit = Math.max(1, Math.min(100, filters.limit || 20));
     
-    return filteredChannels.slice(skip, skip + limit);
+    const activeChannels = this.#filterActiveChannels(filteredChannels);
+    return activeChannels.slice(skip, skip + limit);
   }
 
   /**
@@ -426,14 +439,36 @@ export class CSVChannelRepository extends ChannelRepository {
    * @override
    */
   async markChannelAsValidated(id) {
-    throw new RepositoryError('Marcado de validación no soportado en repositorio CSV de solo lectura');
+    if (!this.#channelMap.has(id)) {
+      throw new ChannelNotFoundError(id);
+    }
+
+    this.#validatedChannels.set(id, new Date());
+    this.#logger.debug(`Canal marcado como validado: ${id}`);
+    
+    const channel = this.#channelMap.get(id);
+    return channel.markAsValidated();
   }
 
   /**
    * @override
    */
   async deactivateChannel(id) {
-    throw new RepositoryError('Desactivación de canales no soportada en repositorio CSV de solo lectura');
+    if (!this.#channelMap.has(id)) {
+      throw new ChannelNotFoundError(id);
+    }
+
+    // Solo desactivar si la configuración lo permite
+    if (!this.#config.validation.removeInvalidStreams) {
+      this.#logger.debug(`Desactivación de canal ${id} omitida (REMOVE_INVALID_STREAMS=false)`);
+      return this.#channelMap.get(id);
+    }
+
+    this.#deactivatedChannels.add(id);
+    this.#logger.info(`Canal desactivado: ${id}`);
+    
+    const channel = this.#channelMap.get(id);
+    return channel.deactivate();
   }
 
   /**
@@ -494,6 +529,20 @@ export class CSVChannelRepository extends ChannelRepository {
       filePath: this.#filePath,
       repositoryType: 'CSV'
     };
+  }
+
+  /**
+   * Filtra canales activos según configuración
+   * @private
+   * @param {Array<Channel>} channels
+   * @returns {Array<Channel>}
+   */
+  #filterActiveChannels(channels) {
+    if (!this.#config.validation.removeInvalidStreams) {
+      return channels;
+    }
+    
+    return channels.filter(channel => !this.#deactivatedChannels.has(channel.id));
   }
 
   /**
