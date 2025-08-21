@@ -201,8 +201,8 @@ export class StreamHandler {
   async #createStreamFromChannel(channel, userConfig = {}) {
     // Obtener configuración de calidad preferida del usuario
     const preferredQuality = userConfig.preferred_quality || this.#config.streaming.defaultQuality;
-    const enableQualityValidation = userConfig.enable_quality_validation !== false;
-    const enableFallback = userConfig.enable_fallback !== false;
+    const enableQualityValidation = userConfig.enable_quality_validation !== false && this.#config.validation?.enableQualityValidation !== false;
+    const enableFallback = userConfig.enable_fallback !== false && this.#config.fallback?.enableFallback !== false;
     
     let streamUrl = channel.streamUrl;
     let fallbackUsed = false;
