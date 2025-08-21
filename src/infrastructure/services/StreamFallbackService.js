@@ -105,10 +105,10 @@ class StreamFallbackService extends EventEmitter {
         const streams = [];
         
         // Stream principal
-        if (channel.url) {
+        if (channel.streamUrl) {
             streams.push({
-                url: channel.url,
-                quality: channel.quality || 'unknown',
+                url: channel.streamUrl,
+                quality: channel.quality?.value || 'unknown',
                 type: 'primary',
                 priority: 1
             });
