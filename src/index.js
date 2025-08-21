@@ -312,8 +312,8 @@ class TVIPTVAddon {
       this.#logger.info(`Auto-actualización programada cada ${dataSources.updateIntervalHours} horas`);
     }
 
-    if (validation.validateStreamsIntervalHours > 0) {
-      const intervalMs = validation.validateStreamsIntervalHours * 60 * 60 * 1000;
+    if (validation.validateStreamsIntervalMinutes > 0) {
+      const intervalMs = validation.validateStreamsIntervalMinutes * 60 * 1000;
       
       setInterval(async () => {
         this.#logger.info('Ejecutando validación periódica de streams...');
@@ -333,7 +333,7 @@ class TVIPTVAddon {
         }
       }, intervalMs);
 
-      this.#logger.info(`Validación periódica programada cada ${validation.validateStreamsIntervalHours} horas`);
+      this.#logger.info(`Validación periódica programada cada ${validation.validateStreamsIntervalMinutes} minutos`);
     }
   }
 

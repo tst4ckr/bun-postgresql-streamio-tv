@@ -135,7 +135,7 @@ export class TVAddonConfig {
       // Configuración de validación
       validation: {
         validateStreamsOnStartup: process.env.VALIDATE_STREAMS_ON_STARTUP === 'true',
-        validateStreamsIntervalHours: parseInt(process.env.VALIDATE_STREAMS_INTERVAL_HOURS) || 6,
+        validateStreamsIntervalMinutes: parseInt(process.env.VALIDATE_STREAMS_INTERVAL_MINUTES) || 15,
         removeInvalidStreams: process.env.REMOVE_INVALID_STREAMS === 'true',
         streamValidationTimeout: parseInt(process.env.STREAM_VALIDATION_TIMEOUT) || 10
       },
