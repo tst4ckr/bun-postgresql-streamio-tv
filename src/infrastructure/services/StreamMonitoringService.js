@@ -1,7 +1,7 @@
-const { StreamQualityValidator } = require('./StreamQualityValidator');
-const { TVAddonConfig } = require('../config/TVAddonConfig');
-const { ErrorHandler, MonitoringError } = require('../error/ErrorHandler');
-const EventEmitter = require('events');
+import { StreamQualityValidator } from './StreamQualityValidator.js';
+import { TVAddonConfig } from '../config/TVAddonConfig.js';
+import { ErrorHandler, MonitoringError } from '../error/ErrorHandler.js';
+import EventEmitter from 'events';
 
 /**
  * Servicio de monitoreo continuo de calidad de streams
@@ -352,4 +352,4 @@ class StreamMonitoringService extends EventEmitter {
     }
 }
 
-module.exports = { StreamMonitoringService };
+export { StreamMonitoringService };

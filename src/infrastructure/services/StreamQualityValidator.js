@@ -1,6 +1,6 @@
-const axios = require('axios');
-const { TVAddonConfig } = require('../config/TVAddonConfig');
-const { ErrorHandler, ValidationError } = require('../error/ErrorHandler');
+import axios from 'axios';
+import { TVAddonConfig } from '../config/TVAddonConfig.js';
+import { ErrorHandler, ValidationError } from '../error/ErrorHandler.js';
 
 /**
  * Servicio para validación avanzada de calidad de streams
@@ -433,4 +433,4 @@ class StreamQualityValidator {
     }
 }
 
-module.exports = { StreamQualityValidator };
+export { StreamQualityValidator };

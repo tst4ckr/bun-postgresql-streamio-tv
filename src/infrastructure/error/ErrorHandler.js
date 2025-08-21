@@ -79,12 +79,31 @@ export class ErrorHandler {
   #logger;
   #config;
   #errorStats;
+  static #instance = null;
 
   constructor(logger, config) {
     this.#logger = logger;
     this.#config = config;
     this.#errorStats = new Map();
     this.#setupGlobalHandlers();
+    ErrorHandler.#instance = this;
+  }
+
+  /**
+   * Método estático para logging de errores
+   * @param {string} context - Contexto donde ocurrió el error
+   * @param {Error} error - Error a registrar
+   */
+  static logError(context, error) {
+    if (ErrorHandler.#instance) {
+      ErrorHandler.#instance.handleAsyncError(error, context);
+    } else {
+      // Fallback si no hay instancia disponible
+      console.error(`[${context}] Error:`, error.message);
+      if (error.stack) {
+        console.error(error.stack);
+      }
+    }
   }
 
   /**

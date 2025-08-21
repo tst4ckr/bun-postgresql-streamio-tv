@@ -1,7 +1,7 @@
-const { StreamQualityValidator } = require('./StreamQualityValidator');
-const { TVAddonConfig } = require('../config/TVAddonConfig');
-const { ErrorHandler, FallbackError } = require('../error/ErrorHandler');
-const EventEmitter = require('events');
+import { StreamQualityValidator } from './StreamQualityValidator.js';
+import { TVAddonConfig } from '../config/TVAddonConfig.js';
+import { ErrorHandler, FallbackError } from '../error/ErrorHandler.js';
+import EventEmitter from 'events';
 
 /**
  * Servicio de fallback automático para streams con problemas
@@ -396,4 +396,4 @@ class StreamFallbackService extends EventEmitter {
     }
 }
 
-module.exports = { StreamFallbackService };
+export { StreamFallbackService };
