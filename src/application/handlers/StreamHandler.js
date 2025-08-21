@@ -4,9 +4,8 @@
  */
 
 import { ChannelNotFoundError } from '../../domain/repositories/ChannelRepository.js';
-import { StreamQualityValidator } from '../../infrastructure/services/StreamQualityValidator.js';
-import { StreamFallbackService } from '../../infrastructure/services/StreamFallbackService.js';
-import { StreamMonitoringService } from '../../infrastructure/services/StreamMonitoringService.js';
+
+
 
 /**
  * Handler para peticiones de streams de TV en vivo
@@ -19,9 +18,8 @@ export class StreamHandler {
   #channelService;
   #config;
   #logger;
-  #qualityValidator;
-  #fallbackService;
-  #monitoringService;
+
+
 
   /**
    * @param {Object} channelService - Servicio de canales
@@ -33,34 +31,10 @@ export class StreamHandler {
     this.#config = config;
     this.#logger = logger;
     
-    // Inicializar servicios de calidad y fallback
-    this.#qualityValidator = new StreamQualityValidator();
-    this.#fallbackService = new StreamFallbackService();
-    this.#monitoringService = new StreamMonitoringService();
-    
-    // Configurar eventos de monitoreo
-    this.#setupMonitoringEvents();
+
   }
 
-  /**
-   * Configura los eventos de monitoreo
-   * @private
-   */
-  #setupMonitoringEvents() {
-    // Eventos de alertas de calidad
-    this.#monitoringService.on('streamAlert', (alertData) => {
-      this.#logger.warn(`Stream quality alert: ${alertData.streamUrl}`, alertData);
-    });
 
-    // Eventos de fallback
-    this.#fallbackService.on('fallbackSuccess', (data) => {
-      this.#logger.info(`Fallback successful for channel ${data.channelId}, attempt ${data.attempt}`);
-    });
-
-    this.#fallbackService.on('fallbackFailure', (data) => {
-      this.#logger.warn(`Fallback failed for channel ${data.channelId}:`, data.validationResult);
-    });
-  }
 
   /**
    * Crea el handler para el addon de Stremio
@@ -201,43 +175,13 @@ export class StreamHandler {
   async #createStreamFromChannel(channel, userConfig = {}) {
     // Obtener configuración de calidad preferida del usuario
     const preferredQuality = userConfig.preferred_quality || this.#config.streaming.defaultQuality;
-    const enableQualityValidation = userConfig.enable_quality_validation !== false && this.#config.validation?.enableQualityValidation !== false;
-    const enableFallback = userConfig.enable_fallback !== false && this.#config.fallback?.enableFallback !== false;
     
     let streamUrl = channel.streamUrl;
-    let fallbackUsed = false;
-    let validationResult = null;
-    
-    // Usar servicio de fallback si está habilitado
-    if (enableFallback) {
-      try {
-        const fallbackResult = await this.#fallbackService.getStreamWithFallback(channel, {
-          validateQuality: enableQualityValidation,
-          preferredQuality,
-          timeout: 15000
-        });
-        
-        if (fallbackResult.success) {
-          streamUrl = fallbackResult.stream.url;
-          fallbackUsed = fallbackResult.fallbackUsed;
-          validationResult = fallbackResult.validationResult;
-          
-          // Iniciar monitoreo del stream si es necesario
-          if (enableQualityValidation && !fallbackUsed) {
-            this.#startStreamMonitoring(channel.id, streamUrl);
-          }
-        } else {
-          this.#logger.warn(`Fallback failed for channel ${channel.id}: ${fallbackResult.error}`);
-        }
-      } catch (error) {
-        this.#logger.error(`Error in fallback service for channel ${channel.id}:`, error);
-      }
-    }
-    
+
     // Crear stream base
     const stream = {
-      name: this.#generateStreamName(channel, preferredQuality, fallbackUsed),
-      description: this.#generateStreamDescription(channel, validationResult),
+      name: this.#generateStreamName(channel, preferredQuality),
+      description: this.#generateStreamDescription(channel),
       url: streamUrl
     };
 
@@ -250,11 +194,6 @@ export class StreamHandler {
     // Agregar información adicional si está disponible
     if (channel.logo) {
       stream.icon = channel.logo;
-    }
-
-    // Agregar metadatos de calidad si están disponibles
-    if (validationResult && enableQualityValidation) {
-      stream.title = stream.name + (validationResult.isValid ? ' ✓' : ' ⚠️');
     }
 
     return stream;
@@ -285,7 +224,7 @@ export class StreamHandler {
    * @param {Object} validationResult 
    * @returns {string}
    */
-  #generateStreamDescription(channel, validationResult = null) {
+  #generateStreamDescription(channel) {
     const parts = [
       channel.genre,
       channel.country,
@@ -297,46 +236,12 @@ export class StreamHandler {
       parts.push('HD');
     }
 
-    // Agregar estado de validación si está disponible
-    if (validationResult) {
-      if (validationResult.audioStatus && validationResult.audioStatus.isPresent) {
-        parts.push('Audio ✓');
-      }
-      if (validationResult.videoStatus && validationResult.videoStatus.isPresent) {
-        parts.push('Video ✓');
-      }
-    }
+
 
     return parts.join(' • ');
   }
 
-  /**
-   * Inicia el monitoreo de un stream
-   * @private
-   * @param {string} channelId 
-   * @param {string} streamUrl 
-   */
-  #startStreamMonitoring(channelId, streamUrl) {
-    try {
-      const monitoringId = this.#monitoringService.startMonitoring(streamUrl, {
-        checkAudio: true,
-        checkVideo: true,
-        interval: 60000, // Verificar cada minuto
-        alertOnFailure: true
-      });
-      
-      this.#logger.info(`Started monitoring for channel ${channelId}, monitoring ID: ${monitoringId}`);
-      
-      // Programar limpieza del monitoreo después de 30 minutos
-      setTimeout(() => {
-        this.#monitoringService.stopMonitoring(monitoringId);
-        this.#logger.info(`Stopped monitoring for channel ${channelId}`);
-      }, 1800000); // 30 minutos
-      
-    } catch (error) {
-      this.#logger.error(`Failed to start monitoring for channel ${channelId}:`, error);
-    }
-  }
+
 
   /**
    * Crea hints de comportamiento para el stream
