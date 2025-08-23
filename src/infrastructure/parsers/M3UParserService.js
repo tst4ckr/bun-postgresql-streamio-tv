@@ -64,15 +64,10 @@ export class M3UParserService {
    * @throws {M3UParseError}
    */
   #validateInput(content) {
-    if (!content || typeof content !== 'string') {
+    if (!content || typeof content !== 'string' || content.trim().length === 0) {
       throw new M3UParseError('El contenido M3U debe ser una cadena no vacía');
     }
 
-    if (content.trim().length === 0) {
-      throw new M3UParseError('El contenido M3U está vacío');
-    }
-
-    // Verificar que sea un archivo M3U válido
     const firstLine = content.trim().split('\n')[0];
     if (!firstLine.startsWith('#EXTM3U')) {
       if (this.#config.strictMode) {
@@ -240,46 +235,18 @@ export class M3UParserService {
     };
 
     try {
-      // Extraer atributos usando expresiones regulares
-      const attributes = {
-        'tvg-id': /tvg-id="([^"]*)"/i,
-        'tvg-name': /tvg-name="([^"]*)"/i,
-        'tvg-logo': /tvg-logo="([^"]*)"/i,
-        'tvg-country': /tvg-country="([^"]*)"/i,
-        'tvg-language': /tvg-language="([^"]*)"/i,
-        'group-title': /group-title="([^"]*)"/i,
-        'logo': /logo="([^"]*)"/i
+      const extractAttribute = (pattern, handler) => {
+        const match = extinf.match(pattern);
+        if (match) handler(match[1]);
       };
 
-      // Extraer cada atributo
-      for (const [key, regex] of Object.entries(attributes)) {
-        const match = extinf.match(regex);
-        if (match) {
-          switch (key) {
-            case 'tvg-id':
-              metadata.tvgId = match[1];
-              break;
-            case 'tvg-name':
-              metadata.tvgName = match[1];
-              break;
-            case 'tvg-logo':
-            case 'logo':
-              metadata.logo = this.#validateLogoUrl(match[1]);
-              break;
-            case 'tvg-country':
-              metadata.tvgCountry = match[1];
-              break;
-            case 'tvg-language':
-              metadata.tvgLanguage = match[1];
-              break;
-            case 'group-title':
-              metadata.group = match[1];
-              break;
-          }
-        }
-      }
+      extractAttribute(/tvg-id="([^"]*)"/i, value => metadata.tvgId = value);
+      extractAttribute(/tvg-name="([^"]*)"/i, value => metadata.tvgName = value);
+      extractAttribute(/(?:tvg-logo|logo)="([^"]*)"/i, value => metadata.logo = this.#validateLogoUrl(value));
+      extractAttribute(/tvg-country="([^"]*)"/i, value => metadata.tvgCountry = value);
+      extractAttribute(/tvg-language="([^"]*)"/i, value => metadata.tvgLanguage = value);
+      extractAttribute(/group-title="([^"]*)"/i, value => metadata.group = value);
 
-      // Extraer nombre del canal (después de la última coma)
       const nameMatch = extinf.match(/,(.+)$/);
       metadata.name = nameMatch ? nameMatch[1].trim() : metadata.tvgName || 'Canal Desconocido';
 
@@ -351,22 +318,11 @@ export class M3UParserService {
 
     const normalizedGroup = group.toLowerCase().trim();
     
-    // Buscar coincidencia exacta
-    if (genreMap[normalizedGroup]) {
-      return genreMap[normalizedGroup];
-    }
-
-    // Buscar coincidencia parcial
-    for (const [key, value] of Object.entries(genreMap)) {
-      if (normalizedGroup.includes(key) || key.includes(normalizedGroup)) {
-        return value;
-      }
-    }
-
-    // Si no se encuentra, usar el grupo original o el por defecto
-    return Object.values(Channel.GENRES).includes(group) 
-      ? group 
-      : this.#config.defaultGenre;
+    return genreMap[normalizedGroup] || 
+           Object.entries(genreMap).find(([key]) => 
+             normalizedGroup.includes(key) || key.includes(normalizedGroup)
+           )?.[1] || 
+           (Object.values(Channel.GENRES).includes(group) ? group : this.#config.defaultGenre);
   }
 
   /**
@@ -380,7 +336,6 @@ export class M3UParserService {
       return this.#normalizeCountry(metadata.tvgCountry);
     }
 
-    // Intentar extraer del nombre del canal
     const countryPatterns = {
       'México': /mexico|mx|azteca|televisa|imagen/i,
       'España': /españa|spain|es|antena|tve|cuatro/i,
@@ -392,13 +347,9 @@ export class M3UParserService {
 
     const channelName = metadata.name?.toLowerCase() || '';
     
-    for (const [country, pattern] of Object.entries(countryPatterns)) {
-      if (pattern.test(channelName)) {
-        return country;
-      }
-    }
-
-    return this.#config.defaultCountry;
+    return Object.entries(countryPatterns).find(([, pattern]) => 
+      pattern.test(channelName)
+    )?.[0] || this.#config.defaultCountry;
   }
 
   /**
