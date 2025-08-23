@@ -125,6 +125,84 @@ export class StreamHealthService {
 
     return { ok, fail, total: results.length, results };
   }
+
+  /**
+   * Valida todos los canales disponibles procesándolos por lotes
+   * @param {Function} getChannelsFunction - Función para obtener canales paginados
+   * @param {Object} options - Opciones de validación
+   * @param {number} options.batchSize - Tamaño del lote
+   * @param {number} options.concurrency - Concurrencia por lote
+   * @param {boolean} options.showProgress - Mostrar progreso
+   * @returns {Promise<{ok:number,fail:number,total:number,results:Array,batches:number}>}
+   */
+  async validateAllChannelsBatched(getChannelsFunction, options = {}) {
+    const {
+      batchSize = this.#config.validation?.validationBatchSize || 50,
+      concurrency = this.#config.validation?.maxValidationConcurrency || 10,
+      showProgress = true
+    } = options;
+
+    let offset = 0;
+    let totalProcessed = 0;
+    let totalOk = 0;
+    let totalFail = 0;
+    let batchCount = 0;
+    const allResults = [];
+
+    if (showProgress) {
+      this.#logger.info(`🔍 Iniciando validación completa por lotes (tamaño: ${batchSize}, concurrencia: ${concurrency})...`);
+    }
+
+    while (true) {
+      // Obtener el siguiente lote de canales
+      const channels = await getChannelsFunction(offset, batchSize);
+      
+      if (!channels || channels.length === 0) {
+        break; // No hay más canales
+      }
+
+      batchCount++;
+      
+      if (showProgress) {
+        this.#logger.info(`📦 Procesando lote ${batchCount}: ${channels.length} canales (offset: ${offset})`);
+      }
+
+      // Validar el lote actual
+      const batchReport = await this.checkChannels(channels, concurrency, false);
+      
+      // Acumular resultados
+      totalProcessed += batchReport.total;
+      totalOk += batchReport.ok;
+      totalFail += batchReport.fail;
+      allResults.push(...batchReport.results);
+
+      if (showProgress) {
+        const batchSuccessRate = ((batchReport.ok / batchReport.total) * 100).toFixed(1);
+        this.#logger.info(`✅ Lote ${batchCount} completado: ${batchReport.ok}/${batchReport.total} (${batchSuccessRate}%) válidos`);
+      }
+
+      // Preparar para el siguiente lote
+      offset += batchSize;
+
+      // Pequeña pausa entre lotes para no sobrecargar el sistema
+      if (channels.length === batchSize) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+    }
+
+    if (showProgress) {
+      const overallSuccessRate = totalProcessed > 0 ? ((totalOk / totalProcessed) * 100).toFixed(1) : '0.0';
+      this.#logger.info(`🎯 Validación completa finalizada: ${totalOk}/${totalProcessed} (${overallSuccessRate}%) válidos en ${batchCount} lotes`);
+    }
+
+    return {
+      ok: totalOk,
+      fail: totalFail,
+      total: totalProcessed,
+      results: allResults,
+      batches: batchCount
+    };
+  }
 }
 export default StreamHealthService;
 

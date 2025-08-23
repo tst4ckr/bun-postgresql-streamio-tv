@@ -137,7 +137,10 @@ export class TVAddonConfig {
         validateStreamsOnStartup: process.env.VALIDATE_STREAMS_ON_STARTUP === 'true',
         validateStreamsIntervalMinutes: parseInt(process.env.VALIDATE_STREAMS_INTERVAL_MINUTES) || 15,
         removeInvalidStreams: process.env.REMOVE_INVALID_STREAMS === 'true',
-        streamValidationTimeout: parseInt(process.env.STREAM_VALIDATION_TIMEOUT) || 10
+        streamValidationTimeout: parseInt(process.env.STREAM_VALIDATION_TIMEOUT) || 10,
+        validationBatchSize: parseInt(process.env.VALIDATION_BATCH_SIZE) || 50,
+        validateAllChannels: process.env.VALIDATE_ALL_CHANNELS !== 'false',
+        maxValidationConcurrency: parseInt(process.env.MAX_VALIDATION_CONCURRENCY) || 10
       },
 
 

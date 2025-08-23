@@ -319,14 +319,34 @@ class TVIPTVAddon {
         this.#logger.info('Ejecutando validación periódica de streams...');
         
         try {
-          const sample = await this.#channelRepository.getChannelsPaginated(0, 30);
-          const report = await this.#healthService.checkChannels(sample, 10, false);
+          let report;
+          
+          if (validation.validateAllChannels) {
+            // Validar todos los canales por lotes
+            const getChannelsFunction = (offset, limit) => 
+              this.#channelRepository.getChannelsPaginated(offset, limit);
+            
+            report = await this.#healthService.validateAllChannelsBatched(
+              getChannelsFunction,
+              {
+                batchSize: validation.validationBatchSize,
+                concurrency: validation.maxValidationConcurrency,
+                showProgress: true
+              }
+            );
+          } else {
+            // Validar solo una muestra (comportamiento anterior)
+            const sample = await this.#channelRepository.getChannelsPaginated(0, 30);
+            report = await this.#healthService.checkChannels(sample, 10, false);
+          }
           
           // Procesar resultados y desactivar canales inválidos si está configurado
           if (report.results) {
             await this.#invalidChannelService.processValidationResults(report.results);
           }
           
+          const batchInfo = report.batches ? ` en ${report.batches} lotes` : '';
+          this.#logger.info(`Procesamiento de validación completado: ${report.ok} validados, ${report.fail} desactivados${batchInfo}`);
           this.#logger.info(`Validación periódica: OK ${report.ok}/${report.total}, Fails ${report.fail}`);
         } catch (error) {
           this.#logger.error('Error en validación periódica:', error); // ERROR: Fallo validación periódica
