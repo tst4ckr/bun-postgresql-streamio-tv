@@ -3,7 +3,6 @@
  * Implementa ChannelRepository para fuentes de datos CSV locales
  */
 
-import { readFile } from 'fs/promises';
 import { createReadStream } from 'fs';
 import csv from 'csv-parser';
 import { ChannelRepository, RepositoryError, ChannelNotFoundError } from '../../domain/repositories/ChannelRepository.js';
@@ -145,45 +144,33 @@ export class CSVChannelRepository extends ChannelRepository {
    * @returns {boolean}
    */
   #passesConfigFilters(channel) {
-    const { filters } = this.#config;
+    const { filters, streaming } = this.#config;
+    const channelCountry = channel.country.toUpperCase();
 
-    // Filtro por países permitidos
+    // Verificar países permitidos
     if (filters.allowedCountries.length > 0) {
-      const channelCountry = channel.country.toUpperCase();
       const isAllowed = filters.allowedCountries.some(country => 
         channelCountry.includes(country) || country.includes(channelCountry)
       );
-      
-      if (!isAllowed) {
-        return false;
-      }
+      if (!isAllowed) return false;
     }
 
-    // Filtro por países bloqueados
+    // Verificar países bloqueados
     if (filters.blockedCountries.length > 0) {
-      const channelCountry = channel.country.toUpperCase();
       const isBlocked = filters.blockedCountries.some(country => 
         channelCountry.includes(country) || country.includes(channelCountry)
       );
-      
-      if (isBlocked) {
-        return false;
-      }
+      if (isBlocked) return false;
     }
 
-    // Nota: no filtramos por supportedLanguages aquí para permitir "Idioma: ninguno" en Stremio
-
-    // Filtro de canales adultos
-    if (!this.#config.streaming.enableAdultChannels) {
+    // Verificar contenido adulto
+    if (!streaming.enableAdultChannels) {
       const adultGenres = ['adulto', 'adult', 'xxx', '+18'];
       const isAdultChannel = adultGenres.some(genre => 
         channel.genre.toLowerCase().includes(genre) ||
         channel.name.toLowerCase().includes(genre)
       );
-      
-      if (isAdultChannel) {
-        return false;
-      }
+      if (isAdultChannel) return false;
     }
 
     return true;
@@ -199,9 +186,8 @@ export class CSVChannelRepository extends ChannelRepository {
     
     const { cacheChannelsHours } = this.#config.streaming;
     const cacheAgeMs = cacheChannelsHours * 60 * 60 * 1000;
-    const now = new Date();
     
-    return (now - this.#lastLoadTime) > cacheAgeMs;
+    return (new Date() - this.#lastLoadTime) > cacheAgeMs;
   }
 
   /**
@@ -233,12 +219,7 @@ export class CSVChannelRepository extends ChannelRepository {
     await this.#refreshIfNeeded();
     
     const channel = this.#channelMap.get(id);
-    if (!channel) {
-      throw new ChannelNotFoundError(id);
-    }
-    
-    // Verificar si el canal está desactivado
-    if (this.#config.validation.removeInvalidStreams && this.#deactivatedChannels.has(id)) {
+    if (!channel || (this.#config.validation.removeInvalidStreams && this.#deactivatedChannels.has(id))) {
       throw new ChannelNotFoundError(id);
     }
     
@@ -309,10 +290,7 @@ export class CSVChannelRepository extends ChannelRepository {
     await this.#refreshIfNeeded();
     
     const activeChannels = this.#filterActiveChannels([...this.#channels]);
-    const startIndex = Math.max(0, skip);
-    const endIndex = Math.min(activeChannels.length, startIndex + limit);
-    
-    return activeChannels.slice(startIndex, endIndex);
+    return activeChannels.slice(Math.max(0, skip), Math.max(0, skip) + limit);
   }
 
   /**
@@ -458,16 +436,15 @@ export class CSVChannelRepository extends ChannelRepository {
       throw new ChannelNotFoundError(id);
     }
 
-    // Solo desactivar si la configuración lo permite
+    const channel = this.#channelMap.get(id);
+    
     if (!this.#config.validation.removeInvalidStreams) {
       this.#logger.debug(`Desactivación de canal ${id} omitida (REMOVE_INVALID_STREAMS=false)`);
-      return this.#channelMap.get(id);
+      return channel;
     }
 
     this.#deactivatedChannels.add(id);
     this.#logger.info(`Canal desactivado: ${id}`);
-    
-    const channel = this.#channelMap.get(id);
     return channel.deactivate();
   }
 
@@ -475,7 +452,6 @@ export class CSVChannelRepository extends ChannelRepository {
    * @override
    */
   async refreshFromRemote() {
-    // Para repositorio CSV local, simplemente recargar el archivo
     this.#logger.info('Refrescando repositorio CSV...');
     await this.#loadChannelsFromCSV();
   }
@@ -484,11 +460,8 @@ export class CSVChannelRepository extends ChannelRepository {
    * @override
    */
   async getChannelsNeedingValidation(hoursThreshold = 6) {
-    // Para repositorio CSV, retornar canales que no han sido validados recientemente
-    // En una implementación real, esto se basaría en timestamps de validación
     await this.#refreshIfNeeded();
     
-    // Por simplicidad, retornar una muestra aleatoria de canales
     const sampleSize = Math.min(10, this.#channels.length);
     const shuffled = [...this.#channels].sort(() => 0.5 - Math.random());
     
