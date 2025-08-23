@@ -55,7 +55,9 @@ async function testRemoveInvalidStreams() {
 
     // 3. Obtener muestra de canales
     console.log('\n3. Obteniendo muestra de canales...');
-    const channels = await channelRepository.getChannelsPaginated(0, 10);
+    const channels = channelRepository.getChannelsPaginatedUnfiltered ? 
+      await channelRepository.getChannelsPaginatedUnfiltered(0, 10) :
+      await channelRepository.getChannelsPaginated(0, 10);
     console.log(`   ✓ Canales obtenidos: ${channels.length}`);
 
     if (channels.length === 0) {

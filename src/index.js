@@ -291,9 +291,11 @@ class TVIPTVAddon {
           let report;
           
           if (validation.validateAllChannels) {
-            // Validar todos los canales por lotes
+            // Validar todos los canales por lotes (sin filtrar para incluir desactivados)
             const getChannelsFunction = (offset, limit) => 
-              this.#channelRepository.getChannelsPaginated(offset, limit);
+              this.#channelRepository.getAllChannelsUnfiltered ? 
+                this.#channelRepository.getChannelsPaginatedUnfiltered(offset, limit) :
+                this.#channelRepository.getChannelsPaginated(offset, limit);
             
             report = await this.#healthService.validateAllChannelsBatched(
               getChannelsFunction,
@@ -304,8 +306,10 @@ class TVIPTVAddon {
               }
             );
           } else {
-            // Validar solo una muestra (comportamiento anterior)
-            const sample = await this.#channelRepository.getChannelsPaginated(0, 30);
+            // Validar muestra de la lista completa original (incluye desactivados)
+            const sample = this.#channelRepository.getChannelsPaginatedUnfiltered ? 
+              await this.#channelRepository.getChannelsPaginatedUnfiltered(0, 30) :
+              await this.#channelRepository.getChannelsPaginated(0, 30);
             report = await this.#healthService.checkChannels(sample, 10, false);
           }
           

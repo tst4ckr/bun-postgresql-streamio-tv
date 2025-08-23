@@ -65,7 +65,20 @@ async deactivateChannel(channelId, reason)
 
 // Filtrar canales activos (método privado)
 #filterActiveChannels(channels)
+
+// Obtener todos los canales sin filtrar (incluye desactivados)
+async getAllChannelsUnfiltered()
+
+// Obtener canales paginados sin filtrar (incluye desactivados)
+async getChannelsPaginatedUnfiltered(skip, limit)
 ```
+
+**Nota importante**: Los métodos `getAllChannelsUnfiltered()` y `getChannelsPaginatedUnfiltered()` se utilizan específicamente para validación, ya que permiten acceder a la lista completa original de canales (incluidos los desactivados). Esto asegura que:
+
+- La validación siempre se realiza contra los 199+ canales originales del archivo M3U
+- Los canales que se reactiven automáticamente pueden ser incluidos
+- Los canales que dejen de funcionar pueden ser excluidos del conteo
+- Se mantiene la integridad de la lista original para futuras validaciones
 
 #### 3. Integración en Validación Periódica
 
@@ -74,8 +87,30 @@ async deactivateChannel(channelId, reason)
 ```javascript
 if (validation.validateStreamsIntervalHours > 0) {
   setInterval(async () => {
-    const sample = await this.#channelRepository.getChannelsPaginated(0, 30);
-    const report = await this.#healthService.checkChannels(sample, 10, false);
+    let report;
+    
+    if (validation.validateAllChannels) {
+      // Validar todos los canales en lotes (incluye desactivados)
+      const getChannelsFunction = (offset, limit) => 
+        this.#channelRepository.getChannelsPaginatedUnfiltered ?
+          this.#channelRepository.getChannelsPaginatedUnfiltered(offset, limit) :
+          this.#channelRepository.getChannelsPaginated(offset, limit);
+      
+      report = await this.#healthService.validateAllChannelsBatched(
+        getChannelsFunction,
+        {
+          batchSize: validation.validationBatchSize,
+          concurrency: validation.maxValidationConcurrency,
+          showProgress: true
+        }
+      );
+    } else {
+      // Validar muestra de la lista completa original (incluye desactivados)
+      const sample = this.#channelRepository.getChannelsPaginatedUnfiltered ? 
+        await this.#channelRepository.getChannelsPaginatedUnfiltered(0, 30) :
+        await this.#channelRepository.getChannelsPaginated(0, 30);
+      report = await this.#healthService.checkChannels(sample, 10, false);
+    }
     
     // Procesar resultados automáticamente
     if (report.results) {

@@ -245,6 +245,28 @@ export class RemoteM3UChannelRepository extends ChannelRepository {
     this.#logger.info(`Canal desactivado: ${id}`);
     return channel.deactivate();
   }
+
+  /**
+   * Obtiene todos los canales sin filtrar (incluye desactivados)
+   * Para uso en validaciones que deben verificar la lista completa original
+   * @returns {Promise<Channel[]>}
+   */
+  async getAllChannelsUnfiltered() {
+    await this.#refreshIfNeeded();
+    return [...this.#channels];
+  }
+
+  /**
+   * Obtiene canales paginados sin filtrar (incluye desactivados)
+   * Para uso en validaciones que deben verificar la lista completa original
+   * @param {number} skip - Número de canales a omitir
+   * @param {number} limit - Número máximo de canales a retornar
+   * @returns {Promise<Channel[]>}
+   */
+  async getChannelsPaginatedUnfiltered(skip = 0, limit = 20) {
+    await this.#refreshIfNeeded();
+    return this.#channels.slice(skip, skip + limit);
+  }
 }
 
 export default RemoteM3UChannelRepository;

@@ -519,6 +519,28 @@ export class CSVChannelRepository extends ChannelRepository {
   }
 
   /**
+   * Obtiene todos los canales sin filtrar (incluye desactivados)
+   * Para uso en validaciones que deben verificar la lista completa original
+   * @returns {Promise<Channel[]>}
+   */
+  async getAllChannelsUnfiltered() {
+    await this.#refreshIfNeeded();
+    return [...this.#channels];
+  }
+
+  /**
+   * Obtiene canales paginados sin filtrar (incluye desactivados)
+   * Para uso en validaciones que deben verificar la lista completa original
+   * @param {number} skip - Número de canales a omitir
+   * @param {number} limit - Número máximo de canales a retornar
+   * @returns {Promise<Channel[]>}
+   */
+  async getChannelsPaginatedUnfiltered(skip = 0, limit = 20) {
+    await this.#refreshIfNeeded();
+    return this.#channels.slice(Math.max(0, skip), Math.max(0, skip) + limit);
+  }
+
+  /**
    * Obtiene información de diagnóstico del repositorio
    * @returns {Object}
    */
@@ -527,6 +549,8 @@ export class CSVChannelRepository extends ChannelRepository {
       isInitialized: this.#isInitialized,
       filePath: this.#filePath,
       channelCount: this.#channels.length,
+      activeChannelCount: this.#filterActiveChannels(this.#channels).length,
+      deactivatedChannelCount: this.#deactivatedChannels.size,
       lastLoadTime: this.#lastLoadTime,
       needsRefresh: this.#needsRefresh()
     };

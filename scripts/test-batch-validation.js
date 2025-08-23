@@ -67,7 +67,9 @@ async function testBatchValidation() {
     // 5. Ejecutar validación por lotes
     console.log('\n5. Ejecutando validación por lotes...');
     const getChannelsFunction = (offset, limit) => 
-      channelRepository.getChannelsPaginated(offset, limit);
+      channelRepository.getChannelsPaginatedUnfiltered ? 
+        channelRepository.getChannelsPaginatedUnfiltered(offset, limit) :
+        channelRepository.getChannelsPaginated(offset, limit);
     
     const startTime = Date.now();
     const validationReport = await healthService.validateAllChannelsBatched(
