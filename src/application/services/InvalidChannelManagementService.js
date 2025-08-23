@@ -28,16 +28,12 @@ export class InvalidChannelManagementService {
    * @returns {Promise<{validated: number, deactivated: number, errors: Array}>}
    */
   async processValidationResults(validationResults) {
-    if (!this.#config.validation?.removeInvalidStreams) {
+    if (!this.isEnabled()) {
       this.#logger.debug('Desactivación automática de canales inválidos está deshabilitada');
       return { validated: 0, deactivated: 0, errors: [] };
     }
 
-    const stats = {
-      validated: 0,
-      deactivated: 0,
-      errors: []
-    };
+    const stats = { validated: 0, deactivated: 0, errors: [] };
 
     const processingPromises = validationResults.map(async (result) => {
       try {
@@ -49,18 +45,16 @@ export class InvalidChannelManagementService {
           stats.deactivated++;
         }
       } catch (error) {
-        const errorInfo = {
+        stats.errors.push({
           channelId: result.id,
           channelName: result.name,
           error: error.message
-        };
-        stats.errors.push(errorInfo);
+        });
         this.#logger.error(`Error procesando canal ${result.id}:`, error);
       }
     });
 
     await Promise.all(processingPromises);
-
     this.#logProcessingResults(stats);
     this.#emitProcessingEvent(stats);
 
@@ -74,7 +68,7 @@ export class InvalidChannelManagementService {
    * @returns {Promise<boolean>}
    */
   async deactivateChannel(channelId, reason = 'Manual deactivation') {
-    if (!this.#config.validation?.removeInvalidStreams) {
+    if (!this.isEnabled()) {
       this.#logger.warn(`Intento de desactivar canal ${channelId} pero REMOVE_INVALID_STREAMS está deshabilitado`);
       return false;
     }
@@ -86,7 +80,7 @@ export class InvalidChannelManagementService {
       this.#emitChannelEvent('channel.deactivated', {
         channelId,
         reason,
-        timestamp: new Date().toISOString()
+        timestamp: this.#getTimestamp()
       });
       
       return true;
@@ -108,7 +102,7 @@ export class InvalidChannelManagementService {
       
       this.#emitChannelEvent('channel.validated', {
         channelId,
-        timestamp: new Date().toISOString()
+        timestamp: this.#getTimestamp()
       });
       
       return true;
@@ -118,31 +112,14 @@ export class InvalidChannelManagementService {
     }
   }
 
-  /**
-   * Obtiene estadísticas de canales desactivados
-   * @returns {Promise<Object>}
-   */
-  async getDeactivationStats() {
-    try {
-      // Esta funcionalidad dependería de que los repositorios implementen métodos de estadísticas
-      // Por ahora retornamos un objeto básico
-      return {
-        totalDeactivated: 0,
-        lastDeactivation: null,
-        deactivationReasons: {}
-      };
-    } catch (error) {
-      this.#logger.error('Error obteniendo estadísticas de desactivación:', error);
-      throw error;
-    }
-  }
+
 
   /**
    * Verifica si la gestión de canales inválidos está habilitada
    * @returns {boolean}
    */
   isEnabled() {
-    return Boolean(this.#config.validation?.removeInvalidStreams);
+    return this.#config.validation?.removeInvalidStreams === true;
   }
 
   // Métodos privados
@@ -175,10 +152,7 @@ export class InvalidChannelManagementService {
    * @private
    */
   #extractFailureReason(result) {
-    if (result.meta?.reason) return result.meta.reason;
-    if (result.meta?.error) return result.meta.error;
-    if (result.meta?.message) return result.meta.message;
-    return 'Stream validation failed';
+    return result.meta?.reason || result.meta?.error || result.meta?.message || 'Stream validation failed';
   }
 
   /**
@@ -206,7 +180,7 @@ export class InvalidChannelManagementService {
   #emitProcessingEvent(stats) {
     this.#emitChannelEvent('channels.validation.processed', {
       ...stats,
-      timestamp: new Date().toISOString()
+      timestamp: this.#getTimestamp()
     });
   }
 
@@ -217,9 +191,18 @@ export class InvalidChannelManagementService {
    * @private
    */
   #emitChannelEvent(eventName, data) {
-    if (this.#eventEmitter && typeof this.#eventEmitter.emit === 'function') {
+    if (this.#eventEmitter?.emit) {
       this.#eventEmitter.emit(eventName, data);
     }
+  }
+
+  /**
+   * Genera timestamp ISO consistente
+   * @returns {string}
+   * @private
+   */
+  #getTimestamp() {
+    return new Date().toISOString();
   }
 }
 
