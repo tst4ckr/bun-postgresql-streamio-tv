@@ -111,14 +111,9 @@ export class StreamHandler {
    * @throws {Error}
    */
   #validateStreamRequest(args) {
-    if (!args) {
-      throw new Error('Argumentos de petición requeridos');
-    }
-
-    if (!args.type || typeof args.type !== 'string') {
+    if (!args?.type || typeof args.type !== 'string') {
       throw new Error('Tipo de contenido requerido');
     }
-
     if (!args.id || typeof args.id !== 'string') {
       throw new Error('ID de contenido requerido');
     }
@@ -131,9 +126,7 @@ export class StreamHandler {
    * @returns {boolean}
    */
   #isSupportedType(type) {
-    // Solo tipos oficiales de Stremio para TV
-    const supportedTypes = ['tv'];
-    return supportedTypes.includes(type);
+    return type === 'tv';
   }
 
   /**
@@ -221,7 +214,6 @@ export class StreamHandler {
    * Genera la descripción del stream
    * @private
    * @param {Channel} channel 
-   * @param {Object} validationResult 
    * @returns {string}
    */
   #generateStreamDescription(channel) {
@@ -231,12 +223,9 @@ export class StreamHandler {
       channel.language.toUpperCase()
     ];
 
-    // Agregar información de calidad si está disponible
     if (channel.quality.isHighDefinition()) {
       parts.push('HD');
     }
-
-
 
     return parts.join(' • ');
   }
@@ -286,9 +275,8 @@ export class StreamHandler {
    * @returns {boolean}
    */
   #requiresNotWebReady(streamUrl) {
-    return streamUrl.startsWith('rtmp://') || 
-           streamUrl.startsWith('rtmps://') ||
-           (!streamUrl.startsWith('https://') && streamUrl.startsWith('http://'));
+    return streamUrl.startsWith('rtmp') || 
+           (streamUrl.startsWith('http://') && !streamUrl.startsWith('https://'));
   }
 
   /**
@@ -301,25 +289,12 @@ export class StreamHandler {
   #getCountryWhitelist(channel, userConfig) {
     const allowedCountries = this.#config.filters.allowedCountries;
     
-    if (allowedCountries.length === 0) {
-      return [];
-    }
+    if (!allowedCountries?.length) return [];
 
-    // Convertir códigos de país a formato ISO 3166-1 alpha-3 (lowercase)
     const countryCodeMap = {
-      'MÉXICO': 'mx',
-      'MEXICO': 'mx',
-      'ESPAÑA': 'es',
-      'SPAIN': 'es',
-      'ARGENTINA': 'ar',
-      'COLOMBIA': 'co',
-      'CHILE': 'cl',
-      'PERÚ': 'pe',
-      'PERU': 'pe',
-      'ESTADOS UNIDOS': 'us',
-      'USA': 'us',
-      'REINO UNIDO': 'gb',
-      'UK': 'gb'
+      'MÉXICO': 'mx', 'MEXICO': 'mx', 'ESPAÑA': 'es', 'SPAIN': 'es',
+      'ARGENTINA': 'ar', 'COLOMBIA': 'co', 'CHILE': 'cl', 'PERÚ': 'pe',
+      'PERU': 'pe', 'ESTADOS UNIDOS': 'us', 'USA': 'us', 'REINO UNIDO': 'gb', 'UK': 'gb'
     };
 
     return allowedCountries
@@ -358,7 +333,6 @@ export class StreamHandler {
   #applyUserFilters(streams, userConfig) {
     let filteredStreams = [...streams];
 
-    // Filtrar por idioma preferido
     if (userConfig.preferred_language) {
       const preferredLang = userConfig.preferred_language.toLowerCase();
       filteredStreams = filteredStreams.filter(stream => 
@@ -366,12 +340,9 @@ export class StreamHandler {
       );
     }
 
-    // Ordenar por calidad preferida
-    if (userConfig.preferred_quality) {
-      filteredStreams = this.#sortStreamsByQuality(filteredStreams, userConfig.preferred_quality);
-    }
-
-    return filteredStreams;
+    return userConfig.preferred_quality 
+      ? this.#sortStreamsByQuality(filteredStreams, userConfig.preferred_quality)
+      : filteredStreams;
   }
 
   /**
@@ -411,13 +382,9 @@ export class StreamHandler {
   #getStreamQualityPriority(streamName) {
     const name = streamName.toLowerCase();
     
-    if (name.includes('hd') || name.includes('720') || name.includes('1080')) {
-      return 3;
-    }
-    if (name.includes('sd') || name.includes('480')) {
-      return 2;
-    }
-    return 1; // Auto
+    if (name.includes('hd') || name.includes('720') || name.includes('1080')) return 3;
+    if (name.includes('sd') || name.includes('480')) return 2;
+    return 1;
   }
 
   /**
