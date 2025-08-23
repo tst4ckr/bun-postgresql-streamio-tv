@@ -8,7 +8,7 @@ const { addonBuilder, serveHTTP } = pkg;
 
 // Configuración e infraestructura
 import { TVAddonConfig } from './infrastructure/config/TVAddonConfig.js';
-import { M3UParserService } from './infrastructure/parsers/M3UParserService.js';
+// Removed unused import M3UParserService
 import { StreamHealthService } from './infrastructure/services/StreamHealthService.js';
 import { SecurityMiddleware } from './infrastructure/middleware/SecurityMiddleware.js';
 import { ErrorHandler } from './infrastructure/error/ErrorHandler.js';
@@ -129,40 +129,8 @@ class TVIPTVAddon {
   async #initializeServices() {
     this.#logger.info('Inicializando servicios de aplicación...');
 
-
-    this.#channelService = {
-      getChannelById: async (id) => {
-        return await this.#channelRepository.getChannelById(id);
-      },
-
-      getAllChannels: async () => {
-        return await this.#channelRepository.getAllChannels();
-      },
-
-      getChannelsByGenre: async (genre) => {
-        return await this.#channelRepository.getChannelsByGenre(genre);
-      },
-
-      getChannelsByCountry: async (country) => {
-        return await this.#channelRepository.getChannelsByCountry(country);
-      },
-
-      searchChannels: async (searchTerm) => {
-        return await this.#channelRepository.searchChannels(searchTerm);
-      },
-
-      getChannelsPaginated: async (skip, limit) => {
-        return await this.#channelRepository.getChannelsPaginated(skip, limit);
-      },
-
-      getChannelsFromCustomM3U: async (m3uUrl) => {
-        const parser = new M3UParserService(this.#config.filters);
-        return [];
-      }
-    };
-
-    this.#logger.info('Servicios de aplicación inicializados');
-
+    // Usar directamente el repositorio como servicio de canales
+    this.#channelService = this.#channelRepository;
 
     this.#healthService = new StreamHealthService(this.#config, this.#logger);
     this.#invalidChannelService = new InvalidChannelManagementService(
@@ -170,6 +138,8 @@ class TVIPTVAddon {
       this.#config,
       this.#logger
     );
+
+    this.#logger.info('Servicios de aplicación inicializados');
   }
 
 
@@ -271,7 +241,7 @@ class TVIPTVAddon {
   }
 
   async #validateStreamsOnStartup() {
-    const startTime = Date.now();    
+    const startTime = Date.now();
     try {
       const channels = await this.#channelRepository.getAllChannels();
       
@@ -287,8 +257,7 @@ class TVIPTVAddon {
       this.#logger.info(`Validación completada: ${ok}/${total} OK (${successRate}%) en ${duration}s`);
       
     } catch (error) {
-      console.log(`Error: ${error.message}`);
-      this.#logger.error('Error validando streams:', error); // ERROR: Fallo en validación
+      this.#logger.error('Error validando streams:', error);
     }
   }
 
@@ -305,7 +274,7 @@ class TVIPTVAddon {
           await this.#channelRepository.refreshFromRemote?.();
           this.#logger.info('Auto-actualización completada');
         } catch (error) {
-          this.#logger.error('Error en auto-actualización:', error); // ERROR: Fallo auto-actualización
+          this.#logger.error('Error en auto-actualización:', error);
         }
       }, intervalMs);
 
@@ -349,7 +318,7 @@ class TVIPTVAddon {
           this.#logger.info(`Procesamiento de validación completado: ${report.ok} validados, ${report.fail} desactivados${batchInfo}`);
           this.#logger.info(`Validación periódica: OK ${report.ok}/${report.total}, Fails ${report.fail}`);
         } catch (error) {
-          this.#logger.error('Error en validación periódica:', error); // ERROR: Fallo validación periódica
+          this.#logger.error('Error en validación periódica:', error);
         }
       }, intervalMs);
 

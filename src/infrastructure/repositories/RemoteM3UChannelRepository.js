@@ -61,9 +61,7 @@ export class RemoteM3UChannelRepository extends ChannelRepository {
         throw new Error(`Respuesta HTTP inesperada: ${response.status}`);
       }
 
-      const m3uContent = response.data;
-      const parsedChannels = await this.#parser.parseM3U(m3uContent);
-      
+      const parsedChannels = await this.#parser.parseM3U(response.data);
       this.#channels = parsedChannels.filter(channel => this.#passesConfigFilters(channel));
       
       this.#channelMap.clear();
@@ -74,13 +72,12 @@ export class RemoteM3UChannelRepository extends ChannelRepository {
 
     } catch (error) {
       this.#logger.error(`Error al obtener o parsear M3U de ${this.#m3uUrl}`, error);
-      // Failover: si falla, intentar con la URL de backup si existe
+      
       if (this.#config.advanced.enableFailover && this.#config.dataSources.backupM3uUrl) {
         this.#logger.warn(`Intentando failover con URL de backup: ${this.#config.dataSources.backupM3uUrl}`);
         this.#m3uUrl = this.#config.dataSources.backupM3uUrl;
-        await this.#fetchAndParseM3U(); // Intenta de nuevo con la URL de backup
+        await this.#fetchAndParseM3U();
       } else if (this.#channels.length === 0) {
-        // Solo lanzar error si no hay canales cacheados
         throw new RepositoryError(`No se pudo cargar la lista M3U y no hay backup.`, error);
       } else {
         this.#logger.warn('No se pudo refrescar la lista M3U. Se usarán los datos cacheados.');
@@ -90,28 +87,25 @@ export class RemoteM3UChannelRepository extends ChannelRepository {
 
   #passesConfigFilters(channel) {
     const { filters, streaming } = this.#config;
+    const channelCountry = (channel.country || '').toUpperCase();
 
-    // Países permitidos
+    // Verificar países permitidos
     if (filters.allowedCountries.length > 0) {
-      const channelCountry = (channel.country || '').toUpperCase();
       const isAllowed = filters.allowedCountries.some(country => 
         channelCountry.includes(country) || country.includes(channelCountry)
       );
       if (!isAllowed) return false;
     }
 
-    // Países bloqueados
+    // Verificar países bloqueados
     if (filters.blockedCountries.length > 0) {
-      const channelCountry = (channel.country || '').toUpperCase();
       const isBlocked = filters.blockedCountries.some(country => 
         channelCountry.includes(country) || country.includes(channelCountry)
       );
       if (isBlocked) return false;
     }
 
-    // Nota: no filtramos por supportedLanguages para permitir "Idioma: ninguno" en Stremio
-
-    // Adultos
+    // Verificar contenido adulto
     if (!streaming.enableAdultChannels) {
       const adultGenres = ['adulto', 'adult', 'xxx', '+18'];
       if (adultGenres.some(g => channel.genre.toLowerCase().includes(g))) return false;
@@ -143,13 +137,9 @@ export class RemoteM3UChannelRepository extends ChannelRepository {
   async getChannelById(id) {
     await this.#refreshIfNeeded();
     const channel = this.#channelMap.get(id);
-    if (!channel) throw new ChannelNotFoundError(id);
-    
-    // Verificar si el canal está desactivado
-    if (this.#config.validation.removeInvalidStreams && this.#deactivatedChannels.has(id)) {
+    if (!channel || (this.#config.validation.removeInvalidStreams && this.#deactivatedChannels.has(id))) {
       throw new ChannelNotFoundError(id);
     }
-    
     return channel;
   }
 
@@ -244,16 +234,15 @@ export class RemoteM3UChannelRepository extends ChannelRepository {
       throw new ChannelNotFoundError(id);
     }
 
-    // Solo desactivar si la configuración lo permite
+    const channel = this.#channelMap.get(id);
+    
     if (!this.#config.validation.removeInvalidStreams) {
       this.#logger.debug(`Desactivación de canal ${id} omitida (REMOVE_INVALID_STREAMS=false)`);
-      return this.#channelMap.get(id);
+      return channel;
     }
 
     this.#deactivatedChannels.add(id);
     this.#logger.info(`Canal desactivado: ${id}`);
-    
-    const channel = this.#channelMap.get(id);
     return channel.deactivate();
   }
 }

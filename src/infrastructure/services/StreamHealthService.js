@@ -21,11 +21,12 @@ export class StreamHealthService {
   async checkStream(url) {
     const timeoutMs = (this.#config.validation.streamValidationTimeout || 10) * 1000;
     const headers = { 'User-Agent': 'Stremio-TV-IPTV-Addon/1.0.0' };
+    const isValidStatus = status => status >= 200 && status < 400;
 
     try {
       // Intento HEAD primero
       const head = await axios.head(url, { timeout: timeoutMs, headers, validateStatus: () => true });
-      if (head.status >= 200 && head.status < 400) {
+      if (isValidStatus(head.status)) {
         return { ok: true, status: head.status, contentType: head.headers['content-type'] };
       }
 
@@ -36,8 +37,8 @@ export class StreamHealthService {
         responseType: 'arraybuffer',
         validateStatus: () => true
       });
-      const ok = get.status >= 200 && get.status < 400;
-      return ok
+      
+      return isValidStatus(get.status)
         ? { ok: true, status: get.status, contentType: get.headers['content-type'] }
         : { ok: false, status: get.status, reason: 'HTTP_NOT_OK' };
     } catch (error) {
@@ -90,11 +91,7 @@ export class StreamHealthService {
           results.push(res);
           
           completed++;
-          if (res.ok) {
-            ok++;
-          } else {
-            fail++;
-          }
+          res.ok ? ok++ : fail++;
 
           // Show progress every 100 channels or at the end
           if (showProgress && (completed % 100 === 0 || completed === total)) {            
@@ -184,7 +181,7 @@ export class StreamHealthService {
       // Preparar para el siguiente lote
       offset += batchSize;
 
-      // Pequeña pausa entre lotes para no sobrecargar el sistema
+      // Pausa entre lotes para no sobrecargar el sistema
       if (channels.length === batchSize) {
         await new Promise(resolve => setTimeout(resolve, 100));
       }
