@@ -6,8 +6,8 @@
 import { TVAddonConfig } from '../config/TVAddonConfig.js';
 import { M3UParserService } from '../parsers/M3UParserService.js';
 import { CSVChannelRepository } from '../repositories/CSVChannelRepository.js';
-// Importaremos el nuevo repositorio M3U aquí cuando exista
 import { RemoteM3UChannelRepository } from '../repositories/RemoteM3UChannelRepository.js';
+import { HybridChannelRepository } from '../repositories/HybridChannelRepository.js';
 
 /**
  * Factory para crear la implementación correcta de ChannelRepository
@@ -53,7 +53,18 @@ export class ChannelRepositoryFactory {
         throw new Error('Repositorio M3U local no implementado aún');
 
       case 'hybrid':
-        throw new Error('Repositorio híbrido no implementado aún');
+        // Crear repositorio híbrido: CSV + M3U URLs
+        const m3uUrls = [dataSources.m3uUrl, dataSources.backupM3uUrl].filter(Boolean);
+        if (m3uUrls.length === 0) {
+          logger.warn('Repositorio híbrido configurado pero sin URLs M3U válidas, usando solo CSV');
+        }
+        repository = new HybridChannelRepository(
+          dataSources.channelsFile,
+          m3uUrls,
+          config,
+          logger
+        );
+        break;
 
       default:
         logger.error(`Fuente de canales no soportada: ${dataSources.channelsSource}`);

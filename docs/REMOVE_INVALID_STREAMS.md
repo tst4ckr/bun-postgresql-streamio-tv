@@ -4,6 +4,34 @@
 
 La funcionalidad `REMOVE_INVALID_STREAMS` permite la desactivación automática de canales con streams inválidos durante el proceso de validación periódica. Esta característica mejora la calidad del servicio al filtrar automáticamente contenido no funcional.
 
+## Repositorio Híbrido (Nuevo)
+
+### Descripción
+El repositorio híbrido combina múltiples fuentes de canales en una sola implementación, priorizando canales locales y agregando canales remotos sin duplicados.
+
+### Configuración
+```bash
+# Configurar repositorio híbrido
+CHANNELS_SOURCE=hybrid
+CHANNELS_FILE=data/channels.csv
+M3U_URL=https://iptv-org.github.io/iptv/countries/mx.m3u
+BACKUP_M3U_URL=https://iptv-org.github.io/iptv/countries/pe.m3u
+```
+
+### Características
+- **Prioridad de fuentes**: Carga primero canales del CSV local, luego agrega canales de URLs M3U remotas
+- **Eliminación de duplicados**: Evita automáticamente canales duplicados basándose en el ID del canal
+- **Validación completa**: Permite validar canales de todas las fuentes de forma unificada
+- **Failover automático**: Si una fuente M3U falla, continúa con las demás fuentes disponibles
+- **Estadísticas detalladas**: Proporciona métricas de cada fuente y duplicados omitidos
+
+### Ventajas
+1. **Flexibilidad**: Combina canales curados localmente con listas remotas actualizadas
+2. **Calidad**: Los canales del CSV local tienen prioridad sobre los remotos
+3. **Escalabilidad**: Puede agregar múltiples fuentes M3U sin conflictos
+4. **Mantenimiento**: Facilita la gestión de canales desde múltiples fuentes
+5. **Validación integral**: Valida todos los canales independientemente de su fuente
+
 ## Configuración
 
 ### Variable de Entorno

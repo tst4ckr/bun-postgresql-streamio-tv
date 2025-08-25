@@ -76,9 +76,10 @@ HOST=0.0.0.0                # Host de binding
 
 #### Fuentes de Datos
 ```bash
-CHANNELS_SOURCE=csv          # Fuente: csv, m3u, remote_m3u, hybrid
+CHANNELS_SOURCE=hybrid       # Fuente: csv, m3u, remote_m3u, hybrid
 CHANNELS_FILE=data/channels.csv
-M3U_URL=https://tu-lista.m3u8
+M3U_URL=https://iptv-org.github.io/iptv/countries/mx.m3u8
+BACKUP_M3U_URL=https://iptv-org.github.io/iptv/countries/pe.m3u8
 UPDATE_INTERVAL_HOURS=4      # Auto-actualización cada X horas
 ```
 
@@ -134,6 +135,23 @@ FALLBACK_QUALITY_ORDER=HD,SD,Auto
 Ver `.env.example` para todas las opciones disponibles.
 
 ## 📊 Fuentes de Datos Soportadas
+
+### 🔄 **Repositorio Híbrido** (Recomendado)
+Combina múltiples fuentes en una sola interfaz unificada:
+
+```bash
+CHANNELS_SOURCE=hybrid
+CHANNELS_FILE=data/channels.csv              # Canales prioritarios locales
+M3U_URL=https://iptv-org.github.io/iptv/countries/mx.m3u8
+BACKUP_M3U_URL=https://iptv-org.github.io/iptv/countries/pe.m3u8
+```
+
+**Características del Repositorio Híbrido:**
+- ✅ **Priorización inteligente**: CSV local tiene prioridad absoluta
+- ✅ **Eliminación de duplicados**: Automática basada en ID único
+- ✅ **Failover robusto**: Continúa si una fuente M3U falla
+- ✅ **Estadísticas detalladas**: Métricas por fuente y duplicados
+- ✅ **Validación unificada**: Todos los canales se validan por igual
 
 ### 📄 CSV Local
 Formato simple para listas de canales locales:
@@ -381,6 +399,47 @@ tail -f logs/addon.log
 # Logs con más detalle
 LOG_LEVEL=debug bun run dev
 ```
+
+## 🔄 Migración al Repositorio Híbrido
+
+### Script de Migración Automática
+
+Para migrar fácilmente desde cualquier configuración existente al nuevo repositorio híbrido:
+
+```bash
+# Ejecutar script de migración
+node scripts/migrate-to-hybrid.js
+```
+
+Este script:
+- ✅ Analiza tu configuración actual
+- ✅ Genera recomendaciones personalizadas
+- ✅ Crea backup de tu configuración existente
+- ✅ Actualiza automáticamente el archivo .env
+- ✅ Crea archivo CSV básico si no existe
+- ✅ Ejecuta validaciones de integridad
+
+### Comandos Útiles para el Repositorio Híbrido
+
+```bash
+# Probar configuración híbrida
+node scripts/test-hybrid-repository.js
+
+# Ejecutar validación por lotes
+node scripts/test-batch-validation.js
+
+# Ver estadísticas detalladas
+node scripts/channel-stats.js
+
+# Migrar configuración existente
+node scripts/migrate-to-hybrid.js
+```
+
+### Documentación Específica
+
+- 📖 **Guía Completa**: [docs/HYBRID_REPOSITORY.md](docs/HYBRID_REPOSITORY.md)
+- 🔧 **Configuración**: [docs/REMOVE_INVALID_STREAMS.md](docs/REMOVE_INVALID_STREAMS.md)
+- ⚙️ **Variables de Entorno**: [.env.example](.env.example)
 
 ## 📄 Licencia
 
