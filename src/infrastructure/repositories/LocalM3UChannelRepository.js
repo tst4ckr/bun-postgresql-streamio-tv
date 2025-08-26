@@ -1,0 +1,314 @@
+/**
+ * @fileoverview LocalM3UChannelRepository - Implementación para archivos M3U locales
+ * Implementa ChannelRepository para fuentes de datos desde archivos M3U en el sistema de archivos
+ */
+
+import fs from 'fs/promises';
+import path from 'path';
+import { ChannelRepository, RepositoryError, ChannelNotFoundError } from '../../domain/repositories/ChannelRepository.js';
+import { Channel } from '../../domain/entities/Channel.js';
+import { M3UParserService } from '../parsers/M3UParserService.js';
+
+/**
+ * Repositorio de canales basado en un archivo M3U local
+ * Responsabilidad: gestionar canales desde un archivo M3U local, incluyendo cache
+ */
+export class LocalM3UChannelRepository extends ChannelRepository {
+  #m3uFilePath;
+  #parser;
+  #config;
+  #logger;
+  #channels = [];
+  #channelMap = new Map();
+  #isInitialized = false;
+  #lastLoadTime = null;
+  #deactivatedChannels = new Set();
+  #validatedChannels = new Map(); // channelId -> timestamp
+  #lastModifiedTime = null;
+
+  constructor(m3uFilePath, parser, config, logger = console) {
+    super();
+    if (!m3uFilePath) {
+      throw new Error('La ruta del archivo M3U es requerida para LocalM3UChannelRepository');
+    }
+    this.#m3uFilePath = path.resolve(m3uFilePath);
+    this.#parser = parser;
+    this.#config = config;
+    this.#logger = logger;
+  }
+
+  async initialize() {
+    if (this.#isInitialized) {
+      this.#logger.warn('Repositorio M3U Local ya inicializado');
+      return;
+    }
+    try {
+      this.#logger.info(`Cargando canales desde archivo M3U local: ${this.#m3uFilePath}`);
+      await this.#loadAndParseM3U();
+      this.#isInitialized = true;
+      this.#logger.info(`Repositorio M3U Local inicializado con ${this.#channels.length} canales`);
+    } catch (error) {
+      throw new RepositoryError(`Error inicializando repositorio M3U local: ${error.message}`, error);
+    }
+  }
+
+  async #loadAndParseM3U() {
+    try {
+      // Verificar si el archivo existe
+      const stats = await fs.stat(this.#m3uFilePath);
+      this.#lastModifiedTime = stats.mtime;
+      
+      // Leer el contenido del archivo
+      const content = await fs.readFile(this.#m3uFilePath, 'utf-8');
+      
+      if (!content.trim()) {
+        this.#logger.warn(`Archivo M3U local está vacío: ${this.#m3uFilePath}`);
+        this.#channels = [];
+        this.#channelMap.clear();
+        return;
+      }
+
+      const parsedChannels = await this.#parser.parseM3U(content);
+      this.#channels = parsedChannels.filter(channel => this.#passesConfigFilters(channel));
+      
+      this.#channelMap.clear();
+      this.#channels.forEach(channel => this.#channelMap.set(channel.id, channel));
+      
+      this.#lastLoadTime = new Date();
+      this.#logger.info(`M3U local cargado: ${this.#channels.length} canales válidos desde ${this.#m3uFilePath}`);
+
+    } catch (error) {
+      if (error.code === 'ENOENT') {
+        this.#logger.warn(`Archivo M3U local no encontrado: ${this.#m3uFilePath}`);
+        this.#channels = [];
+        this.#channelMap.clear();
+        return;
+      }
+      
+      this.#logger.error(`Error al leer o parsear archivo M3U local ${this.#m3uFilePath}`, error);
+      
+      if (this.#channels.length === 0) {
+        throw new RepositoryError(`No se pudo cargar el archivo M3U local.`, error);
+      } else {
+        this.#logger.warn('No se pudo refrescar el archivo M3U local. Se usarán los datos cacheados.');
+      }
+    }
+  }
+
+  #passesConfigFilters(channel) {
+    const { filters, streaming } = this.#config;
+    const channelCountry = (channel.country || '').toUpperCase();
+
+    // Verificar países permitidos
+    if (filters.allowedCountries.length > 0) {
+      const isAllowed = filters.allowedCountries.some(country => 
+        channelCountry.includes(country) || country.includes(channelCountry)
+      );
+      if (!isAllowed) return false;
+    }
+
+    // Verificar países bloqueados
+    if (filters.blockedCountries.length > 0) {
+      const isBlocked = filters.blockedCountries.some(country => 
+        channelCountry.includes(country) || country.includes(channelCountry)
+      );
+      if (isBlocked) return false;
+    }
+
+    // Verificar contenido adulto
+    if (!streaming.enableAdultChannels) {
+      const adultGenres = ['adulto', 'adult', 'xxx', '+18'];
+      if (adultGenres.some(g => channel.genre.toLowerCase().includes(g))) return false;
+    }
+
+    return true;
+  }
+  
+  async #needsRefresh() {
+    if (!this.#lastLoadTime || !this.#lastModifiedTime) return true;
+    
+    try {
+      const stats = await fs.stat(this.#m3uFilePath);
+      // Verificar si el archivo ha sido modificado
+      if (stats.mtime > this.#lastModifiedTime) {
+        return true;
+      }
+    } catch (error) {
+      // Si no se puede acceder al archivo, no necesita refresco
+      return false;
+    }
+    
+    // Verificar cache por tiempo
+    const { cacheChannelsHours } = this.#config.streaming;
+    const cacheAgeMs = cacheChannelsHours * 60 * 60 * 1000;
+    return (new Date() - this.#lastLoadTime) > cacheAgeMs;
+  }
+
+  async #refreshIfNeeded() {
+    if (await this.#needsRefresh()) {
+      this.#logger.info('Refrescando canales desde archivo M3U local...');
+      await this.#loadAndParseM3U();
+    }
+  }
+
+  #filterActiveChannels(channels) {
+    if (!this.#config.validation.removeInvalidStreams) {
+      return channels;
+    }
+    return channels.filter(channel => !this.#deactivatedChannels.has(channel.id));
+  }
+
+  // Implementación de métodos del contrato ChannelRepository
+  async getAllChannels() {
+    await this.#refreshIfNeeded();
+    return this.#filterActiveChannels([...this.#channels]);
+  }
+
+  async getAllChannelsUnfiltered() {
+    await this.#refreshIfNeeded();
+    return [...this.#channels];
+  }
+
+  async getChannelById(id) {
+    await this.#refreshIfNeeded();
+    const channel = this.#channelMap.get(id);
+    if (!channel || (this.#config.validation.removeInvalidStreams && this.#deactivatedChannels.has(id))) {
+      throw new ChannelNotFoundError(id);
+    }
+    return channel;
+  }
+
+  async getChannelsByGenre(genre) {
+    await this.#refreshIfNeeded();
+    const channels = this.#channels.filter(ch => ch.genre.toLowerCase() === genre.toLowerCase());
+    return this.#filterActiveChannels(channels);
+  }
+  
+  async getChannelsByCountry(country) {
+    await this.#refreshIfNeeded();
+    const channels = this.#channels.filter(ch => ch.country.toLowerCase().includes(country.toLowerCase()));
+    return this.#filterActiveChannels(channels);
+  }
+
+  async getChannelsByLanguage(language) {
+    await this.#refreshIfNeeded();
+    const channels = this.#channels.filter(ch => ch.language.toLowerCase() === language.toLowerCase());
+    return this.#filterActiveChannels(channels);
+  }
+
+  async searchChannels(searchTerm) {
+    await this.#refreshIfNeeded();
+    const term = searchTerm.toLowerCase();
+    const channels = this.#channels.filter(ch => 
+      ch.name.toLowerCase().includes(term) || 
+      ch.genre.toLowerCase().includes(term)
+    );
+    return this.#filterActiveChannels(channels);
+  }
+
+  async getChannelsByFilter(filter) {
+    await this.#refreshIfNeeded();
+    let channels = [...this.#channels];
+
+    if (filter.genre) {
+      channels = channels.filter(ch => ch.genre.toLowerCase() === filter.genre.toLowerCase());
+    }
+    if (filter.country) {
+      channels = channels.filter(ch => ch.country.toLowerCase().includes(filter.country.toLowerCase()));
+    }
+    if (filter.language) {
+      channels = channels.filter(ch => ch.language.toLowerCase() === filter.language.toLowerCase());
+    }
+    if (filter.quality) {
+      channels = channels.filter(ch => ch.quality === filter.quality);
+    }
+
+    return this.#filterActiveChannels(channels);
+  }
+  
+  async getChannelsPaginated(skip = 0, limit = 50) {
+    await this.#refreshIfNeeded();
+    const activeChannels = this.#filterActiveChannels([...this.#channels]);
+    return activeChannels.slice(skip, skip + limit);
+  }
+
+  async getChannelsPaginatedUnfiltered(skip = 0, limit = 50) {
+    await this.#refreshIfNeeded();
+    return this.#channels.slice(skip, skip + limit);
+  }
+
+  async getAvailableGenres() {
+    await this.#refreshIfNeeded();
+    const activeChannels = this.#filterActiveChannels([...this.#channels]);
+    const genres = new Set(activeChannels.map(ch => ch.genre));
+    return Array.from(genres).sort();
+  }
+  
+  async getChannelsCount() {
+    await this.#refreshIfNeeded();
+    const activeChannels = this.#filterActiveChannels([...this.#channels]);
+    return activeChannels.length;
+  }
+
+  async refreshFromRemote() {
+    this.#logger.info('Forzando refresco desde archivo M3U local...');
+    await this.#loadAndParseM3U();
+  }
+
+  async getChannelsNeedingValidation(hoursThreshold = 6) {
+    await this.#refreshIfNeeded();
+    
+    const sampleSize = Math.min(30, this.#channels.length);
+    const shuffled = [...this.#channels].sort(() => 0.5 - Math.random());
+    
+    return shuffled.slice(0, sampleSize);
+  }
+
+  // Métodos de gestión de canales inválidos
+  async markChannelAsValidated(channelId) {
+    this.#validatedChannels.set(channelId, new Date());
+    this.#deactivatedChannels.delete(channelId);
+    this.#logger.debug(`Canal local M3U ${channelId} marcado como validado`);
+  }
+
+  async deactivateChannel(channelId, reason) {
+    this.#deactivatedChannels.add(channelId);
+    this.#logger.info(`Canal local M3U ${channelId} desactivado: ${reason}`);
+  }
+
+  async getDeactivationStats() {
+    return {
+      deactivatedCount: this.#deactivatedChannels.size,
+      validatedCount: this.#validatedChannels.size,
+      deactivatedChannels: Array.from(this.#deactivatedChannels),
+      lastValidationTimes: Object.fromEntries(this.#validatedChannels)
+    };
+  }
+
+  // Métodos no aplicables para un repo local de solo lectura
+  async updateChannel(channel) {
+    throw new RepositoryError('El repositorio M3U local es de solo lectura.');
+  }
+
+  // Método específico para obtener información del archivo
+  async getFileInfo() {
+    try {
+      const stats = await fs.stat(this.#m3uFilePath);
+      return {
+        filePath: this.#m3uFilePath,
+        exists: true,
+        size: stats.size,
+        lastModified: stats.mtime,
+        lastLoaded: this.#lastLoadTime
+      };
+    } catch (error) {
+      return {
+        filePath: this.#m3uFilePath,
+        exists: false,
+        error: error.message
+      };
+    }
+  }
+}
+
+export default LocalM3UChannelRepository;

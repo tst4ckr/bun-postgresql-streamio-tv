@@ -29,8 +29,21 @@ El **Repositorio Híbrido** es una implementación avanzada que combina múltipl
 # Configuración básica del repositorio híbrido
 CHANNELS_SOURCE=hybrid
 CHANNELS_FILE=data/channels.csv
+
+# URLs M3U remotas (múltiples fuentes)
 M3U_URL=https://iptv-org.github.io/iptv/countries/mx.m3u
+M3U_URL1=https://iptv-org.github.io/iptv/countries/ar.m3u
+M3U_URL2=https://iptv-org.github.io/iptv/countries/co.m3u
+M3U_URL3=https://iptv-org.github.io/iptv/countries/cl.m3u
 BACKUP_M3U_URL=https://iptv-org.github.io/iptv/countries/pe.m3u
+
+# Archivos M3U locales (fuentes adicionales)
+LOCAL_M3U_LATAM1=data/latam/mexico.m3u8
+LOCAL_M3U_LATAM2=data/latam/argentina.m3u8
+LOCAL_M3U_LATAM3=data/latam/colombia.m3u8
+LOCAL_M3U_LATAM4=data/latam/chile.m3u8
+LOCAL_M3U_INDEX=data/index/premium.m3u
+LOCAL_CHANNELS_CSV=data/premium/vip_channels.csv
 
 # Configuración de cache y actualización
 CACHE_CHANNELS_HOURS=6
@@ -50,6 +63,28 @@ El archivo CSV local debe seguir esta estructura:
 id,name,url,logo,genre,country,language,quality
 tv_canal_ejemplo,Canal Ejemplo,https://stream.ejemplo.com/live,https://logo.ejemplo.com/logo.png,Entertainment,Mexico,Spanish,HD
 ```
+
+### Configuración de Múltiples Fuentes
+
+#### URLs M3U Remotas
+El sistema soporta múltiples URLs M3U remotas que se procesan en orden de prioridad:
+
+1. **M3U_URL**: Fuente principal
+2. **M3U_URL1, M3U_URL2, M3U_URL3**: Fuentes adicionales
+3. **BACKUP_M3U_URL**: Fuente de respaldo
+
+#### Archivos M3U Locales
+Puedes agregar archivos M3U locales para contenido curado:
+
+- **LOCAL_M3U_LATAM1-4**: Archivos regionales de Latinoamérica
+- **LOCAL_M3U_INDEX**: Archivo índice principal
+- **LOCAL_CHANNELS_CSV**: Archivo CSV de canales locales
+
+#### Orden de Prioridad
+1. **CSV Local** (máxima prioridad)
+2. **Archivos M3U Locales**
+3. **URLs M3U Remotas** (en orden: M3U_URL, M3U_URL1, M3U_URL2, M3U_URL3)
+4. **URL de Respaldo** (mínima prioridad)
 
 ## Flujo de Operación
 
@@ -89,12 +124,21 @@ import { TVAddonConfig } from './src/infrastructure/config/TVAddonConfig.js';
 const config = TVAddonConfig.getInstance();
 const logger = console;
 
+// Ejemplo con múltiples fuentes M3U (remotas y locales)
+const m3uSources = [
+  // URLs remotas
+  'https://iptv-org.github.io/iptv/countries/mx.m3u',
+  'https://iptv-org.github.io/iptv/countries/ar.m3u',
+  'https://iptv-org.github.io/iptv/countries/co.m3u',
+  // Archivos locales
+  'data/latam/mexico.m3u8',
+  'data/latam/argentina.m3u8',
+  'data/index/premium.m3u'
+];
+
 const repository = new HybridChannelRepository(
   'data/channels.csv',
-  [
-    'https://iptv-org.github.io/iptv/countries/mx.m3u',
-    'https://iptv-org.github.io/iptv/countries/pe.m3u'
-  ],
+  m3uSources,
   config,
   logger
 );
@@ -109,7 +153,10 @@ const stats = await repository.getRepositoryStats();
 console.log('Estadísticas del Repositorio:', {
   totalChannels: stats.totalChannels,
   activeChannels: stats.activeChannels,
+  deactivatedChannels: stats.deactivatedChannels,
   csvChannels: stats.csvChannels,
+  remoteM3uChannels: stats.remoteM3uChannels,
+  localM3uChannels: stats.localM3uChannels,
   m3uChannelsTotal: stats.m3uChannelsTotal,
   duplicatesOmitted: stats.duplicatesOmitted
 });
@@ -160,8 +207,14 @@ const mexicanChannels = await repository.getChannelsByCountry('Mexico');
 ```bash
 # Canales premium curados en CSV
 CHANNELS_FILE=data/premium_channels.csv
-# Canales gratuitos de fuentes públicas
+# Múltiples fuentes remotas por región
 M3U_URL=https://iptv-org.github.io/iptv/countries/mx.m3u
+M3U_URL1=https://iptv-org.github.io/iptv/countries/ar.m3u
+M3U_URL2=https://iptv-org.github.io/iptv/countries/co.m3u
+M3U_URL3=https://iptv-org.github.io/iptv/countries/pe.m3u
+# Archivos locales curados
+LOCAL_M3U_LATAM1=data/premium_latam.m3u8
+LOCAL_M3U_LATAM2=data/sports_channels.m3u8
 BACKUP_M3U_URL=https://iptv-org.github.io/iptv/categories/news.m3u
 ```
 
@@ -169,9 +222,15 @@ BACKUP_M3U_URL=https://iptv-org.github.io/iptv/categories/news.m3u
 ```bash
 # Canales locales verificados
 CHANNELS_FILE=data/local_channels.csv
-# Canales nacionales
+# Fuentes regionales múltiples
 M3U_URL=https://iptv-org.github.io/iptv/countries/mx.m3u
-# Canales internacionales
+M3U_URL1=https://iptv-org.github.io/iptv/languages/spa.m3u
+M3U_URL2=https://iptv-org.github.io/iptv/categories/general.m3u
+# Archivos locales por región
+LOCAL_M3U_LATAM1=data/latam1.m3u8
+LOCAL_M3U_LATAM2=data/latam2.m3u8
+LOCAL_M3U_LATAM3=data/latam3.m3u8
+LOCAL_M3U_LATAM4=data/latam4.m3u8
 BACKUP_M3U_URL=https://iptv-org.github.io/iptv/languages/spa.m3u
 ```
 
@@ -179,8 +238,37 @@ BACKUP_M3U_URL=https://iptv-org.github.io/iptv/languages/spa.m3u
 ```bash
 # Canales de prueba controlados
 CHANNELS_FILE=data/test_channels.csv
-# Canales de desarrollo
+# Múltiples fuentes de prueba
 M3U_URL=https://iptv-org.github.io/iptv/categories/kids.m3u
+M3U_URL1=https://iptv-org.github.io/iptv/categories/education.m3u
+M3U_URL2=https://iptv-org.github.io/iptv/categories/music.m3u
+# Archivos locales de desarrollo
+LOCAL_M3U_INDEX=data/index.m3u
+LOCAL_CHANNELS_CSV=data/channels.csv
+```
+
+### 4. Configuración Completa Multi-Región
+```bash
+# Configuración completa con todas las fuentes
+CHANNELS_SOURCE=hybrid
+CHANNELS_FILE=data/channels.csv
+
+# URLs remotas por país
+M3U_URL=https://iptv-org.github.io/iptv/countries/mx.m3u
+M3U_URL1=https://iptv-org.github.io/iptv/countries/ar.m3u
+M3U_URL2=https://iptv-org.github.io/iptv/countries/co.m3u
+M3U_URL3=https://iptv-org.github.io/iptv/countries/pe.m3u
+
+# Archivos locales especializados
+LOCAL_M3U_LATAM1=data/latam1.m3u8
+LOCAL_M3U_LATAM2=data/latam2.m3u8
+LOCAL_M3U_LATAM3=data/latam3.m3u8
+LOCAL_M3U_LATAM4=data/latam4.m3u8
+LOCAL_M3U_INDEX=data/index.m3u
+LOCAL_CHANNELS_CSV=data/channels.csv
+
+# Respaldo general
+BACKUP_M3U_URL=https://iptv-org.github.io/iptv/languages/spa.m3u
 ```
 
 ## Troubleshooting
@@ -243,11 +331,28 @@ node -e "console.log(require('./src/infrastructure/config/TVAddonConfig.js').TVA
 3. **Actualización**: Verificar frecuencia de actualización de las fuentes
 4. **Backup**: Siempre configurar una URL de respaldo
 
+### 🌐 Gestión de Múltiples Fuentes
+1. **Priorización**: Configurar fuentes en orden de confiabilidad
+2. **Diversificación**: Usar fuentes de diferentes proveedores
+3. **Especialización**: Asignar fuentes específicas por región/categoría
+4. **Redundancia**: Mantener múltiples fuentes para contenido crítico
+5. **Archivos Locales**: Usar para contenido curado y de alta calidad
+6. **Monitoreo**: Verificar regularmente el estado de todas las fuentes
+
+### 📁 Organización de Archivos Locales
+1. **Nomenclatura**: Usar nombres descriptivos (latam1, latam2, etc.)
+2. **Contenido**: Especializar cada archivo por región o categoría
+3. **Mantenimiento**: Actualizar regularmente los archivos locales
+4. **Validación**: Verificar integridad antes de usar
+5. **Backup**: Mantener copias de seguridad de archivos críticos
+
 ### ⚡ Optimización de Rendimiento
 1. **Cache Inteligente**: Ajustar `CACHE_CHANNELS_HOURS` según necesidades
 2. **Validación Eficiente**: Balancear frecuencia vs. recursos
 3. **Concurrencia**: Ajustar límites según capacidad del servidor
 4. **Monitoreo**: Revisar regularmente estadísticas y logs
+5. **Carga Balanceada**: Distribuir carga entre múltiples fuentes
+6. **Failover Rápido**: Configurar timeouts apropiados para cambio de fuente
 
 ## Conclusión
 

@@ -6,6 +6,7 @@
 import { ChannelRepository, RepositoryError, ChannelNotFoundError } from '../../domain/repositories/ChannelRepository.js';
 import { CSVChannelRepository } from './CSVChannelRepository.js';
 import { RemoteM3UChannelRepository } from './RemoteM3UChannelRepository.js';
+import { LocalM3UChannelRepository } from './LocalM3UChannelRepository.js';
 import { M3UParserService } from '../parsers/M3UParserService.js';
 
 /**
@@ -27,11 +28,11 @@ export class HybridChannelRepository extends ChannelRepository {
 
   /**
    * @param {string} csvPath - Ruta al archivo CSV local
-   * @param {string[]} m3uUrls - URLs de archivos M3U remotos
+   * @param {string[]} m3uSources - URLs remotas y rutas de archivos M3U locales
    * @param {TVAddonConfig} config - Configuración del addon
    * @param {Object} logger - Logger para trazabilidad
    */
-  constructor(csvPath, m3uUrls, config, logger) {
+  constructor(csvPath, m3uSources, config, logger) {
     super();
     this.#config = config;
     this.#logger = logger;
@@ -39,13 +40,40 @@ export class HybridChannelRepository extends ChannelRepository {
     // Crear repositorio CSV
     this.#csvRepository = new CSVChannelRepository(csvPath, config, logger);
     
-    // Crear repositorios M3U para cada URL
+    // Separar URLs remotas de archivos locales y crear repositorios apropiados
     const m3uParser = new M3UParserService(config.filters);
-    this.#m3uRepositories = m3uUrls.filter(url => url).map(url => 
-      new RemoteM3UChannelRepository(url, m3uParser, config, logger)
-    );
+    this.#m3uRepositories = [];
     
-    this.#logger.info(`HybridChannelRepository creado: CSV + ${this.#m3uRepositories.length} fuentes M3U`);
+    let remoteCount = 0;
+    let localCount = 0;
+    
+    m3uSources.filter(source => source).forEach(source => {
+      if (this.#isRemoteUrl(source)) {
+        // URL remota - usar RemoteM3UChannelRepository
+        this.#m3uRepositories.push(
+          new RemoteM3UChannelRepository(source, m3uParser, config, logger)
+        );
+        remoteCount++;
+      } else {
+        // Archivo local - usar LocalM3UChannelRepository
+        this.#m3uRepositories.push(
+          new LocalM3UChannelRepository(source, m3uParser, config, logger)
+        );
+        localCount++;
+      }
+    });
+    
+    this.#logger.info(`HybridChannelRepository creado: CSV + ${remoteCount} URLs remotas + ${localCount} archivos locales`);
+  }
+
+  /**
+   * Determina si una fuente es una URL remota o un archivo local
+   * @private
+   * @param {string} source - Fuente a evaluar
+   * @returns {boolean} true si es URL remota, false si es archivo local
+   */
+  #isRemoteUrl(source) {
+    return source.startsWith('http://') || source.startsWith('https://');
   }
 
   /**
@@ -293,27 +321,44 @@ export class HybridChannelRepository extends ChannelRepository {
     await this.#refreshIfNeeded();
     
     const csvChannels = await this.#csvRepository.getAllChannelsUnfiltered();
-    let m3uChannelsTotal = 0;
+    let remoteM3uChannelsTotal = 0;
+    let localM3uChannelsTotal = 0;
+    let remoteSourcesCount = 0;
+    let localSourcesCount = 0;
     
     for (const m3uRepo of this.#m3uRepositories) {
       try {
         const m3uChannels = await m3uRepo.getAllChannelsUnfiltered();
-        m3uChannelsTotal += m3uChannels.length;
+        
+        // Determinar si es repositorio remoto o local
+        if (m3uRepo instanceof RemoteM3UChannelRepository) {
+          remoteM3uChannelsTotal += m3uChannels.length;
+          remoteSourcesCount++;
+        } else if (m3uRepo instanceof LocalM3UChannelRepository) {
+          localM3uChannelsTotal += m3uChannels.length;
+          localSourcesCount++;
+        }
       } catch (error) {
         this.#logger.error('Error obteniendo stats de M3U:', error);
       }
     }
+    
+    const totalM3uChannels = remoteM3uChannelsTotal + localM3uChannelsTotal;
     
     return {
       totalChannels: this.#channels.length,
       activeChannels: this.#filterActiveChannels([...this.#channels]).length,
       deactivatedChannels: this.#deactivatedChannels.size,
       csvChannels: csvChannels.length,
-      m3uChannelsTotal,
-      duplicatesOmitted: (csvChannels.length + m3uChannelsTotal) - this.#channels.length,
+      remoteM3uChannels: remoteM3uChannelsTotal,
+      localM3uChannels: localM3uChannelsTotal,
+      m3uChannelsTotal: totalM3uChannels,
+      duplicatesOmitted: (csvChannels.length + totalM3uChannels) - this.#channels.length,
       sources: {
         csv: 1,
-        m3u: this.#m3uRepositories.length
+        remoteM3u: remoteSourcesCount,
+        localM3u: localSourcesCount,
+        totalM3u: this.#m3uRepositories.length
       },
       lastRefresh: this.#lastLoadTime
     };

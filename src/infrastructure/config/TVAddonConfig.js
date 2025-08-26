@@ -86,6 +86,18 @@ export class TVAddonConfig {
         channelsFile: process.env.CHANNELS_FILE || 'data/channels.csv',
         m3uUrl: process.env.M3U_URL || null,
         backupM3uUrl: process.env.BACKUP_M3U_URL || null,
+        // URLs M3U adicionales para múltiples fuentes
+        m3uUrl1: process.env.M3U_URL1 || '',
+        m3uUrl2: process.env.M3U_URL2 || '',
+        m3uUrl3: process.env.M3U_URL3 || '',
+        // Archivos M3U locales
+        localM3uLatam1: process.env.LOCAL_M3U_LATAM1 || '',
+        localM3uLatam2: process.env.LOCAL_M3U_LATAM2 || '',
+        localM3uLatam3: process.env.LOCAL_M3U_LATAM3 || '',
+        localM3uLatam4: process.env.LOCAL_M3U_LATAM4 || '',
+        localM3uIndex: process.env.LOCAL_M3U_INDEX || '',
+        // Archivo CSV local adicional
+        localChannelsCsv: process.env.LOCAL_CHANNELS_CSV || '',
         enableAutoUpdate: process.env.ENABLE_AUTO_UPDATE === 'true',
         updateIntervalHours: parseInt(process.env.UPDATE_INTERVAL_HOURS) || 4
       },

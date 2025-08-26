@@ -53,14 +53,34 @@ export class ChannelRepositoryFactory {
         throw new Error('Repositorio M3U local no implementado aún');
 
       case 'hybrid':
-        // Crear repositorio híbrido: CSV + M3U URLs
-        const m3uUrls = [dataSources.m3uUrl, dataSources.backupM3uUrl].filter(Boolean);
-        if (m3uUrls.length === 0) {
-          logger.warn('Repositorio híbrido configurado pero sin URLs M3U válidas, usando solo CSV');
+        // Crear repositorio híbrido: CSV + M3U URLs (remotas y locales)
+        const remoteM3uUrls = [
+          dataSources.m3uUrl,
+          dataSources.backupM3uUrl,
+          dataSources.m3uUrl1,
+          dataSources.m3uUrl2,
+          dataSources.m3uUrl3
+        ].filter(Boolean);
+        
+        const localM3uFiles = [
+          dataSources.localM3uLatam1,
+          dataSources.localM3uLatam2,
+          dataSources.localM3uLatam3,
+          dataSources.localM3uLatam4,
+          dataSources.localM3uIndex
+        ].filter(Boolean);
+        
+        const allM3uSources = [...remoteM3uUrls, ...localM3uFiles];
+        
+        if (allM3uSources.length === 0) {
+          logger.warn('Repositorio híbrido configurado pero sin fuentes M3U válidas, usando solo CSV');
+        } else {
+          logger.info(`Repositorio híbrido configurado con ${remoteM3uUrls.length} URLs remotas y ${localM3uFiles.length} archivos locales`);
         }
+        
         repository = new HybridChannelRepository(
           dataSources.channelsFile,
-          m3uUrls,
+          allM3uSources,
           config,
           logger
         );
