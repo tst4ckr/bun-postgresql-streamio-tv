@@ -127,13 +127,22 @@ async function demonstrateContentFiltering() {
     });
     
     // Obtener estadísticas del filtro
-    const stats = filterService.getFilterStats();
+    const stats = filterService.getFilterStats(exampleChannels, filteredChannels);
     logger.info('\n📈 ESTADÍSTICAS DE FILTRADO:');
-    logger.info(`- Total procesados: ${stats.totalProcessed}`);
-    logger.info(`- Religiosos filtrados: ${stats.religiousFiltered}`);
-    logger.info(`- Adultos filtrados: ${stats.adultFiltered}`);
-    logger.info(`- Políticos filtrados: ${stats.politicalFiltered}`);
-    logger.info(`- Total mantenidos: ${stats.totalKept}`);
+    logger.info(`- Canales originales: ${stats.originalChannels}`);
+    logger.info(`- Canales filtrados: ${stats.filteredChannels}`);
+    logger.info(`- Canales removidos: ${stats.removedChannels}`);
+    logger.info(`- Porcentaje removido: ${stats.removalPercentage}%`);
+    logger.info(`- Religiosos removidos: ${stats.removedByCategory.religious}`);
+    logger.info(`- Adultos removidos: ${stats.removedByCategory.adult}`);
+    logger.info(`- Políticos removidos: ${stats.removedByCategory.political}`);
+    
+    // Mostrar configuración de filtros
+    const currentFilterConfig = filterService.getFilterConfiguration();
+    logger.info('\n⚙️ CONFIGURACIÓN DE FILTROS:');
+    logger.info(`- Filtro religioso: ${currentFilterConfig.religious.enabled ? 'ACTIVO' : 'INACTIVO'} (${currentFilterConfig.religious.keywordCount} palabras clave)`);
+    logger.info(`- Filtro adulto: ${currentFilterConfig.adult.enabled ? 'ACTIVO' : 'INACTIVO'} (${currentFilterConfig.adult.keywordCount} palabras clave)`);
+    logger.info(`- Filtro político: ${currentFilterConfig.political.enabled ? 'ACTIVO' : 'INACTIVO'} (${currentFilterConfig.political.keywordCount} palabras clave)`);
     
     logger.info('\n✅ Demostración completada exitosamente');
     
