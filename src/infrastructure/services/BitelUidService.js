@@ -68,10 +68,10 @@ export class BitelUidService {
    * @returns {string} URL con UID generado
    */
   #generateBitelUrlWithUid(streamUrl, channelId) {
-    // Verificar si necesita regenerar UID (cache de 5 minutos)
+    // Verificar si necesita regenerar UID (cache de 20 minutos para evitar conflictos con validación periódica)
     const now = Date.now();
     const lastGeneration = this.#lastGenerationTime.get(channelId) || 0;
-    const cacheExpiry = 5 * 60 * 1000; // 5 minutos
+    const cacheExpiry = 20 * 60 * 1000; // 20 minutos - mayor que el intervalo de validación (15 min)
 
     let uid;
     if (now - lastGeneration > cacheExpiry) {
