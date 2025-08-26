@@ -40,7 +40,9 @@ export class BitelUidService {
 
     try {
       const processedUrl = this.#generateBitelUrlWithUid(streamUrl, channelId);
-      this.#logger.debug(`URL BITEL procesada para ${channelId}: ${processedUrl}`);
+      if (this.#logger.debug) {
+        this.#logger.debug(`URL BITEL procesada para ${channelId}: ${processedUrl}`);
+      }
       return processedUrl;
     } catch (error) {
       this.#logger.warn(`Error procesando URL BITEL para ${channelId}: ${error.message}`);
@@ -76,7 +78,9 @@ export class BitelUidService {
       uid = this.#generateDynamicUid();
       this.#uidCache.set(channelId, uid);
       this.#lastGenerationTime.set(channelId, now);
-      this.#logger.debug(`Nuevo UID generado para ${channelId}: ${uid}`);
+      if (this.#logger.debug) {
+        this.#logger.debug(`Nuevo UID generado para ${channelId}: ${uid}`);
+      }
     } else {
       uid = this.#uidCache.get(channelId) || this.#generateDynamicUid();
     }
@@ -85,20 +89,19 @@ export class BitelUidService {
   }
 
   /**
-   * Genera un UID dinámico basado en timestamp y número aleatorio
+   * Genera un UID dinámico que empieza con '10' seguido de 6 números aleatorios
    * @private
-   * @returns {string} UID generado
+   * @returns {string} UID generado (formato: 10XXXXXX)
    */
   #generateDynamicUid() {
-    // Generar número de 10 dígitos: timestamp reducido + número aleatorio
-    const timestamp = Math.floor(Date.now() / 1000); // Timestamp en segundos
-    const randomPart = Math.floor(Math.random() * 1000); // 0-999
+    // Generar 6 números aleatorios (000000-999999)
+    const randomPart = Math.floor(Math.random() * 1000000); // 0-999999
     
-    // Combinar para crear un número de 10 dígitos
-    const uid = `${timestamp}${randomPart.toString().padStart(3, '0')}`;
+    // Formatear con padding para asegurar 6 dígitos
+    const paddedRandom = randomPart.toString().padStart(6, '0');
     
-    // Asegurar que tenga exactamente 10 dígitos
-    return uid.slice(-10);
+    // Combinar '10' + 6 números aleatorios = 8 dígitos total
+    return `10${paddedRandom}`;
   }
 
   /**
@@ -130,11 +133,15 @@ export class BitelUidService {
     if (channelId) {
       this.#uidCache.delete(channelId);
       this.#lastGenerationTime.delete(channelId);
-      this.#logger.debug(`Cache limpiado para canal ${channelId}`);
+      if (this.#logger.debug) {
+        this.#logger.debug(`Cache limpiado para canal ${channelId}`);
+      }
     } else {
       this.#uidCache.clear();
       this.#lastGenerationTime.clear();
-      this.#logger.debug('Cache de UIDs completamente limpiado');
+      if (this.#logger.debug) {
+        this.#logger.debug('Cache de UIDs completamente limpiado');
+      }
     }
   }
 

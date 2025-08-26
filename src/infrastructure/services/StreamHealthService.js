@@ -3,35 +3,42 @@
  */
 
 import axios from 'axios';
+import { BitelUidService } from './BitelUidService.js';
 
 export class StreamHealthService {
   #config;
   #logger;
+  #bitelUidService;
 
   constructor(config, logger = console) {
     this.#config = config;
     this.#logger = logger;
+    this.#bitelUidService = new BitelUidService(config, logger);
   }
 
   /**
    * Verifica un stream por URL usando HEAD y fallback GET parcial
    * @param {string} url
+   * @param {string} channelId - ID del canal para procesamiento de BITEL
    * @returns {Promise<{ok:boolean,status?:number,contentType?:string,reason?:string}>}
    */
-  async checkStream(url) {
+  async checkStream(url, channelId = null) {
+    // Procesar URL con BitelUidService si es necesario
+    const processedUrl = channelId ? this.#bitelUidService.processStreamUrl(url, channelId) : url;
+    
     const timeoutMs = (this.#config.validation.streamValidationTimeout || 10) * 1000;
     const headers = { 'User-Agent': 'Stremio-TV-IPTV-Addon/1.0.0' };
     const isValidStatus = status => status >= 200 && status < 400;
 
     try {
       // Intento HEAD primero
-      const head = await axios.head(url, { timeout: timeoutMs, headers, validateStatus: () => true });
+      const head = await axios.head(processedUrl, { timeout: timeoutMs, headers, validateStatus: () => true });
       if (isValidStatus(head.status)) {
         return { ok: true, status: head.status, contentType: head.headers['content-type'] };
       }
 
       // Fallback GET de un pequeño rango
-      const get = await axios.get(url, {
+      const get = await axios.get(processedUrl, {
         timeout: timeoutMs,
         headers: { ...headers, Range: 'bytes=0-1024' },
         responseType: 'arraybuffer',
@@ -52,7 +59,7 @@ export class StreamHealthService {
    * @returns {Promise<{id:string,name:string,ok:boolean,meta?:object}>}
    */
   async checkChannel(channel) {
-    const result = await this.checkStream(channel.streamUrl);
+    const result = await this.checkStream(channel.streamUrl, channel.id);
     return {
       id: channel.id,
       name: channel.name,
