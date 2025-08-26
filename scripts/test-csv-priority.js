@@ -90,16 +90,6 @@ testCSVPriority().then(() => {
 }).catch(error => {
   console.error('❌ Error en el script:', error);
   process.exit(1);
-});`) {
-  testCSVPriority()
-    .then(() => {
-      logger.info('✅ Script completado');
-      process.exit(0);
-    })
-    .catch(error => {
-      logger.error('❌ Error fatal:', error);
-      process.exit(1);
-    });
-}
+});
 
 export { testCSVPriority };
