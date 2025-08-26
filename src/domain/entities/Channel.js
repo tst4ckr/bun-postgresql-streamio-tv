@@ -7,7 +7,8 @@ import { StreamQuality } from '../value-objects/StreamQuality.js';
 
 export class Channel {
   static TYPES = {
-    TV: 'tv'
+    TV: 'tv',
+    CHANNEL: 'channel'
   };
 
   static GENRES = {
@@ -18,7 +19,10 @@ export class Channel {
     MOVIES: 'Movies',
     KIDS: 'Kids',
     DOCUMENTARY: 'Documentary',
-    GENERAL: 'General'
+    GENERAL: 'General',
+    ANIMATION: 'Animation',
+    EDUCATIONAL: 'Educational',
+    RELIGIOUS: 'Religious'
   };
 
   /**
@@ -117,8 +121,8 @@ export class Channel {
     }
 
     // Validar tipo
-    if (type !== Channel.TYPES.TV) {
-      throw new Error(`Tipo de canal inválido: ${type}. Debe ser: ${Channel.TYPES.TV}`);
+    if (!Object.values(Channel.TYPES).includes(type)) {
+      throw new Error(`Tipo de canal inválido: ${type}. Debe ser uno de: ${Object.values(Channel.TYPES).join(', ')}`);
     }
 
     // Validar género
@@ -139,7 +143,7 @@ export class Channel {
    * @returns {boolean}
    */
   #isValidChannelId(id) {
-    const channelIdPattern = /^tv_[a-zA-Z0-9_-]+$/;
+    const channelIdPattern = /^(tv_|ch_)[a-zA-Z0-9_-]+$/;
     return channelIdPattern.test(id);
   }
 
