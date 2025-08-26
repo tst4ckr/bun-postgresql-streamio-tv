@@ -93,19 +93,21 @@ class PeriodicValidationTest {
     let consistentUids = 0;
     let totalBitelChannels = 0;
     
-    firstReport.results.forEach(firstResult => {
-      const secondResult = secondReport.results.find(r => r.id === firstResult.id);
+    // Analizar todos los canales BITEL que fueron validados
+    bitelChannels.forEach(channel => {
+      const firstResult = firstReport.results.find(r => r.id === channel.id);
+      const secondResult = secondReport.results.find(r => r.id === channel.id);
       
-      if (firstResult.meta?.processedUrl?.includes('tv360.bitel.com.pe') && secondResult) {
+      if (firstResult && secondResult) {
         totalBitelChannels++;
         
-        const firstUid = firstResult.meta.processedUrl.match(/uid=([^&]+)/)?.[1] || 'NO_UID';
+        const firstUid = firstResult.meta?.processedUrl?.match(/uid=([^&]+)/)?.[1] || 'NO_UID';
         const secondUid = secondResult.meta?.processedUrl?.match(/uid=([^&]+)/)?.[1] || 'NO_UID';
         
-        const isConsistent = firstUid === secondUid;
+        const isConsistent = firstUid === secondUid && firstUid !== 'NO_UID';
         if (isConsistent) consistentUids++;
         
-        this.logger.info(`${firstResult.id}:`);
+        this.logger.info(`${channel.id} (${channel.name}):`);
         this.logger.info(`  Primera:  ${firstUid}`);
         this.logger.info(`  Segunda:  ${secondUid}`);
         this.logger.info(`  Estado:   ${isConsistent ? '✅ CONSISTENTE' : '❌ INCONSISTENTE'}`);

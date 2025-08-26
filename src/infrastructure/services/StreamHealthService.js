@@ -34,7 +34,12 @@ export class StreamHealthService {
       // Intento HEAD primero
       const head = await axios.head(processedUrl, { timeout: timeoutMs, headers, validateStatus: () => true });
       if (isValidStatus(head.status)) {
-        return { ok: true, status: head.status, contentType: head.headers['content-type'] };
+        return { 
+          ok: true, 
+          status: head.status, 
+          contentType: head.headers['content-type'],
+          processedUrl: processedUrl
+        };
       }
 
       // Fallback GET de un pequeño rango
@@ -46,10 +51,24 @@ export class StreamHealthService {
       });
       
       return isValidStatus(get.status)
-        ? { ok: true, status: get.status, contentType: get.headers['content-type'] }
-        : { ok: false, status: get.status, reason: 'HTTP_NOT_OK' };
+        ? { 
+            ok: true, 
+            status: get.status, 
+            contentType: get.headers['content-type'],
+            processedUrl: processedUrl
+          }
+        : { 
+            ok: false, 
+            status: get.status, 
+            reason: 'HTTP_NOT_OK',
+            processedUrl: processedUrl
+          };
     } catch (error) {
-      return { ok: false, reason: error.code || error.message };
+      return { 
+        ok: false, 
+        reason: error.code || error.message,
+        processedUrl: processedUrl
+      };
     }
   }
 
