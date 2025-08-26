@@ -169,7 +169,7 @@ export class LocalM3UChannelRepository extends ChannelRepository {
     let channels = this.#filterActiveChannels([...this.#channels]);
     
     // Aplicar filtros de contenido si están activos
-    if (this.#contentFilter.isActive()) {
+    if (this.#contentFilter.hasActiveFilters()) {
       const originalCount = channels.length;
       const filterResult = this.#contentFilter.filterChannels(channels);
       channels = filterResult.filteredChannels;
@@ -208,7 +208,7 @@ export class LocalM3UChannelRepository extends ChannelRepository {
     channels = this.#filterActiveChannels(channels);
     
     // Aplicar filtros de contenido si están activos
-    if (this.#contentFilter.isActive()) {
+    if (this.#contentFilter.hasActiveFilters()) {
       const filterResult = this.#contentFilter.filterChannels(channels);
       channels = filterResult.filteredChannels;
     }
@@ -222,7 +222,7 @@ export class LocalM3UChannelRepository extends ChannelRepository {
     channels = this.#filterActiveChannels(channels);
     
     // Aplicar filtros de contenido si están activos
-    if (this.#contentFilter.isActive()) {
+    if (this.#contentFilter.hasActiveFilters()) {
       const filterResult = this.#contentFilter.filterChannels(channels);
       channels = filterResult.filteredChannels;
     }
@@ -236,7 +236,7 @@ export class LocalM3UChannelRepository extends ChannelRepository {
     channels = this.#filterActiveChannels(channels);
     
     // Aplicar filtros de contenido si están activos
-    if (this.#contentFilter.isActive()) {
+    if (this.#contentFilter.hasActiveFilters()) {
       const filterResult = this.#contentFilter.filterChannels(channels);
       channels = filterResult.filteredChannels;
     }
@@ -254,7 +254,7 @@ export class LocalM3UChannelRepository extends ChannelRepository {
     channels = this.#filterActiveChannels(channels);
     
     // Aplicar filtros de contenido si están activos
-    if (this.#contentFilter.isActive()) {
+    if (this.#contentFilter.hasActiveFilters()) {
       const filterResult = this.#contentFilter.filterChannels(channels);
       channels = filterResult.filteredChannels;
     }
@@ -282,7 +282,7 @@ export class LocalM3UChannelRepository extends ChannelRepository {
     channels = this.#filterActiveChannels(channels);
     
     // Aplicar filtros de contenido si están activos
-    if (this.#contentFilter.isActive()) {
+    if (this.#contentFilter.hasActiveFilters()) {
       const filterResult = this.#contentFilter.filterChannels(channels);
       channels = filterResult.filteredChannels;
     }
@@ -295,7 +295,7 @@ export class LocalM3UChannelRepository extends ChannelRepository {
     let channels = this.#filterActiveChannels([...this.#channels]);
     
     // Aplicar filtros de contenido si están activos
-    if (this.#contentFilter.isActive()) {
+    if (this.#contentFilter.hasActiveFilters()) {
       const filterResult = this.#contentFilter.filterChannels(channels);
       channels = filterResult.filteredChannels;
     }
@@ -313,7 +313,7 @@ export class LocalM3UChannelRepository extends ChannelRepository {
     let channels = this.#filterActiveChannels([...this.#channels]);
     
     // Aplicar filtros de contenido si están activos
-    if (this.#contentFilter.isActive()) {
+    if (this.#contentFilter.hasActiveFilters()) {
       const filterResult = this.#contentFilter.filterChannels(channels);
       channels = filterResult.filteredChannels;
     }
@@ -327,7 +327,7 @@ export class LocalM3UChannelRepository extends ChannelRepository {
     let channels = this.#filterActiveChannels([...this.#channels]);
     
     // Aplicar filtros de contenido si están activos
-    if (this.#contentFilter.isActive()) {
+    if (this.#contentFilter.hasActiveFilters()) {
       const filterResult = this.#contentFilter.filterChannels(channels);
       channels = filterResult.filteredChannels;
     }
@@ -380,7 +380,7 @@ export class LocalM3UChannelRepository extends ChannelRepository {
     let contentFilterStats = null;
     
     // Obtener estadísticas de filtrado de contenido si está activo
-    if (this.#contentFilter.isActive()) {
+    if (this.#contentFilter.hasActiveFilters()) {
       const filterResult = this.#contentFilter.filterChannels(activeChannels);
       filteredCount = filterResult.filteredChannels.length;
       

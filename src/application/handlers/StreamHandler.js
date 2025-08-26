@@ -4,6 +4,7 @@
  */
 
 import { ChannelNotFoundError } from '../../domain/repositories/ChannelRepository.js';
+import { BitelUidService } from '../../infrastructure/services/BitelUidService.js';
 
 
 
@@ -18,6 +19,7 @@ export class StreamHandler {
   #channelService;
   #config;
   #logger;
+  #bitelUidService;
 
 
 
@@ -30,7 +32,7 @@ export class StreamHandler {
     this.#channelService = channelService;
     this.#config = config;
     this.#logger = logger;
-    
+    this.#bitelUidService = new BitelUidService(config, logger);
 
   }
 
@@ -169,7 +171,8 @@ export class StreamHandler {
     // Obtener configuración de calidad preferida del usuario
     const preferredQuality = userConfig.preferred_quality || this.#config.streaming.defaultQuality;
     
-    let streamUrl = channel.streamUrl;
+    // Procesar URL con servicio de UID dinámico para canales BITEL
+    let streamUrl = this.#bitelUidService.processStreamUrl(channel.streamUrl, channel.id);
 
     // Crear stream base
     const stream = {

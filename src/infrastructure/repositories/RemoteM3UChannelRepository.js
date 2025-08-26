@@ -139,7 +139,7 @@ export class RemoteM3UChannelRepository extends ChannelRepository {
     let channels = this.#filterActiveChannels([...this.#channels]);
     
     // Aplicar filtros de contenido si están activos
-    if (this.#contentFilter.isActive()) {
+    if (this.#contentFilter.hasActiveFilters()) {
       const beforeCount = channels.length;
       channels = this.#contentFilter.filterChannels(channels);
       const afterCount = channels.length;
@@ -173,7 +173,7 @@ export class RemoteM3UChannelRepository extends ChannelRepository {
     let filteredChannels = this.#filterActiveChannels(channels);
     
     // Aplicar filtros de contenido si están activos
-    if (this.#contentFilter.isActive()) {
+    if (this.#contentFilter.hasActiveFilters()) {
       filteredChannels = this.#contentFilter.filterChannels(filteredChannels);
     }
     
@@ -186,7 +186,7 @@ export class RemoteM3UChannelRepository extends ChannelRepository {
     let filteredChannels = this.#filterActiveChannels(channels);
     
     // Aplicar filtros de contenido si están activos
-    if (this.#contentFilter.isActive()) {
+    if (this.#contentFilter.hasActiveFilters()) {
       filteredChannels = this.#contentFilter.filterChannels(filteredChannels);
     }
     
@@ -199,7 +199,7 @@ export class RemoteM3UChannelRepository extends ChannelRepository {
     let filteredChannels = this.#filterActiveChannels(channels);
     
     // Aplicar filtros de contenido si están activos
-    if (this.#contentFilter.isActive()) {
+    if (this.#contentFilter.hasActiveFilters()) {
       filteredChannels = this.#contentFilter.filterChannels(filteredChannels);
     }
     
@@ -213,7 +213,7 @@ export class RemoteM3UChannelRepository extends ChannelRepository {
     let filteredChannels = this.#filterActiveChannels(channels);
     
     // Aplicar filtros de contenido si están activos
-    if (this.#contentFilter.isActive()) {
+    if (this.#contentFilter.hasActiveFilters()) {
       filteredChannels = this.#contentFilter.filterChannels(filteredChannels);
     }
     
@@ -225,7 +225,7 @@ export class RemoteM3UChannelRepository extends ChannelRepository {
     let activeChannels = this.#filterActiveChannels([...this.#channels]);
     
     // Aplicar filtros de contenido si están activos
-    if (this.#contentFilter.isActive()) {
+    if (this.#contentFilter.hasActiveFilters()) {
       activeChannels = this.#contentFilter.filterChannels(activeChannels);
     }
     
@@ -244,7 +244,7 @@ export class RemoteM3UChannelRepository extends ChannelRepository {
     let activeChannels = this.#filterActiveChannels([...this.#channels]);
     
     // Aplicar filtros de contenido si están activos
-    if (this.#contentFilter.isActive()) {
+    if (this.#contentFilter.hasActiveFilters()) {
       activeChannels = this.#contentFilter.filterChannels(activeChannels);
     }
     
