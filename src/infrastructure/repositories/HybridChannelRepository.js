@@ -8,11 +8,20 @@ import { CSVChannelRepository } from './CSVChannelRepository.js';
 import { RemoteM3UChannelRepository } from './RemoteM3UChannelRepository.js';
 import { LocalM3UChannelRepository } from './LocalM3UChannelRepository.js';
 import { M3UParserService } from '../parsers/M3UParserService.js';
+import ContentFilterService from '../../domain/services/ContentFilterService.js';
 
 /**
  * Repositorio híbrido que combina múltiples fuentes de canales
  * Responsabilidad: gestionar canales desde CSV local + URLs M3U remotas
- * Prioridad: CSV local primero, luego M3U remotas (evitando duplicados)
+ * 
+ * PRIORIZACIÓN ESTRICTA:
+ * 1. CSV local tiene prioridad ABSOLUTA sobre todas las demás fuentes
+ * 2. Canales M3U remotos/locales solo se agregan si NO existen en CSV
+ * 3. Duplicados de fuentes M3U se omiten automáticamente
+ * 4. Durante refrescos, la prioridad CSV se mantiene intacta
+ * 
+ * Orden de carga: CSV local → M3U remotas → M3U locales
+ * Deduplicación: Por ID de canal, CSV siempre gana
  */
 export class HybridChannelRepository extends ChannelRepository {
   #csvRepository;
@@ -25,6 +34,7 @@ export class HybridChannelRepository extends ChannelRepository {
   #lastLoadTime = null;
   #deactivatedChannels = new Set();
   #validatedChannels = new Map(); // channelId -> timestamp
+  #contentFilter; // Servicio de filtrado de contenido
 
   /**
    * @param {string} csvPath - Ruta al archivo CSV local
@@ -36,6 +46,9 @@ export class HybridChannelRepository extends ChannelRepository {
     super();
     this.#config = config;
     this.#logger = logger;
+    
+    // Inicializar servicio de filtrado de contenido
+    this.#contentFilter = new ContentFilterService(config.filters);
     
     // Crear repositorio CSV
     this.#csvRepository = new CSVChannelRepository(csvPath, config, logger);
@@ -106,17 +119,29 @@ export class HybridChannelRepository extends ChannelRepository {
           await m3uRepo.initialize();
           const m3uChannels = await m3uRepo.getAllChannelsUnfiltered();
           
-          // Agregar solo canales que no existan en CSV (evitar duplicados)
+          // Agregar solo canales que no existan en CSV (CSV tiene prioridad absoluta)
           let addedCount = 0;
+          let duplicatesOmitted = 0;
+          const duplicateChannels = [];
+          
           m3uChannels.forEach(channel => {
             if (!this.#channelMap.has(channel.id)) {
               this.#channels.push(channel);
               this.#channelMap.set(channel.id, channel);
               addedCount++;
+            } else {
+              duplicatesOmitted++;
+              duplicateChannels.push(channel.name);
             }
           });
           
-          this.#logger.info(`M3U ${i + 1}: ${addedCount} canales nuevos agregados (${m3uChannels.length} total, ${m3uChannels.length - addedCount} duplicados omitidos)`);
+          this.#logger.info(`M3U ${i + 1}: ${addedCount} canales nuevos agregados (${m3uChannels.length} total, ${duplicatesOmitted} duplicados omitidos por prioridad CSV)`);
+          
+          if (duplicatesOmitted > 0 && duplicateChannels.length <= 10) {
+            this.#logger.debug(`Canales duplicados omitidos de M3U ${i + 1}: ${duplicateChannels.join(', ')}`);
+          } else if (duplicatesOmitted > 10) {
+            this.#logger.debug(`Canales duplicados omitidos de M3U ${i + 1}: ${duplicateChannels.slice(0, 10).join(', ')} y ${duplicatesOmitted - 10} más...`);
+          }
           
         } catch (error) {
           this.#logger.error(`Error cargando M3U ${i + 1}:`, error);
@@ -151,22 +176,42 @@ export class HybridChannelRepository extends ChannelRepository {
       this.#channelMap.clear();
       csvChannels.forEach(channel => this.#channelMap.set(channel.id, channel));
       
-      // Refrescar y agregar M3U
-      for (const m3uRepo of this.#m3uRepositories) {
+      // Refrescar y agregar M3U (manteniendo prioridad CSV)
+      let totalM3uAdded = 0;
+      let totalM3uDuplicates = 0;
+      
+      for (let i = 0; i < this.#m3uRepositories.length; i++) {
+        const m3uRepo = this.#m3uRepositories[i];
         try {
           await m3uRepo.refreshFromRemote();
           const m3uChannels = await m3uRepo.getAllChannelsUnfiltered();
           
-          // Agregar solo canales nuevos
+          // Agregar solo canales que no existan en CSV (CSV mantiene prioridad)
+          let addedCount = 0;
+          let duplicatesCount = 0;
+          
           m3uChannels.forEach(channel => {
             if (!this.#channelMap.has(channel.id)) {
               this.#channels.push(channel);
               this.#channelMap.set(channel.id, channel);
+              addedCount++;
+            } else {
+              duplicatesCount++;
             }
           });
+          
+          totalM3uAdded += addedCount;
+          totalM3uDuplicates += duplicatesCount;
+          
+          this.#logger.debug(`Refresco M3U ${i + 1}: ${addedCount} nuevos, ${duplicatesCount} duplicados omitidos por prioridad CSV`);
+          
         } catch (error) {
-          this.#logger.error('Error refrescando fuente M3U:', error);
+          this.#logger.error(`Error refrescando fuente M3U ${i + 1}:`, error);
         }
+      }
+      
+      if (this.#m3uRepositories.length > 0) {
+        this.#logger.info(`Refresco M3U completado: ${totalM3uAdded} canales agregados, ${totalM3uDuplicates} duplicados omitidos por prioridad CSV`);
       }
       
       this.#lastLoadTime = new Date();
@@ -221,7 +266,24 @@ export class HybridChannelRepository extends ChannelRepository {
 
   async getAllChannels() {
     await this.#refreshIfNeeded();
-    return this.#filterActiveChannels([...this.#channels]);
+    const activeChannels = this.#filterActiveChannels([...this.#channels]);
+    
+    // Aplicar filtros de contenido si están activos
+    if (this.#contentFilter.hasActiveFilters()) {
+      const filteredChannels = this.#contentFilter.filterChannels(activeChannels);
+      
+      // Log estadísticas de filtrado
+      const stats = this.#contentFilter.getFilterStats(activeChannels, filteredChannels);
+      this.#logger.info(`Filtros de contenido aplicados: ${stats.removedChannels} canales removidos (${stats.removalPercentage}%)`);
+      
+      if (stats.removedChannels > 0) {
+        this.#logger.debug(`Canales removidos por categoría: religioso=${stats.removedByCategory.religious}, adulto=${stats.removedByCategory.adult}, político=${stats.removedByCategory.political}`);
+      }
+      
+      return filteredChannels;
+    }
+    
+    return activeChannels;
   }
 
   async getAllChannelsUnfiltered() {
@@ -241,19 +303,22 @@ export class HybridChannelRepository extends ChannelRepository {
   async getChannelsByGenre(genre) {
     await this.#refreshIfNeeded();
     const channels = this.#channels.filter(ch => ch.genre.toLowerCase() === genre.toLowerCase());
-    return this.#filterActiveChannels(channels);
+    const activeChannels = this.#filterActiveChannels(channels);
+    return this.#contentFilter.hasActiveFilters() ? this.#contentFilter.filterChannels(activeChannels) : activeChannels;
   }
 
   async getChannelsByCountry(country) {
     await this.#refreshIfNeeded();
     const channels = this.#channels.filter(ch => ch.country.toLowerCase().includes(country.toLowerCase()));
-    return this.#filterActiveChannels(channels);
+    const activeChannels = this.#filterActiveChannels(channels);
+    return this.#contentFilter.hasActiveFilters() ? this.#contentFilter.filterChannels(activeChannels) : activeChannels;
   }
 
   async getChannelsByLanguage(language) {
     await this.#refreshIfNeeded();
     const channels = this.#channels.filter(ch => ch.language.toLowerCase() === language.toLowerCase());
-    return this.#filterActiveChannels(channels);
+    const activeChannels = this.#filterActiveChannels(channels);
+    return this.#contentFilter.hasActiveFilters() ? this.#contentFilter.filterChannels(activeChannels) : activeChannels;
   }
 
   async searchChannels(searchTerm) {
@@ -263,7 +328,8 @@ export class HybridChannelRepository extends ChannelRepository {
       ch.name.toLowerCase().includes(term) || 
       ch.genre.toLowerCase().includes(term)
     );
-    return this.#filterActiveChannels(channels);
+    const activeChannels = this.#filterActiveChannels(channels);
+    return this.#contentFilter.hasActiveFilters() ? this.#contentFilter.filterChannels(activeChannels) : activeChannels;
   }
 
   async getChannelsByFilter(filter) {
@@ -283,13 +349,15 @@ export class HybridChannelRepository extends ChannelRepository {
       channels = channels.filter(ch => ch.quality === filter.quality);
     }
 
-    return this.#filterActiveChannels(channels);
+    const activeChannels = this.#filterActiveChannels(channels);
+    return this.#contentFilter.hasActiveFilters() ? this.#contentFilter.filterChannels(activeChannels) : activeChannels;
   }
 
   async getChannelsPaginated(skip = 0, limit = 50) {
     await this.#refreshIfNeeded();
     const activeChannels = this.#filterActiveChannels([...this.#channels]);
-    return activeChannels.slice(skip, skip + limit);
+    const filteredChannels = this.#contentFilter.hasActiveFilters() ? this.#contentFilter.filterChannels(activeChannels) : activeChannels;
+    return filteredChannels.slice(skip, skip + limit);
   }
 
   async getChannelsPaginatedUnfiltered(skip = 0, limit = 50) {
@@ -300,7 +368,8 @@ export class HybridChannelRepository extends ChannelRepository {
   async getChannelsCount() {
     await this.#refreshIfNeeded();
     const activeChannels = this.#filterActiveChannels([...this.#channels]);
-    return activeChannels.length;
+    const filteredChannels = this.#contentFilter.hasActiveFilters() ? this.#contentFilter.filterChannels(activeChannels) : activeChannels;
+    return filteredChannels.length;
   }
 
   async refreshFromRemote() {
@@ -325,10 +394,12 @@ export class HybridChannelRepository extends ChannelRepository {
     let localM3uChannelsTotal = 0;
     let remoteSourcesCount = 0;
     let localSourcesCount = 0;
+    let totalM3uChannelsBeforeDedup = 0;
     
     for (const m3uRepo of this.#m3uRepositories) {
       try {
         const m3uChannels = await m3uRepo.getAllChannelsUnfiltered();
+        totalM3uChannelsBeforeDedup += m3uChannels.length;
         
         // Determinar si es repositorio remoto o local
         if (m3uRepo instanceof RemoteM3UChannelRepository) {
@@ -344,16 +415,28 @@ export class HybridChannelRepository extends ChannelRepository {
     }
     
     const totalM3uChannels = remoteM3uChannelsTotal + localM3uChannelsTotal;
+    const csvPriorityDuplicates = (csvChannels.length + totalM3uChannels) - this.#channels.length;
+    const m3uChannelsAdded = this.#channels.length - csvChannels.length;
+    const activeChannels = this.#filterActiveChannels([...this.#channels]);
+    const filteredChannels = this.#contentFilter.hasActiveFilters() ? this.#contentFilter.filterChannels(activeChannels) : activeChannels;
     
-    return {
+    // Obtener estadísticas de filtrado de contenido
+    const contentFilterStats = this.#contentFilter.hasActiveFilters() 
+      ? this.#contentFilter.getFilterStats(activeChannels, filteredChannels)
+      : null;
+    
+    const stats = {
       totalChannels: this.#channels.length,
-      activeChannels: this.#filterActiveChannels([...this.#channels]).length,
+      activeChannels: activeChannels.length,
+      filteredChannels: filteredChannels.length,
       deactivatedChannels: this.#deactivatedChannels.size,
       csvChannels: csvChannels.length,
       remoteM3uChannels: remoteM3uChannelsTotal,
       localM3uChannels: localM3uChannelsTotal,
       m3uChannelsTotal: totalM3uChannels,
-      duplicatesOmitted: (csvChannels.length + totalM3uChannels) - this.#channels.length,
+      duplicatesOmitted: csvPriorityDuplicates,
+      m3uChannelsAdded: m3uChannelsAdded,
+      csvPriorityApplied: csvPriorityDuplicates > 0,
       sources: {
         csv: 1,
         remoteM3u: remoteSourcesCount,
@@ -362,6 +445,25 @@ export class HybridChannelRepository extends ChannelRepository {
       },
       lastRefresh: this.#lastLoadTime
     };
+    
+    // Agregar estadísticas de filtrado de contenido si están activas
+    if (contentFilterStats) {
+      stats.contentFiltering = {
+        enabled: true,
+        removedChannels: contentFilterStats.removedChannels,
+        removalPercentage: contentFilterStats.removalPercentage,
+        removedByCategory: contentFilterStats.removedByCategory,
+        filtersActive: contentFilterStats.filtersActive,
+        filterConfiguration: this.#contentFilter.getFilterConfiguration()
+      };
+    } else {
+      stats.contentFiltering = {
+        enabled: false,
+        filterConfiguration: this.#contentFilter.getFilterConfiguration()
+      };
+    }
+    
+    return stats;
   }
 
   // Métodos de gestión de canales inválidos

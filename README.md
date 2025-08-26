@@ -132,9 +132,40 @@ FALLBACK_TIMEOUT=15000
 FALLBACK_QUALITY_ORDER=HD,SD,Auto
 ```
 
+#### 🛡️ Filtros de Contenido
+```bash
+# Habilitar filtros de contenido
+ENABLE_CONTENT_FILTERS=true
+
+# Filtro de contenido religioso
+FILTER_RELIGIOUS_CONTENT=true
+RELIGIOUS_KEYWORDS=iglesia,pastor,dios,jesus,cristo,biblia,gospel,cristiano,catolico,evangelico
+
+# Filtro de contenido adulto
+FILTER_ADULT_CONTENT=true
+ADULT_KEYWORDS=xxx,adult,porn,sexy,hot,+18,adulto,erotico,sexual
+
+# Filtro de contenido político
+FILTER_POLITICAL_CONTENT=false
+POLITICAL_KEYWORDS=politica,gobierno,presidente,elecciones,congreso,senado,diputado
+
+# Configuración de sensibilidad
+FILTER_SENSITIVITY=medium  # low, medium, high
+FILTER_MATCH_MODE=partial  # exact, partial, fuzzy
+```
+
 Ver `.env.example` para todas las opciones disponibles.
 
 ## 📊 Fuentes de Datos Soportadas
+
+### Priorización de Fuentes
+
+**IMPORTANTE**: El sistema implementa una **priorización estricta** donde:
+
+1. **CSV Local tiene prioridad ABSOLUTA** sobre todas las demás fuentes
+2. Los canales de fuentes M3U solo se agregan si **NO existen** en el CSV local
+3. Los duplicados de fuentes M3U se **omiten automáticamente**
+4. Durante actualizaciones, la prioridad del CSV se **mantiene intacta**
 
 ### 🔄 **Repositorio Híbrido** (Recomendado)
 Combina múltiples fuentes en una sola interfaz unificada:
@@ -224,6 +255,35 @@ El addon incluye un sistema avanzado de validación que **previene problemas de 
 - 🔄 **Cambio automático** a streams de respaldo cuando es necesario
 - 📱 **Experiencia fluida** sin intervención manual
 - 🎵 **Garantía de audio** en todos los canales reproducidos
+
+#### 🛡️ **Sistema de Filtros de Contenido**
+
+El addon incluye un sistema avanzado de filtrado que permite **controlar el tipo de contenido** mostrado según las preferencias del usuario:
+
+##### ✨ **Tipos de Filtros Disponibles**
+- 🙏 **Contenido Religioso**: Filtra canales con contenido religioso, evangélico o espiritual
+- 🔞 **Contenido Adulto**: Bloquea canales con contenido para adultos o explícito
+- 🏛️ **Contenido Político**: Oculta canales de noticias políticas o gubernamentales
+
+##### 🎯 **Configuración Flexible**
+- **Sensibilidad**: Ajusta qué tan estricto es el filtrado (bajo, medio, alto)
+- **Modo de Coincidencia**: Controla cómo se detectan las palabras clave (exacto, parcial, difuso)
+- **Palabras Clave Personalizables**: Define tus propias listas de palabras a filtrar
+- **Activación Individual**: Habilita solo los filtros que necesites
+
+##### 🔍 **Cómo Funciona el Filtrado**
+1. **Análisis de Metadatos**: Examina nombre, género y descripción del canal
+2. **Detección Inteligente**: Usa algoritmos de coincidencia de patrones
+3. **Filtrado Transparente**: Remueve canales sin afectar el rendimiento
+4. **Estadísticas Detalladas**: Reporta cuántos canales fueron filtrados por categoría
+5. **Logging Opcional**: Registra la actividad de filtrado para debugging
+
+##### 📊 **Beneficios del Sistema**
+- 👨‍👩‍👧‍👦 **Control Parental**: Protege a menores de contenido inapropiado
+- 🎯 **Experiencia Personalizada**: Muestra solo el contenido que te interesa
+- ⚡ **Rendimiento Optimizado**: Filtrado eficiente sin impacto en velocidad
+- 📈 **Transparencia Total**: Estadísticas claras sobre el filtrado aplicado
+- 🔧 **Fácil Configuración**: Variables de entorno simples para personalizar
 
 ## 🏗️ Arquitectura del Proyecto
 

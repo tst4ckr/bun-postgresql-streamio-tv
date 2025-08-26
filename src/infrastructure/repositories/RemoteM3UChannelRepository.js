@@ -7,6 +7,7 @@ import axios from 'axios';
 import { ChannelRepository, RepositoryError, ChannelNotFoundError } from '../../domain/repositories/ChannelRepository.js';
 import { Channel } from '../../domain/entities/Channel.js';
 import { M3UParserService } from '../parsers/M3UParserService.js';
+import ContentFilterService from '../../domain/services/ContentFilterService.js';
 
 /**
  * Repositorio de canales basado en una URL M3U remota
@@ -23,6 +24,7 @@ export class RemoteM3UChannelRepository extends ChannelRepository {
   #lastLoadTime = null;
   #deactivatedChannels = new Set();
   #validatedChannels = new Map(); // channelId -> timestamp
+  #contentFilter; // Servicio de filtrado de contenido
 
   constructor(m3uUrl, parser, config, logger = console) {
     super();
@@ -33,6 +35,9 @@ export class RemoteM3UChannelRepository extends ChannelRepository {
     this.#parser = parser;
     this.#config = config;
     this.#logger = logger;
+    
+    // Inicializar servicio de filtrado de contenido
+    this.#contentFilter = new ContentFilterService(config.filters);
   }
 
   async initialize() {
@@ -131,7 +136,26 @@ export class RemoteM3UChannelRepository extends ChannelRepository {
   // Implementación de métodos del contrato ChannelRepository
   async getAllChannels() {
     await this.#refreshIfNeeded();
-    return this.#filterActiveChannels([...this.#channels]);
+    let channels = this.#filterActiveChannels([...this.#channels]);
+    
+    // Aplicar filtros de contenido si están activos
+    if (this.#contentFilter.isActive()) {
+      const beforeCount = channels.length;
+      channels = this.#contentFilter.filterChannels(channels);
+      const afterCount = channels.length;
+      const removedCount = beforeCount - afterCount;
+      
+      if (removedCount > 0) {
+        const stats = this.#contentFilter.getFilteringStats();
+        this.#logger.info(`Filtros de contenido aplicados: ${removedCount} canales removidos`, {
+          religious: stats.removedByCategory.religious,
+          adult: stats.removedByCategory.adult,
+          political: stats.removedByCategory.political
+        });
+      }
+    }
+    
+    return channels;
   }
 
   async getChannelById(id) {
@@ -146,31 +170,65 @@ export class RemoteM3UChannelRepository extends ChannelRepository {
   async getChannelsByGenre(genre) {
     await this.#refreshIfNeeded();
     const channels = this.#channels.filter(ch => ch.genre.toLowerCase() === genre.toLowerCase());
-    return this.#filterActiveChannels(channels);
+    let filteredChannels = this.#filterActiveChannels(channels);
+    
+    // Aplicar filtros de contenido si están activos
+    if (this.#contentFilter.isActive()) {
+      filteredChannels = this.#contentFilter.filterChannels(filteredChannels);
+    }
+    
+    return filteredChannels;
   }
   
   async getChannelsByCountry(country) {
     await this.#refreshIfNeeded();
     const channels = this.#channels.filter(ch => ch.country.toLowerCase().includes(country.toLowerCase()));
-    return this.#filterActiveChannels(channels);
+    let filteredChannels = this.#filterActiveChannels(channels);
+    
+    // Aplicar filtros de contenido si están activos
+    if (this.#contentFilter.isActive()) {
+      filteredChannels = this.#contentFilter.filterChannels(filteredChannels);
+    }
+    
+    return filteredChannels;
   }
 
   async getChannelsByLanguage(language) {
     await this.#refreshIfNeeded();
     const channels = this.#channels.filter(ch => ch.language.toLowerCase() === language.toLowerCase());
-    return this.#filterActiveChannels(channels);
+    let filteredChannels = this.#filterActiveChannels(channels);
+    
+    // Aplicar filtros de contenido si están activos
+    if (this.#contentFilter.isActive()) {
+      filteredChannels = this.#contentFilter.filterChannels(filteredChannels);
+    }
+    
+    return filteredChannels;
   }
 
   async searchChannels(searchTerm) {
     await this.#refreshIfNeeded();
     const term = searchTerm.toLowerCase();
     const channels = this.#channels.filter(ch => ch.name.toLowerCase().includes(term) || ch.genre.toLowerCase().includes(term));
-    return this.#filterActiveChannels(channels);
+    let filteredChannels = this.#filterActiveChannels(channels);
+    
+    // Aplicar filtros de contenido si están activos
+    if (this.#contentFilter.isActive()) {
+      filteredChannels = this.#contentFilter.filterChannels(filteredChannels);
+    }
+    
+    return filteredChannels;
   }
   
   async getChannelsPaginated(skip = 0, limit = 20) {
     await this.#refreshIfNeeded();
-    const activeChannels = this.#filterActiveChannels([...this.#channels]);
+    let activeChannels = this.#filterActiveChannels([...this.#channels]);
+    
+    // Aplicar filtros de contenido si están activos
+    if (this.#contentFilter.isActive()) {
+      activeChannels = this.#contentFilter.filterChannels(activeChannels);
+    }
+    
     return activeChannels.slice(skip, skip + limit);
   }
 
@@ -183,7 +241,13 @@ export class RemoteM3UChannelRepository extends ChannelRepository {
   
   async getChannelsCount() {
     await this.#refreshIfNeeded();
-    const activeChannels = this.#filterActiveChannels([...this.#channels]);
+    let activeChannels = this.#filterActiveChannels([...this.#channels]);
+    
+    // Aplicar filtros de contenido si están activos
+    if (this.#contentFilter.isActive()) {
+      activeChannels = this.#contentFilter.filterChannels(activeChannels);
+    }
+    
     return activeChannels.length;
   }
 

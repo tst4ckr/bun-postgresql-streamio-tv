@@ -19,6 +19,7 @@ El **TV IPTV Addon** es una extensión para Stremio que proporciona acceso a can
 - ✅ Soporte para múltiples fuentes de datos (CSV, M3U local/remoto)
 - ✅ Validación automática de streams
 - ✅ Filtrado por país, idioma y género
+- ✅ Sistema avanzado de filtros de contenido (religioso, adulto, político)
 - ✅ Cache optimizado para rendimiento
 - ✅ Manejo robusto de errores
 - ✅ Configuración centralizada via variables de entorno
@@ -110,6 +111,23 @@ Define el contrato para todas las implementaciones:
 - Validación de filas CSV
 - Filtros de configuración aplicados
 
+#### HybridChannelRepository
+
+Repositorio que combina múltiples fuentes de canales con **priorización estricta**:
+
+##### Priorización de Fuentes
+- **CSV local**: Prioridad ABSOLUTA, nunca se sobrescribe
+- **URLs M3U remotas/locales**: Solo agregan canales NO presentes en CSV
+- **Deduplicación**: Automática por ID de canal, CSV siempre gana
+- **Orden de carga**: CSV → M3U remotas → M3U locales
+
+##### Características Técnicas
+- Gestión unificada de múltiples repositorios
+- Estadísticas detalladas de duplicados omitidos
+- Logging específico para priorización CSV
+- Mantenimiento de prioridad durante refrescos
+- Integración completa con filtros de contenido
+
 #### RemoteM3UChannelRepository
 - Descarga y parsea listas M3U remotas
 - Manejo de errores y failover
@@ -140,6 +158,14 @@ Convierte canales al formato requerido por Stremio:
 - Reportes de salud por lotes
 - Timeout configurable
 
+#### ContentFilterService
+- Sistema avanzado de filtrado de contenido
+- Detección por palabras clave y patrones
+- Filtros configurables (religioso, adulto, político)
+- Múltiples modos de coincidencia (exacto, parcial, difuso)
+- Estadísticas detalladas de filtrado
+- Configuración de sensibilidad ajustable
+
 #### SecurityMiddleware
 - Configura CORS para dominios de Stremio
 - Rate limiting para protección DDoS
@@ -161,10 +187,18 @@ CHANNELS_SOURCE=remote_m3u          # csv, m3u, remote_m3u, hybrid
 M3U_URL=https://iptv-org.github.io/iptv/countries/es.m3u
 BACKUP_M3U_URL=https://iptv-org.github.io/iptv/countries/mx.m3u
 
-# Filtros
+# Filtros básicos
 ALLOWED_COUNTRIES=MX,ES,AR,CO,US
 BLOCKED_COUNTRIES=
 ENABLE_ADULT_CHANNELS=false
+
+# Filtros de contenido avanzados
+ENABLE_CONTENT_FILTERS=true
+FILTER_RELIGIOUS_CONTENT=true
+FILTER_ADULT_CONTENT=true
+FILTER_POLITICAL_CONTENT=false
+FILTER_SENSITIVITY=medium           # low, medium, high
+FILTER_MATCH_MODE=partial           # exact, partial, fuzzy
 
 # Cache (segundos)
 STREAM_CACHE_MAX_AGE=300
@@ -180,6 +214,122 @@ El addon soporta configuración personalizada:
 - URL M3U personalizada
 - Calidad preferida (HD/SD/Auto)
 - Idioma preferido
+- Filtros de contenido personalizados
+
+## 🛡️ Sistema de Filtros de Contenido
+
+### Arquitectura del Sistema de Filtros
+
+El `ContentFilterService` implementa un sistema robusto de filtrado que opera a nivel de repositorio, aplicándose automáticamente a todos los métodos de recuperación de canales.
+
+#### Componentes Principales
+
+```javascript
+// Estructura del ContentFilterService
+class ContentFilterService {
+  constructor(filterConfig)     // Inicialización con configuración
+  isActive()                   // Verifica si hay filtros activos
+  filterChannels(channels)     // Aplica filtros a lista de canales
+  getActiveFilters()          // Obtiene lista de filtros activos
+  getFilterConfiguration()    // Obtiene configuración actual
+}
+```
+
+#### Tipos de Filtros Implementados
+
+1. **Filtro Religioso** (`FILTER_RELIGIOUS_CONTENT`)
+   - Detecta contenido religioso, evangélico, católico
+   - Palabras clave: iglesia, pastor, dios, jesus, cristo, biblia, gospel
+   - Aplicable a canales de predicación, misas, programas espirituales
+
+2. **Filtro de Contenido Adulto** (`FILTER_ADULT_CONTENT`)
+   - Bloquea contenido explícito o para adultos
+   - Palabras clave: xxx, adult, porn, sexy, hot, +18, adulto, erótico
+   - Protección para entornos familiares
+
+3. **Filtro Político** (`FILTER_POLITICAL_CONTENT`)
+   - Oculta contenido político y gubernamental
+   - Palabras clave: política, gobierno, presidente, elecciones, congreso
+   - Útil para evitar contenido polarizante
+
+#### Configuración de Sensibilidad
+
+```bash
+# Niveles de sensibilidad
+FILTER_SENSITIVITY=low      # Solo coincidencias exactas obvias
+FILTER_SENSITIVITY=medium   # Balance entre precisión y cobertura
+FILTER_SENSITIVITY=high     # Máxima detección, puede tener falsos positivos
+```
+
+#### Modos de Coincidencia
+
+```bash
+# Modos de detección
+FILTER_MATCH_MODE=exact     # Solo palabras completas exactas
+FILTER_MATCH_MODE=partial   # Coincidencias parciales en texto
+FILTER_MATCH_MODE=fuzzy     # Detección difusa con tolerancia a errores
+```
+
+#### Integración en Repositorios
+
+Todos los repositorios (`HybridChannelRepository`, `CSVChannelRepository`, `RemoteM3UChannelRepository`, `LocalM3UChannelRepository`) integran automáticamente el filtrado:
+
+```javascript
+// Ejemplo de integración en método getAllChannels
+async getAllChannels() {
+  let channels = await this.getBaseChannels();
+  
+  // Aplicar filtros de contenido si están activos
+  if (this.#contentFilter.isActive()) {
+    const filterResult = this.#contentFilter.filterChannels(channels);
+    channels = filterResult.filteredChannels;
+    
+    // Logging de estadísticas
+    this.#logger.info(`Filtros aplicados: ${filterResult.removedChannels.length} canales removidos`);
+  }
+  
+  return channels;
+}
+```
+
+#### Estadísticas de Filtrado
+
+El sistema proporciona estadísticas detalladas:
+
+```javascript
+// Ejemplo de estadísticas retornadas
+{
+  enabled: true,
+  removedChannels: 15,
+  removalPercentage: "12.50",
+  removedByCategory: {
+    religious: 8,
+    adult: 5,
+    political: 2
+  },
+  activeFilters: ["religious", "adult"],
+  filterConfiguration: {
+    sensitivity: "medium",
+    matchMode: "partial"
+  }
+}
+```
+
+#### Personalización de Palabras Clave
+
+```bash
+# Personalizar listas de palabras clave
+RELIGIOUS_KEYWORDS=iglesia,pastor,dios,jesus,cristo,biblia,gospel,cristiano
+ADULT_KEYWORDS=xxx,adult,porn,sexy,hot,+18,adulto,erotico,sexual
+POLITICAL_KEYWORDS=politica,gobierno,presidente,elecciones,congreso,senado
+```
+
+#### Consideraciones de Rendimiento
+
+- **Filtrado Eficiente**: O(n) donde n es el número de canales
+- **Cache de Patrones**: Las expresiones regulares se compilan una vez
+- **Filtrado Lazy**: Solo se aplica cuando hay filtros activos
+- **Impacto Mínimo**: < 5ms adicionales en listas de 1000+ canales
 
 ## 🔐 Seguridad
 

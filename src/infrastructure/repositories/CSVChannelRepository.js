@@ -7,6 +7,7 @@ import { createReadStream } from 'fs';
 import csv from 'csv-parser';
 import { ChannelRepository, RepositoryError, ChannelNotFoundError } from '../../domain/repositories/ChannelRepository.js';
 import { Channel } from '../../domain/entities/Channel.js';
+import ContentFilterService from '../../domain/services/ContentFilterService.js';
 
 /**
  * Repositorio de canales basado en archivo CSV
@@ -25,6 +26,7 @@ export class CSVChannelRepository extends ChannelRepository {
   #lastLoadTime = null;
   #deactivatedChannels = new Set();
   #validatedChannels = new Map(); // channelId -> timestamp
+  #contentFilter; // Servicio de filtrado de contenido
 
   /**
    * @param {string} filePath - Ruta al archivo CSV
@@ -36,6 +38,9 @@ export class CSVChannelRepository extends ChannelRepository {
     this.#filePath = filePath;
     this.#config = config;
     this.#logger = logger;
+    
+    // Inicializar servicio de filtrado de contenido
+    this.#contentFilter = new ContentFilterService(config.filters);
   }
 
   /**
@@ -209,7 +214,26 @@ export class CSVChannelRepository extends ChannelRepository {
    */
   async getAllChannels() {
     await this.#refreshIfNeeded();
-    return this.#filterActiveChannels([...this.#channels]);
+    let channels = this.#filterActiveChannels([...this.#channels]);
+    
+    // Aplicar filtros de contenido si están activos
+    if (this.#contentFilter.isActive()) {
+      const beforeCount = channels.length;
+      channels = this.#contentFilter.filterChannels(channels);
+      const afterCount = channels.length;
+      const removedCount = beforeCount - afterCount;
+      
+      if (removedCount > 0) {
+        const stats = this.#contentFilter.getFilteringStats();
+        this.#logger.info(`Filtros de contenido aplicados: ${removedCount} canales removidos`, {
+          religious: stats.removedByCategory.religious,
+          adult: stats.removedByCategory.adult,
+          political: stats.removedByCategory.political
+        });
+      }
+    }
+    
+    return channels;
   }
 
   /**
@@ -235,7 +259,14 @@ export class CSVChannelRepository extends ChannelRepository {
     const channels = this.#channels.filter(channel => 
       channel.genre.toLowerCase() === genre.toLowerCase()
     );
-    return this.#filterActiveChannels(channels);
+    let filteredChannels = this.#filterActiveChannels(channels);
+    
+    // Aplicar filtros de contenido si están activos
+    if (this.#contentFilter.isActive()) {
+      filteredChannels = this.#contentFilter.filterChannels(filteredChannels);
+    }
+    
+    return filteredChannels;
   }
 
   /**
@@ -248,7 +279,14 @@ export class CSVChannelRepository extends ChannelRepository {
       channel.country.toLowerCase().includes(country.toLowerCase()) ||
       country.toLowerCase().includes(channel.country.toLowerCase())
     );
-    return this.#filterActiveChannels(channels);
+    let filteredChannels = this.#filterActiveChannels(channels);
+    
+    // Aplicar filtros de contenido si están activos
+    if (this.#contentFilter.isActive()) {
+      filteredChannels = this.#contentFilter.filterChannels(filteredChannels);
+    }
+    
+    return filteredChannels;
   }
 
   /**
@@ -260,7 +298,14 @@ export class CSVChannelRepository extends ChannelRepository {
     const channels = this.#channels.filter(channel => 
       channel.language.toLowerCase() === language.toLowerCase()
     );
-    return this.#filterActiveChannels(channels);
+    let filteredChannels = this.#filterActiveChannels(channels);
+    
+    // Aplicar filtros de contenido si están activos
+    if (this.#contentFilter.isActive()) {
+      filteredChannels = this.#contentFilter.filterChannels(filteredChannels);
+    }
+    
+    return filteredChannels;
   }
 
   /**
@@ -280,7 +325,14 @@ export class CSVChannelRepository extends ChannelRepository {
              channel.genre.toLowerCase().includes(term) ||
              channel.country.toLowerCase().includes(term);
     });
-    return this.#filterActiveChannels(channels);
+    let filteredChannels = this.#filterActiveChannels(channels);
+    
+    // Aplicar filtros de contenido si están activos
+    if (this.#contentFilter.isActive()) {
+      filteredChannels = this.#contentFilter.filterChannels(filteredChannels);
+    }
+    
+    return filteredChannels;
   }
 
   /**
@@ -289,7 +341,13 @@ export class CSVChannelRepository extends ChannelRepository {
   async getChannelsPaginated(skip = 0, limit = 20) {
     await this.#refreshIfNeeded();
     
-    const activeChannels = this.#filterActiveChannels([...this.#channels]);
+    let activeChannels = this.#filterActiveChannels([...this.#channels]);
+    
+    // Aplicar filtros de contenido si están activos
+    if (this.#contentFilter.isActive()) {
+      activeChannels = this.#contentFilter.filterChannels(activeChannels);
+    }
+    
     return activeChannels.slice(Math.max(0, skip), Math.max(0, skip) + limit);
   }
 
@@ -336,7 +394,13 @@ export class CSVChannelRepository extends ChannelRepository {
     const skip = Math.max(0, filters.skip || 0);
     const limit = Math.max(1, Math.min(100, filters.limit || 20));
     
-    const activeChannels = this.#filterActiveChannels(filteredChannels);
+    let activeChannels = this.#filterActiveChannels(filteredChannels);
+    
+    // Aplicar filtros de contenido si están activos
+    if (this.#contentFilter.isActive()) {
+      activeChannels = this.#contentFilter.filterChannels(activeChannels);
+    }
+    
     return activeChannels.slice(skip, skip + limit);
   }
 
@@ -389,7 +453,14 @@ export class CSVChannelRepository extends ChannelRepository {
    */
   async getChannelsCount() {
     await this.#refreshIfNeeded();
-    return this.#channels.length;
+    let activeChannels = this.#filterActiveChannels([...this.#channels]);
+    
+    // Aplicar filtros de contenido si están activos
+    if (this.#contentFilter.isActive()) {
+      activeChannels = this.#contentFilter.filterChannels(activeChannels);
+    }
+    
+    return activeChannels.length;
   }
 
   /**

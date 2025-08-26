@@ -124,7 +124,14 @@ export class TVAddonConfig {
         allowedCountries: this.#parseCountryList(process.env.ALLOWED_COUNTRIES),
         blockedCountries: this.#parseCountryList(process.env.BLOCKED_COUNTRIES),
         defaultLanguage: process.env.DEFAULT_LANGUAGE || 'es',
-        supportedLanguages: this.#parseLanguageList(process.env.SUPPORTED_LANGUAGES)
+        supportedLanguages: this.#parseLanguageList(process.env.SUPPORTED_LANGUAGES),
+        // Filtros de contenido
+        filterReligiousContent: process.env.FILTER_RELIGIOUS_CONTENT === 'true',
+        filterAdultContent: process.env.FILTER_ADULT_CONTENT === 'true',
+        filterPoliticalContent: process.env.FILTER_POLITICAL_CONTENT === 'true',
+        religiousKeywords: this.#parseKeywordList(process.env.RELIGIOUS_KEYWORDS),
+        adultKeywords: this.#parseKeywordList(process.env.ADULT_KEYWORDS),
+        politicalKeywords: this.#parseKeywordList(process.env.POLITICAL_KEYWORDS)
       },
 
       // Configuración de cache optimizada para streams en vivo según SDK
@@ -195,6 +202,17 @@ export class TVAddonConfig {
   #parseLanguageList(languageList) {
     if (!languageList) return [];
     return languageList.split(',').map(l => l.trim().toLowerCase()).filter(l => l.length > 0);
+  }
+
+  /**
+   * Parsea lista de palabras clave desde variable de entorno
+   * @private
+   * @param {string} keywordList 
+   * @returns {string[]}
+   */
+  #parseKeywordList(keywordList) {
+    if (!keywordList) return [];
+    return keywordList.split(',').map(k => k.trim().toLowerCase()).filter(k => k.length > 0);
   }
 
 
