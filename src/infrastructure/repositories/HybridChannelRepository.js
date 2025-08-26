@@ -9,6 +9,8 @@ import { RemoteM3UChannelRepository } from './RemoteM3UChannelRepository.js';
 import { LocalM3UChannelRepository } from './LocalM3UChannelRepository.js';
 import { M3UParserService } from '../parsers/M3UParserService.js';
 import ContentFilterService from '../../domain/services/ContentFilterService.js';
+import { HttpsToHttpConversionService } from '../../domain/services/HttpsToHttpConversionService.js';
+import { StreamHealthService } from '../services/StreamHealthService.js';
 
 /**
  * Repositorio híbrido que combina múltiples fuentes de canales
@@ -35,6 +37,7 @@ export class HybridChannelRepository extends ChannelRepository {
   #deactivatedChannels = new Set();
   #validatedChannels = new Map(); // channelId -> timestamp
   #contentFilter; // Servicio de filtrado de contenido
+  #httpsToHttpService; // Servicio de conversión HTTPS a HTTP
 
   /**
    * @param {string} csvPath - Ruta al archivo CSV local
@@ -49,6 +52,12 @@ export class HybridChannelRepository extends ChannelRepository {
     
     // Inicializar servicio de filtrado de contenido
     this.#contentFilter = new ContentFilterService(config.filters);
+    
+    // Inicializar servicio de salud de streams
+    const streamHealthService = new StreamHealthService(config, logger);
+    
+    // Inicializar servicio de conversión HTTPS a HTTP
+    this.#httpsToHttpService = new HttpsToHttpConversionService(config, streamHealthService, logger);
     
     // Crear repositorio CSV
     this.#csvRepository = new CSVChannelRepository(csvPath, config, logger);
@@ -266,7 +275,34 @@ export class HybridChannelRepository extends ChannelRepository {
 
   async getAllChannels() {
     await this.#refreshIfNeeded();
-    const activeChannels = this.#filterActiveChannels([...this.#channels]);
+    let activeChannels = this.#filterActiveChannels([...this.#channels]);
+    
+    // Aplicar conversión HTTPS a HTTP si está habilitada
+    if (this.#httpsToHttpService.isEnabled()) {
+      this.#logger.info('Aplicando conversión HTTPS a HTTP y validación de streams...');
+      
+      try {
+        const conversionResult = await this.#httpsToHttpService.processChannels(activeChannels, {
+          concurrency: this.#config.validation?.maxValidationConcurrency || 10,
+          showProgress: true,
+          onlyWorkingHttp: true
+        });
+        
+        // Log estadísticas de conversión
+        this.#logger.info(`Conversión HTTPS a HTTP completada: ${conversionResult.stats.total} canales procesados, ${conversionResult.stats.converted} convertidos, ${conversionResult.stats.httpWorking} validados`);
+        
+        if (conversionResult.stats.failed > 0) {
+          this.#logger.warn(`${conversionResult.stats.failed} canales fallaron en la conversión/validación`);
+        }
+        
+        // Usar los canales procesados (ya filtrados por onlyWorkingHttp: true)
+        activeChannels = conversionResult.processed;
+        
+      } catch (error) {
+        this.#logger.error('Error durante conversión HTTPS a HTTP:', error);
+        // En caso de error, continuar con canales originales
+      }
+    }
     
     // Aplicar filtros de contenido si están activos
     if (this.#contentFilter.hasActiveFilters()) {

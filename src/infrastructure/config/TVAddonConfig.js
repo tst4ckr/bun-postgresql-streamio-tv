@@ -159,7 +159,12 @@ export class TVAddonConfig {
         streamValidationTimeout: parseInt(process.env.STREAM_VALIDATION_TIMEOUT) || 10,
         validationBatchSize: parseInt(process.env.VALIDATION_BATCH_SIZE) || 50,
         validateAllChannels: process.env.VALIDATE_ALL_CHANNELS !== 'false',
-        maxValidationConcurrency: parseInt(process.env.MAX_VALIDATION_CONCURRENCY) || 10
+        maxValidationConcurrency: parseInt(process.env.MAX_VALIDATION_CONCURRENCY) || 10,
+        // Configuración de conversión HTTPS a HTTP
+        convertHttpsToHttp: process.env.CONVERT_HTTPS_TO_HTTP === 'true',
+        validateHttpConversion: process.env.VALIDATE_HTTP_CONVERSION === 'true',
+        httpConversionTimeout: parseInt(process.env.HTTP_CONVERSION_TIMEOUT) || 5,
+        httpConversionMaxRetries: parseInt(process.env.HTTP_CONVERSION_MAX_RETRIES) || 2
       },
 
 
