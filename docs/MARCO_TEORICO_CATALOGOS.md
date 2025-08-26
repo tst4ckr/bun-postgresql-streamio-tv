@@ -415,7 +415,326 @@ const ESTRUCTURA_CHINA = {
 - **Paginación inteligente**: Agrupación por relevancia geográfica
 - **Compresión de metadatos**: Optimización para caracteres Unicode
 
-### 11. Conclusiones Actualizadas
+### 11. Estrategias de Enriquecimiento para Canales "Unknown"
+
+#### Problema Identificado
+
+Aproximadamente el 70% de los canales en el catálogo tienen la categoría "Undefined" o "Unknown", representando una oportunidad significativa para el enriquecimiento automático de metadatos.
+
+#### Técnicas de Enriquecimiento Automático
+
+##### 1. Análisis de URL y Dominio
+
+```javascript
+const analizarDominio = (url) => {
+  const patrones = {
+    // Patrones geográficos
+    china: /\.(cn|com\.cn)$|chinese|cctv|cgtn/i,
+    taiwan: /\.(tw|com\.tw)$|taiwan|formosa/i,
+    korea: /\.(kr|co\.kr)$|korea|sbs|kbs|mbc/i,
+    japan: /\.(jp|co\.jp)$|japan|nhk|fuji/i,
+    
+    // Patrones temáticos
+    deportes: /sport|football|soccer|basketball|tennis/i,
+    noticias: /news|noticias|info|cnn|bbc/i,
+    musica: /music|radio|fm|am/i,
+    infantil: /kids|children|cartoon|disney/i,
+    religioso: /church|gospel|christian|islamic|buddhist/i,
+    
+    // Patrones de calidad
+    hd: /hd|1080|720/i,
+    uhd: /4k|uhd|2160/i
+  };
+  
+  const metadata = {
+    region: null,
+    categoria: null,
+    calidad: 'SD',
+    confianza: 0
+  };
+  
+  // Análisis de dominio
+  for (const [region, patron] of Object.entries(patrones)) {
+    if (patron.test(url)) {
+      if (['china', 'taiwan', 'korea', 'japan'].includes(region)) {
+        metadata.region = region;
+        metadata.confianza += 0.3;
+      } else if (['deportes', 'noticias', 'musica', 'infantil', 'religioso'].includes(region)) {
+        metadata.categoria = region;
+        metadata.confianza += 0.4;
+      } else if (['hd', 'uhd'].includes(region)) {
+        metadata.calidad = region.toUpperCase();
+        metadata.confianza += 0.2;
+      }
+    }
+  }
+  
+  return metadata;
+};
+```
+
+##### 2. Extracción de Metadatos de Página Web
+
+```javascript
+const urlMetadata = require('url-metadata');
+const extruct = require('extruct');
+
+const enriquecerMetadatos = async (canal) => {
+  try {
+    // Extraer URL base del stream
+    const urlBase = extraerUrlBase(canal.url);
+    
+    if (!urlBase) return canal;
+    
+    // Obtener metadatos básicos
+    const metadata = await urlMetadata(urlBase, {
+      timeout: 5000,
+      descriptionLength: 200
+    });
+    
+    // Extraer datos estructurados
+    const datosEstructurados = await extruct.extract(metadata.responseBody, {
+      base_url: urlBase,
+      syntaxes: ['opengraph', 'microdata', 'json-ld']
+    });
+    
+    return {
+      ...canal,
+      metadatos_enriquecidos: {
+        titulo_pagina: metadata.title,
+        descripcion: metadata.description,
+        idioma: metadata.language,
+        imagen: metadata.image,
+        datos_estructurados: datosEstructurados,
+        fecha_extraccion: new Date().toISOString()
+      }
+    };
+    
+  } catch (error) {
+    console.warn(`Error enriqueciendo ${canal.name}:`, error.message);
+    return canal;
+  }
+};
+
+const extraerUrlBase = (streamUrl) => {
+  try {
+    const url = new URL(streamUrl);
+    return `${url.protocol}//${url.hostname}`;
+  } catch {
+    return null;
+  }
+};
+```
+
+##### 3. Análisis de Nombre del Canal
+
+```javascript
+const analizarNombreCanal = (nombre) => {
+  const patrones = {
+    // Patrones de idioma/región
+    chino: /[\u4e00-\u9fff]|CCTV|CGTN|Phoenix|凤凰|央视/,
+    arabe: /[\u0600-\u06ff]|Al\s|العربية|الجزيرة/,
+    coreano: /[\uac00-\ud7af]|KBS|SBS|MBC|JTBC/,
+    japones: /[\u3040-\u309f\u30a0-\u30ff]|NHK|Fuji|TBS/,
+    
+    // Patrones temáticos específicos
+    deportes: /Sport|Football|Soccer|Basketball|Tennis|ESPN|Fox Sports|Eurosport/i,
+    noticias: /News|CNN|BBC|Fox News|Sky News|Al Jazeera|Noticias/i,
+    musica: /Music|MTV|VH1|Radio|FM|Música/i,
+    peliculas: /Movie|Cinema|Film|Cine|Hollywood/i,
+    infantil: /Kids|Children|Cartoon|Disney|Nickelodeon|Infantil/i,
+    documentales: /Discovery|National Geographic|History|Documentary/i,
+    
+    // Patrones de ubicación específica
+    local: /TV\s*\d+|Canal\s*\d+|Local|Municipal|Regional/i,
+    nacional: /Nacional|National|Federal|Central/i
+  };
+  
+  const resultado = {
+    idioma_detectado: null,
+    categoria_detectada: null,
+    alcance: null,
+    confianza: 0
+  };
+  
+  for (const [tipo, patron] of Object.entries(patrones)) {
+    if (patron.test(nombre)) {
+      if (['chino', 'arabe', 'coreano', 'japones'].includes(tipo)) {
+        resultado.idioma_detectado = tipo;
+        resultado.confianza += 0.4;
+      } else if (['local', 'nacional'].includes(tipo)) {
+        resultado.alcance = tipo;
+        resultado.confianza += 0.2;
+      } else {
+        resultado.categoria_detectada = tipo;
+        resultado.confianza += 0.3;
+      }
+    }
+  }
+  
+  return resultado;
+};
+```
+
+##### 4. Sistema de Clasificación por Machine Learning
+
+```javascript
+const clasificarPorML = async (canal) => {
+  // Preparar características para el modelo
+  const caracteristicas = {
+    // Características de URL
+    dominio: extraerDominio(canal.url),
+    tld: extraerTLD(canal.url),
+    longitud_url: canal.url.length,
+    
+    // Características de nombre
+    longitud_nombre: canal.name.length,
+    tiene_numeros: /\d/.test(canal.name),
+    tiene_caracteres_especiales: /[^a-zA-Z0-9\s]/.test(canal.name),
+    
+    // Características de metadatos existentes
+    tiene_logo: !!canal['tvg-logo'],
+    calidad_detectada: extraerCalidad(canal.name),
+    
+    // Características de horario
+    disponibilidad: canal.name.includes('[Not 24/7]') ? 'limitada' : 'completa',
+    geo_bloqueado: canal.name.includes('[Geo-blocked]')
+  };
+  
+  // Aquí se integraría con un modelo de ML entrenado
+  // Por ahora, usamos reglas heurísticas
+  return clasificarHeuristico(caracteristicas);
+};
+
+const clasificarHeuristico = (caracteristicas) => {
+  let puntuaciones = {
+    deportes: 0,
+    noticias: 0,
+    entretenimiento: 0,
+    musica: 0,
+    infantil: 0,
+    documentales: 0,
+    religioso: 0,
+    general: 0.1 // Puntuación base
+  };
+  
+  // Aplicar reglas de puntuación
+  if (caracteristicas.dominio.includes('sport')) puntuaciones.deportes += 0.5;
+  if (caracteristicas.dominio.includes('news')) puntuaciones.noticias += 0.5;
+  if (caracteristicas.dominio.includes('music')) puntuaciones.musica += 0.5;
+  
+  // Retornar la categoría con mayor puntuación
+  const categoriaPredicta = Object.keys(puntuaciones).reduce((a, b) => 
+    puntuaciones[a] > puntuaciones[b] ? a : b
+  );
+  
+  return {
+    categoria: categoriaPredicta,
+    confianza: puntuaciones[categoriaPredicta],
+    puntuaciones_todas: puntuaciones
+  };
+};
+```
+
+##### 5. Pipeline de Enriquecimiento Completo
+
+```javascript
+const enriquecerCanalCompleto = async (canal) => {
+  const resultado = {
+    ...canal,
+    enriquecimiento: {
+      timestamp: new Date().toISOString(),
+      metodos_aplicados: [],
+      confianza_total: 0,
+      categoria_sugerida: null,
+      region_sugerida: null,
+      metadatos_adicionales: {}
+    }
+  };
+  
+  try {
+    // 1. Análisis de dominio
+    const analisisDominio = analizarDominio(canal.url);
+    if (analisisDominio.confianza > 0.3) {
+      resultado.enriquecimiento.metodos_aplicados.push('analisis_dominio');
+      resultado.enriquecimiento.confianza_total += analisisDominio.confianza;
+      if (analisisDominio.categoria) {
+        resultado.enriquecimiento.categoria_sugerida = analisisDominio.categoria;
+      }
+      if (analisisDominio.region) {
+        resultado.enriquecimiento.region_sugerida = analisisDominio.region;
+      }
+    }
+    
+    // 2. Análisis de nombre
+    const analisisNombre = analizarNombreCanal(canal.name);
+    if (analisisNombre.confianza > 0.3) {
+      resultado.enriquecimiento.metodos_aplicados.push('analisis_nombre');
+      resultado.enriquecimiento.confianza_total += analisisNombre.confianza;
+      if (analisisNombre.categoria_detectada && !resultado.enriquecimiento.categoria_sugerida) {
+        resultado.enriquecimiento.categoria_sugerida = analisisNombre.categoria_detectada;
+      }
+    }
+    
+    // 3. Extracción de metadatos web (solo para canales con alta prioridad)
+    if (resultado.enriquecimiento.confianza_total < 0.5) {
+      const metadatosWeb = await enriquecerMetadatos(canal);
+      if (metadatosWeb.metadatos_enriquecidos) {
+        resultado.enriquecimiento.metodos_aplicados.push('extraccion_web');
+        resultado.enriquecimiento.metadatos_adicionales = metadatosWeb.metadatos_enriquecidos;
+      }
+    }
+    
+    // 4. Clasificación por ML
+    const clasificacionML = await clasificarPorML(canal);
+    if (clasificacionML.confianza > 0.4) {
+      resultado.enriquecimiento.metodos_aplicados.push('clasificacion_ml');
+      if (!resultado.enriquecimiento.categoria_sugerida) {
+        resultado.enriquecimiento.categoria_sugerida = clasificacionML.categoria;
+      }
+    }
+    
+    // 5. Normalizar confianza total
+    resultado.enriquecimiento.confianza_total = Math.min(resultado.enriquecimiento.confianza_total, 1.0);
+    
+  } catch (error) {
+    console.error(`Error en enriquecimiento completo para ${canal.name}:`, error);
+  }
+  
+  return resultado;
+};
+```
+
+#### Estrategia de Implementación
+
+##### Fase 1: Enriquecimiento Básico (Semanas 1-2)
+- Implementar análisis de dominio y nombre
+- Procesar canales con mayor probabilidad de éxito
+- Crear base de datos de patrones conocidos
+
+##### Fase 2: Extracción Web (Semanas 3-4)
+- Implementar extracción de metadatos web
+- Configurar límites de rate limiting
+- Manejar errores y timeouts
+
+##### Fase 3: Machine Learning (Semanas 5-6)
+- Entrenar modelo con datos enriquecidos
+- Implementar clasificación automática
+- Validar resultados y ajustar parámetros
+
+##### Fase 4: Optimización (Semanas 7-8)
+- Optimizar rendimiento del pipeline
+- Implementar caché de resultados
+- Crear sistema de retroalimentación
+
+#### Métricas de Éxito
+
+- **Reducción de canales "Undefined"**: Objetivo 70% → 30%
+- **Precisión de clasificación**: >85% para categorías principales
+- **Tiempo de procesamiento**: <2 segundos por canal
+- **Cobertura de enriquecimiento**: >90% de canales procesados
+
+### 12. Conclusiones Actualizadas
 
 Este marco teórico actualizado propone una solución integral para organizar eficientemente más de 10,000 canales IPTV mediante:
 
@@ -424,11 +743,12 @@ Este marco teórico actualizado propone una solución integral para organizar ef
 3. **Arquitectura escalable y mantenible** optimizada para alto volumen de canales chinos
 4. **Experiencia de usuario optimizada** con navegación intuitiva multiidioma
 5. **Manejo especializado de contenido asiático** representando ~50% del total
+6. **Sistema de enriquecimiento automático** para reducir significativamente los canales "Undefined"
 
 #### Hallazgos Clave del Análisis Completo:
 - **Concentración geográfica**: China domina con ~40-50% del contenido
-- **Categorización deficiente**: ~70% de canales marcados como "Undefined"
-- **Oportunidad de mejora**: Gran potencial de optimización mediante clasificación automática
+- **Categorización deficiente**: ~70% de canales marcados como "Undefined" - oportunidad de enriquecimiento
+- **Oportunidad de mejora**: Gran potencial de optimización mediante clasificación automática y enriquecimiento de metadatos
 - **Diversidad global**: Cobertura de todos los continentes con patrones regionales específicos
 
-La implementación seguirá principios de arquitectura limpia, separación de responsabilidades y configuración centralizada, con especial énfasis en el manejo eficiente del contenido asiático y la clasificación automática inteligente.
+La implementación seguirá principios de arquitectura limpia, separación de responsabilidades y configuración centralizada, con especial énfasis en el manejo eficiente del contenido asiático, la clasificación automática inteligente y el enriquecimiento progresivo de metadatos para maximizar la utilidad del catálogo.
