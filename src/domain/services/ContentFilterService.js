@@ -8,6 +8,26 @@ class ContentFilterService {
    */
   constructor(filterConfig) {
     this.#filterConfig = filterConfig;
+    
+    // Patrones religiosos mejorados con alta precisión
+    this.#religiousPatterns = [
+      // Palabras específicamente religiosas (alta precisión)
+      /\b(iglesia|pastor|predicador|sermon|biblia|evangelio)\b/i,
+      /\b(cristiano|catolico|protestante|pentecostal|bautista|metodista)\b/i,
+      /\b(adventista|testigo|jehova|mormon|mision|ministerio)\b/i,
+      /\b(apostol|profeta|sacerdote|obispo|papa|vaticano)\b/i,
+      /\b(templo|catedral|capilla|santuario|altar|cruz|crucifijo)\b/i,
+      /\b(rosario|oracion|rezo|bendicion|milagro|santo|santa)\b/i,
+      /\b(virgen|maria|jesus|cristo|dios|señor|espiritu|trinidad)\b/i,
+      /\b(salvacion|pecado|perdon|gracia|gloria|aleluya|amen|hosanna)\b/i,
+      /\b(gospel|church|christian|catholic|protestant|baptist)\b/i,
+      /\b(methodist|pentecostal|evangelical|apostolic|ministry)\b/i,
+      /\b(priest|bishop|pope|temple|cathedral|chapel|sanctuary)\b/i,
+      /\b(prayer|blessing|miracle|saint|virgin|mary|jesus|christ)\b/i,
+      /\b(god|lord|spirit|trinity|salvation|sin|forgiveness)\b/i,
+      /\b(grace|glory|hallelujah|amen|hosanna)\b/i
+    ];
+    
     this.#initializeFilters();
   }
 
@@ -68,9 +88,12 @@ class ContentFilterService {
     // Obtener texto combinado del canal para análisis
     const channelText = this.#getChannelText(channel);
     
-    // Aplicar filtros según configuración
-    if (this.#filterConfig.filterReligiousContent && this.#containsReligiousContent(channelText)) {
-      return false;
+    // Verificar contenido religioso con lógica mejorada
+    if (this.#filterConfig.filterReligiousContent) {
+      const religiousResult = this.#checkReligiousContent(channel, channelText);
+      if (religiousResult.isReligious) {
+        return false;
+      }
     }
 
     if (this.#filterConfig.filterAdultContent && this.#containsAdultContent(channelText)) {
@@ -123,8 +146,62 @@ class ContentFilterService {
       textParts.push(...channel.genres);
     }
     
+    // Agregar URL/dominio para análisis de contenido
+    if (channel.url) {
+      try {
+        // Extraer dominio de la URL
+        const url = new URL(channel.url);
+        const domain = url.hostname.toLowerCase();
+        textParts.push(domain);
+        
+        // También agregar la URL completa para análisis más detallado
+        textParts.push(channel.url.toLowerCase());
+      } catch (error) {
+        // Si la URL no es válida, agregar como texto plano
+        textParts.push(channel.url.toLowerCase());
+      }
+    }
+    
+    // Agregar stream URL si es diferente de la URL principal
+    if (channel.stream && channel.stream !== channel.url) {
+      try {
+        const streamUrl = new URL(channel.stream);
+        const streamDomain = streamUrl.hostname.toLowerCase();
+        textParts.push(streamDomain);
+        textParts.push(channel.stream.toLowerCase());
+      } catch (error) {
+        textParts.push(channel.stream.toLowerCase());
+      }
+    }
+    
     return textParts.join(' ').toLowerCase();
   }
+
+  /**
+    * Verifica si el canal contiene contenido religioso con lógica mejorada
+    * @private
+    * @param {Object} channel
+    * @param {string} text
+    * @returns {Object}
+    */
+   #checkReligiousContent(channel, text) {
+     // Lista de excepciones conocidas que no deben ser filtradas
+     const exceptions = ['telefe', 'telefonica', 'telefilm', 'telefutura'];
+     
+     // Verificar si el canal está en la lista de excepciones
+     const channelName = (channel.name || '').toLowerCase();
+     if (exceptions.some(exception => channelName.includes(exception))) {
+       return { isReligious: false, reason: 'exception' };
+     }
+     
+     // Verificar patrones religiosos con mayor precisión
+     const hasReligiousPattern = this.#matchesPatterns(text, this.#religiousPatterns);
+     
+     return {
+       isReligious: hasReligiousPattern,
+       reason: hasReligiousPattern ? 'pattern_match' : 'no_match'
+     };
+   }
 
   /**
    * Verifica si el texto contiene contenido religioso

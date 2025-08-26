@@ -308,6 +308,99 @@ El sistema proporciona estadísticas detalladas:
     political: 2
   },
   activeFilters: ["religious", "adult"],
+  totalChannelsProcessed: 120
+}
+```
+
+### Ejemplos de Configuración de Filtros
+
+#### Configuración Familiar Estricta
+```bash
+# Máxima protección para entornos familiares
+ENABLE_CONTENT_FILTERS=true
+FILTER_RELIGIOUS_CONTENT=true
+FILTER_ADULT_CONTENT=true
+FILTER_POLITICAL_CONTENT=true
+FILTER_SENSITIVITY=high
+FILTER_MATCH_MODE=fuzzy
+
+# Palabras clave personalizadas adicionales
+CUSTOM_RELIGIOUS_KEYWORDS=evangelio,misa,oración,santo,bendición
+CUSTOM_ADULT_KEYWORDS=sensual,provocativo,nocturno,+21
+CUSTOM_POLITICAL_KEYWORDS=campaña,partido,senado,diputado
+```
+
+#### Configuración Moderada
+```bash
+# Solo filtrado de contenido adulto
+ENABLE_CONTENT_FILTERS=true
+FILTER_RELIGIOUS_CONTENT=false
+FILTER_ADULT_CONTENT=true
+FILTER_POLITICAL_CONTENT=false
+FILTER_SENSITIVITY=medium
+FILTER_MATCH_MODE=partial
+```
+
+#### Configuración Permisiva
+```bash
+# Filtrado mínimo, solo contenido explícito obvio
+ENABLE_CONTENT_FILTERS=true
+FILTER_RELIGIOUS_CONTENT=false
+FILTER_ADULT_CONTENT=true
+FILTER_POLITICAL_CONTENT=false
+FILTER_SENSITIVITY=low
+FILTER_MATCH_MODE=exact
+```
+
+#### Sin Filtros
+```bash
+# Contenido completo sin restricciones
+ENABLE_CONTENT_FILTERS=false
+```
+
+### Verificación de Filtros
+
+Para verificar que los filtros funcionan correctamente:
+
+```bash
+# Ejecutar prueba básica de filtros
+node scripts/test-csv-priority.js
+
+# Ejecutar prueba completa con estadísticas
+node scripts/test-csv-priority-with-m3u.js
+```
+
+### Personalización Avanzada
+
+#### Palabras Clave por Categoría
+
+```bash
+# Religioso - Detecta contenido religioso/espiritual
+CUSTOM_RELIGIOUS_KEYWORDS=iglesia,pastor,dios,jesus,cristo,biblia,gospel,evangelio,misa,oración,santo,bendición,católico,protestante,cristiano
+
+# Adulto - Detecta contenido para adultos
+CUSTOM_ADULT_KEYWORDS=xxx,adult,porn,sexy,hot,+18,adulto,erótico,sensual,provocativo,nocturno,+21,desnudo,íntimo
+
+# Político - Detecta contenido político/gubernamental
+CUSTOM_POLITICAL_KEYWORDS=política,gobierno,presidente,elecciones,congreso,senado,diputado,campaña,partido,ministerio,alcalde,gobernador
+```
+
+#### Configuración de Logging
+
+```bash
+# Habilitar logging detallado de filtros
+FILTER_DETAILED_LOGGING=true
+FILTER_LOG_REMOVED_CHANNELS=true
+FILTER_LOG_STATISTICS=true
+```
+
+Esto generará logs como:
+```
+[INFO] Filtros de contenido aplicados: 12 canales removidos (8.33%)
+[INFO] Por categoría: religioso=5, adulto=4, político=3
+[INFO] Canales removidos: Canal Religioso TV, Contenido Adulto Plus, Noticias Políticas
+```
+  activeFilters: ["religious", "adult"],
   filterConfiguration: {
     sensitivity: "medium",
     matchMode: "partial"
