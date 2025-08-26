@@ -1,5 +1,5 @@
 id,name,stream_url,logo,genre,country,language,quality,type,is_active
-tv_dw_espanol,DW Español,http://dwamdstream104.akamaized.net/hls/live/2015530/dwstream104/index.m3u8?uid=,https://upload.wikimedia.org/wikipedia/commons/thumb/7/75/Deutsche_Welle_symbol_2012.svg/512px-Deutsche_Welle_symbol_2012.svg.png,News,Alemania,es,HD,tv,true
+tv_dw_espanol,DW Español,http://dwamdstream104.akamaized.net/hls/live/2015530/dwstream104/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/7/75/Deutsche_Welle_symbol_2012.svg/512px-Deutsche_Welle_symbol_2012.svg.png,News,Alemania,es,HD,tv,true
 tv_latina,Latina,http://live-evg25.tv360.bitel.com.pe/bitel/latina/playlist.m3u8?uid=,https://img-evg3.tv360.bitel.com.pe/peru-image/2025/01/02/23/1735835839459/7f9e192ef8c6_480_270.png,General,Peru,es,HD,tv,true
 tv_america_hd,América TV HD,http://live-evg25.tv360.bitel.com.pe/bitel/americatvhd/playlist.m3u8?uid=,https://img-evg3.tv360.bitel.com.pe/peru-image/2025/01/02/23/1735835681860/c6e8bd31225d_480_270.png,General,Peru,es,HD,tv,true
 tv_latina_noticias,Latina Noticias,http://live-evg25.tv360.bitel.com.pe/bitel/latinanoticias/chunks.m3u8?uid=,https://img-evg3.tv360.bitel.com.pe/peru-image/2025/01/02/23/1735835839459/7f9e192ef8c6_480_270.png,News,Peru,es,HD,tv,true
