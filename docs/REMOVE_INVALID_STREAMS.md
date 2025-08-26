@@ -2,7 +2,9 @@
 
 ## Descripción General
 
-La funcionalidad `REMOVE_INVALID_STREAMS` permite la desactivación automática de canales con streams inválidos durante el proceso de validación periódica. Esta característica mejora la calidad del servicio al filtrar automáticamente contenido no funcional.
+La funcionalidad `REMOVE_INVALID_STREAMS` permite la desactivación automática de canales con streams inválidos durante el proceso de validación manual. Esta característica mejora la calidad del servicio al filtrar automáticamente contenido no funcional.
+
+**NOTA IMPORTANTE**: La validación periódica automática ha sido removida del sistema por solicitud del usuario. Solo está disponible la validación manual al inicio del sistema.
 
 ## Repositorio Híbrido (Nuevo)
 
@@ -43,7 +45,8 @@ REMOVE_INVALID_STREAMS=true
 ```javascript
 validation: {
   removeInvalidStreams: process.env.REMOVE_INVALID_STREAMS === 'true',
-  validateStreamsIntervalHours: parseInt(process.env.VALIDATE_STREAMS_INTERVAL_HOURS) || 24
+  validateStreamsOnStartup: process.env.VALIDATE_STREAMS_ON_STARTUP === 'true'
+  // Nota: validateStreamsIntervalMinutes removido - sin validación periódica
 }
 ```
 

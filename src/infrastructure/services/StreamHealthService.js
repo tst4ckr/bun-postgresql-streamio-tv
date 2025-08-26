@@ -17,18 +17,28 @@ export class StreamHealthService {
   }
 
   /**
-   * Verifica un stream por URL usando HEAD y fallback GET parcial
+   * Verifica un stream por URL usando HEAD y fallback GET parcial con retry
    * @param {string} url
    * @param {string} channelId - ID del canal para procesamiento de BITEL
+   * @param {number} retryCount - Número de reintentos (interno)
    * @returns {Promise<{ok:boolean,status?:number,contentType?:string,reason?:string}>}
    */
-  async checkStream(url, channelId = null) {
+  async checkStream(url, channelId = null, retryCount = 0) {
     // Procesar URL con BitelUidService si es necesario
     const processedUrl = channelId ? this.#bitelUidService.processStreamUrl(url, channelId) : url;
     
-    const timeoutMs = (this.#config.validation.streamValidationTimeout || 10) * 1000;
+    // Timeout progresivo: 15s, 25s, 35s según mejores prácticas Context7
+    const baseTimeout = this.#config.validation.streamValidationTimeout || 15;
+    const timeoutMs = (baseTimeout + (retryCount * 10)) * 1000;
+    const maxRetries = this.#config.validation.maxValidationRetries || 2;
+    
     const headers = { 'User-Agent': 'Stremio-TV-IPTV-Addon/1.0.0' };
     const isValidStatus = status => status >= 200 && status < 400;
+    const isRetryableError = (error) => {
+      const retryableCodes = ['ECONNRESET', 'ETIMEDOUT', 'ENOTFOUND', 'ECONNREFUSED'];
+      return retryableCodes.includes(error.code) || 
+             (error.response && [502, 503, 504, 408, 429].includes(error.response.status));
+    };
 
     try {
       // Intento HEAD primero
@@ -38,7 +48,8 @@ export class StreamHealthService {
           ok: true, 
           status: head.status, 
           contentType: head.headers['content-type'],
-          processedUrl: processedUrl
+          processedUrl: processedUrl,
+          attempts: retryCount + 1
         };
       }
 
@@ -55,19 +66,32 @@ export class StreamHealthService {
             ok: true, 
             status: get.status, 
             contentType: get.headers['content-type'],
-            processedUrl: processedUrl
+            processedUrl: processedUrl,
+            attempts: retryCount + 1
           }
         : { 
             ok: false, 
             status: get.status, 
             reason: 'HTTP_NOT_OK',
-            processedUrl: processedUrl
+            processedUrl: processedUrl,
+            attempts: retryCount + 1
           };
     } catch (error) {
+      // Implementar retry con backoff exponencial para errores temporales
+      if (retryCount < maxRetries && isRetryableError(error)) {
+        const backoffMs = Math.min(1000 * Math.pow(2, retryCount), 5000);
+        this.#logger.debug(`Reintentando validación de ${channelId || 'stream'} en ${backoffMs}ms (intento ${retryCount + 1}/${maxRetries + 1})`);
+        
+        await new Promise(resolve => setTimeout(resolve, backoffMs));
+        return this.checkStream(url, channelId, retryCount + 1);
+      }
+      
       return { 
         ok: false, 
         reason: error.code || error.message,
-        processedUrl: processedUrl
+        processedUrl: processedUrl,
+        attempts: retryCount + 1,
+        finalError: true
       };
     }
   }
