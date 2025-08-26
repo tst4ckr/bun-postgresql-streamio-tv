@@ -30,23 +30,48 @@ async function testFilterWorkingChannels() {
   try {
     logger.info('🧪 Iniciando prueba de filtrado de canales HTTP funcionales...');
     
+    // Configurar variables de entorno para pruebas
+    process.env.CSV_PATH = join(projectRoot, 'data', 'channels.csv');
+    process.env.REMOTE_M3U_URLS = 'https://raw.githubusercontent.com/Free-TV/IPTV/master/playlists/playlist_spain.m3u8';
+    process.env.CONVERT_HTTPS_TO_HTTP = 'true';
+    process.env.VALIDATE_HTTP_CONVERSION = 'true';
+    process.env.HTTP_CONVERSION_TIMEOUT = '5';
+    process.env.HTTP_CONVERSION_MAX_RETRIES = '1';
+    process.env.VALIDATE_STREAMS_ON_STARTUP = 'false';
+    process.env.REMOVE_INVALID_STREAMS = 'false';
+    process.env.STREAM_VALIDATION_TIMEOUT = '5';
+    process.env.FILTER_RELIGIOUS_CONTENT = 'false';
+    process.env.FILTER_ADULT_CONTENT = 'false';
+    process.env.FILTER_POLITICAL_CONTENT = 'false';
+    
     // Cargar configuración
-    const config = await loadConfig();
+    const config = new TVAddonConfig();
     
     // Verificar que la conversión HTTPS a HTTP esté habilitada
-    if (!config.httpsToHttp?.enabled) {
+    if (!config.validation.convertHttpsToHttp) {
       logger.error('❌ La conversión HTTPS a HTTP debe estar habilitada en .env');
-      logger.info('💡 Agrega: HTTPS_TO_HTTP_ENABLED=true');
+      logger.info('💡 Agrega: CONVERT_HTTPS_TO_HTTP=true');
       process.exit(1);
     }
     
-    // Inicializar servicios
-    const streamHealthService = new StreamHealthService(config, logger);
-    const httpsToHttpService = new HttpsToHttpConversionService(config, logger, streamHealthService);
-    const contentFilterService = new ContentFilterService(config, logger);
-    
     // Inicializar repositorio
-    const repository = new HybridChannelRepository(config, logger, httpsToHttpService, contentFilterService);
+    const csvPath = config.dataSources.channelsFile;
+    const m3uSources = [
+      config.dataSources.m3uUrl,
+      config.dataSources.backupM3uUrl,
+      config.dataSources.m3uUrl1,
+      config.dataSources.m3uUrl2,
+      config.dataSources.m3uUrl3,
+      config.dataSources.localM3uLatam1,
+      config.dataSources.localM3uLatam2,
+      config.dataSources.localM3uLatam3,
+      config.dataSources.localM3uLatam4
+    ].filter(url => url && url.trim() !== '');
+    
+    const repository = new HybridChannelRepository(csvPath, m3uSources, config, logger);
+    
+    logger.info('Inicializando repositorio...');
+    await repository.initialize();
     
     logger.info('1. Obteniendo todos los canales sin filtrar...');
     const allChannels = await repository.getAllChannelsUnfiltered();

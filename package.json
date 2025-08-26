@@ -32,15 +32,16 @@
   "author": "Stremio TV IPTV Addon",
   "license": "MIT",
   "dependencies": {
-    "stremio-addon-sdk": "^1.6.8",
-    "express": "^4.18.2",
-    "helmet": "^7.1.0",
-    "cors": "^2.8.5",
-    "express-rate-limit": "^7.1.5",
-    "dotenv": "^16.3.1",
-    "csv-parser": "^3.0.0",
     "axios": "^1.6.2",
-    "node-cron": "^3.0.3"
+    "cors": "^2.8.5",
+    "csv-parser": "^3.0.0",
+    "csv-writer": "^1.6.0",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "express-rate-limit": "^7.1.5",
+    "helmet": "^7.1.0",
+    "node-cron": "^3.0.3",
+    "stremio-addon-sdk": "^1.6.8"
   },
   "devDependencies": {
     "eslint": "^8.55.0",
