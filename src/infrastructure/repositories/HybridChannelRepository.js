@@ -141,14 +141,47 @@ export class HybridChannelRepository extends ChannelRepository {
         }
       }
       
-      // 4. Validación temprana de streams M3U (CSV tiene prioridad absoluta)
-      let validatedM3uChannels = allM3uChannels;
+      // 4. Aplicar conversión HTTPS→HTTP a todos los canales M3U ANTES de deduplicación
+      let processedM3uChannels = allM3uChannels;
+      
+      if (this.#httpsToHttpService.isEnabled() && allM3uChannels.length > 0) {
+        this.#logger.info(`🔄 Iniciando conversión HTTPS→HTTP para ${allM3uChannels.length} canales M3U con ${this.#config.validation?.maxValidationConcurrency || 10} workers`);
+        
+        try {
+          const conversionResult = await this.#httpsToHttpService.processChannels(allM3uChannels, {
+            concurrency: this.#config.validation?.maxValidationConcurrency || 10,
+            showProgress: true,
+            onlyWorkingHttp: true
+          });
+          
+          // Usar solo canales que pasaron la conversión/validación
+          processedM3uChannels = conversionResult.processed;
+          
+          this.#logger.info(
+            `✅ Conversión HTTPS→HTTP completada: ${conversionResult.stats.total} procesados, ${conversionResult.stats.converted} convertidos, ${conversionResult.stats.httpWorking} (${(conversionResult.stats.httpWorking/conversionResult.stats.total*100).toFixed(1)}%) funcionales HTTP`
+          );
+          
+          if (conversionResult.stats.failed > 0) {
+            this.#logger.warn(`${conversionResult.stats.failed} canales fallaron conversión/validación`);
+          }
+          
+        } catch (error) {
+          this.#logger.error('Error durante conversión HTTPS→HTTP:', error);
+          // En caso de error, continuar con canales originales
+          processedM3uChannels = allM3uChannels;
+        }
+      } else {
+        this.#logger.info('🔄 Conversión HTTPS→HTTP deshabilitada, usando canales originales');
+      }
+      
+      // 5. Validación temprana de streams M3U procesados (CSV tiene prioridad absoluta)
+      let validatedM3uChannels = processedM3uChannels;
       
       if (this.#streamValidationService.isEnabled()) {
-        this.#logger.info(`🔍 Iniciando validación temprana de ${allM3uChannels.length} canales M3U (CSV exento)...`);
+        this.#logger.info(`🔍 Iniciando validación temprana de ${processedM3uChannels.length} canales M3U (CSV exento)...`);
         
         const validationResult = await this.#streamValidationService.validateChannelsBatch(
-          allM3uChannels,
+          processedM3uChannels,
           {
             concurrency: this.#config.validation?.earlyValidationConcurrency || 15,
             showProgress: true
@@ -165,7 +198,7 @@ export class HybridChannelRepository extends ChannelRepository {
           .map(result => result.channel);
         
         this.#logger.info(
-          `✅ Validación M3U completada: ${validM3uChannels.length} válidos, ${invalidM3uChannels.length} inválidos de ${allM3uChannels.length} totales`
+          `✅ Validación M3U completada: ${validM3uChannels.length} válidos, ${invalidM3uChannels.length} inválidos de ${processedM3uChannels.length} totales`
         );
         this.#logger.info(
           `📋 Canales CSV preservados: ${csvChannels.length} (prioridad absoluta, sin validación)`
@@ -238,7 +271,7 @@ export class HybridChannelRepository extends ChannelRepository {
       this.#channelMap.clear();
       csvChannels.forEach(channel => this.#channelMap.set(channel.id, channel));
       
-      // Cargar todos los canales M3U para validación
+      // Cargar todos los canales M3U para procesamiento
       const allM3uChannels = [];
       for (let i = 0; i < this.#m3uRepositories.length; i++) {
         const m3uRepo = this.#m3uRepositories[i];
@@ -252,14 +285,39 @@ export class HybridChannelRepository extends ChannelRepository {
         }
       }
       
+      // Aplicar conversión HTTPS→HTTP durante refresco ANTES de deduplicación
+      let processedM3uChannels = allM3uChannels;
+      
+      if (this.#httpsToHttpService.isEnabled() && allM3uChannels.length > 0) {
+        this.#logger.info(`🔄 Conversión HTTPS→HTTP durante refresco: ${allM3uChannels.length} canales M3U`);
+        
+        try {
+          const conversionResult = await this.#httpsToHttpService.processChannels(allM3uChannels, {
+            concurrency: this.#config.validation?.maxValidationConcurrency || 10,
+            showProgress: false, // Menos verbose durante refresco
+            onlyWorkingHttp: true
+          });
+          
+          processedM3uChannels = conversionResult.processed;
+          
+          this.#logger.info(
+            `✅ Conversión refresco completada: ${conversionResult.stats.total} procesados, ${conversionResult.stats.httpWorking} (${(conversionResult.stats.httpWorking/conversionResult.stats.total*100).toFixed(1)}%) funcionales`
+          );
+          
+        } catch (error) {
+          this.#logger.error('Error durante conversión HTTPS→HTTP en refresco:', error);
+          processedM3uChannels = allM3uChannels;
+        }
+      }
+      
       // Validación temprana M3U durante refresco (CSV preservado)
-      let validatedM3uChannels = allM3uChannels;
+      let validatedM3uChannels = processedM3uChannels;
       
       if (this.#streamValidationService.isEnabled()) {
-        this.#logger.info(`🔍 Validación temprana durante refresco: ${allM3uChannels.length} canales M3U (CSV exento)`);
+        this.#logger.info(`🔍 Validación temprana durante refresco: ${processedM3uChannels.length} canales M3U (CSV exento)`);
         
         const validationResult = await this.#streamValidationService.validateChannelsBatch(
-          allM3uChannels,
+          processedM3uChannels,
           {
             concurrency: this.#config.validation?.earlyValidationConcurrency || 15,
             showProgress: false // Menos verbose durante refresco
