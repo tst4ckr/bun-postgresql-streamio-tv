@@ -164,7 +164,17 @@ export class TVAddonConfig {
         convertHttpsToHttp: process.env.CONVERT_HTTPS_TO_HTTP === 'true',
         validateHttpConversion: process.env.VALIDATE_HTTP_CONVERSION === 'true',
         httpConversionTimeout: parseInt(process.env.HTTP_CONVERSION_TIMEOUT) || 5,
-        httpConversionMaxRetries: parseInt(process.env.HTTP_CONVERSION_MAX_RETRIES) || 2
+        httpConversionMaxRetries: parseInt(process.env.HTTP_CONVERSION_MAX_RETRIES) || 2,
+        // Configuración de validación temprana
+        enableEarlyValidation: process.env.ENABLE_EARLY_VALIDATION === 'true',
+        earlyValidationTimeout: parseInt(process.env.EARLY_VALIDATION_TIMEOUT) || 8,
+        earlyValidationConcurrency: parseInt(process.env.EARLY_VALIDATION_CONCURRENCY) || 10,
+        earlyValidationBatchSize: parseInt(process.env.EARLY_VALIDATION_BATCH_SIZE) || 100,
+        earlyValidationCacheSize: parseInt(process.env.EARLY_VALIDATION_CACHE_SIZE) || 1000,
+        earlyValidationCacheTtl: parseInt(process.env.EARLY_VALIDATION_CACHE_TTL) || 3600,
+        // Configuración de deduplicación inteligente
+        enableIntelligentDeduplication: process.env.ENABLE_INTELLIGENT_DEDUPLICATION === 'true',
+        deduplicationStrategy: process.env.DEDUPLICATION_STRATEGY || 'prioritize_working'
       },
 
 

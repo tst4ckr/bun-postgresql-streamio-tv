@@ -250,6 +250,33 @@ export class Channel {
   }
 
   /**
+   * Actualiza el estado de validación del canal
+   * @param {boolean} isValid - Si el canal es válido
+   * @returns {Channel} Nueva instancia con estado actualizado
+   */
+  withValidationStatus(isValid) {
+    const newChannel = new Channel({
+      id: this.#id,
+      name: this.#name,
+      logo: this.#logo,
+      streamUrl: this.#streamUrl,
+      genre: this.#genre,
+      country: this.#country,
+      language: this.#language,
+      quality: this.#quality,
+      type: this.#type,
+      isActive: isValid,
+      metadata: this.#metadata
+    });
+    
+    if (isValid) {
+      newChannel.#lastValidated = new Date();
+    }
+    
+    return newChannel;
+  }
+
+  /**
    * Desactiva el canal
    * @returns {Channel} Nueva instancia desactivada
    */

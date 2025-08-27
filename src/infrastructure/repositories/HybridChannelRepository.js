@@ -9,8 +9,9 @@ import { RemoteM3UChannelRepository } from './RemoteM3UChannelRepository.js';
 import { LocalM3UChannelRepository } from './LocalM3UChannelRepository.js';
 import { M3UParserService } from '../parsers/M3UParserService.js';
 import ContentFilterService from '../../domain/services/ContentFilterService.js';
-import { HttpsToHttpConversionService } from '../../domain/services/HttpsToHttpConversionService.js';
+import { HttpsToHttpConversionService } from '../services/HttpsToHttpConversionService.js';
 import { StreamHealthService } from '../services/StreamHealthService.js';
+import { StreamValidationService } from '../services/StreamValidationService.js';
 
 /**
  * Repositorio híbrido que combina múltiples fuentes de canales
@@ -38,6 +39,7 @@ export class HybridChannelRepository extends ChannelRepository {
   #validatedChannels = new Map(); // channelId -> timestamp
   #contentFilter; // Servicio de filtrado de contenido
   #httpsToHttpService; // Servicio de conversión HTTPS a HTTP
+  #streamValidationService; // Servicio de validación temprana de streams
 
   /**
    * @param {string} csvPath - Ruta al archivo CSV local
@@ -58,6 +60,9 @@ export class HybridChannelRepository extends ChannelRepository {
     
     // Inicializar servicio de conversión HTTPS a HTTP
     this.#httpsToHttpService = new HttpsToHttpConversionService(config, streamHealthService, logger);
+    
+    // Inicializar servicio de validación temprana de streams
+    this.#streamValidationService = new StreamValidationService(config, logger);
     
     // Crear repositorio CSV
     this.#csvRepository = new CSVChannelRepository(csvPath, config, logger);
@@ -121,46 +126,96 @@ export class HybridChannelRepository extends ChannelRepository {
       this.#channelMap.clear();
       csvChannels.forEach(channel => this.#channelMap.set(channel.id, channel));
       
-      // 3. Cargar canales de URLs M3U remotas
+      // 3. Cargar canales de URLs M3U remotas (sin deduplicación aún)
+      const allM3uChannels = [];
       for (let i = 0; i < this.#m3uRepositories.length; i++) {
         const m3uRepo = this.#m3uRepositories[i];
         try {
           await m3uRepo.initialize();
           const m3uChannels = await m3uRepo.getAllChannelsUnfiltered();
-          
-          // Agregar solo canales que no existan en CSV (CSV tiene prioridad absoluta)
-          let addedCount = 0;
-          let duplicatesOmitted = 0;
-          const duplicateChannels = [];
-          
-          m3uChannels.forEach(channel => {
-            if (!this.#channelMap.has(channel.id)) {
-              this.#channels.push(channel);
-              this.#channelMap.set(channel.id, channel);
-              addedCount++;
-            } else {
-              duplicatesOmitted++;
-              duplicateChannels.push(channel.name);
-            }
-          });
-          
-          this.#logger.info(`M3U ${i + 1}: ${addedCount} canales nuevos agregados (${m3uChannels.length} total, ${duplicatesOmitted} duplicados omitidos por prioridad CSV)`);
-          
-          if (duplicatesOmitted > 0 && duplicateChannels.length <= 10) {
-            this.#logger.debug(`Canales duplicados omitidos de M3U ${i + 1}: ${duplicateChannels.join(', ')}`);
-          } else if (duplicatesOmitted > 10) {
-            this.#logger.debug(`Canales duplicados omitidos de M3U ${i + 1}: ${duplicateChannels.slice(0, 10).join(', ')} y ${duplicatesOmitted - 10} más...`);
-          }
-          
+          allM3uChannels.push(...m3uChannels);
+          this.#logger.info(`M3U ${i + 1}: ${m3uChannels.length} canales cargados`);
         } catch (error) {
           this.#logger.error(`Error cargando M3U ${i + 1}:`, error);
           // Continuar con las siguientes fuentes aunque una falle
         }
       }
       
+      // 4. Validación temprana de streams (antes de deduplicación)
+      const allChannelsForValidation = [...csvChannels, ...allM3uChannels];
+      let validatedChannels = allChannelsForValidation;
+      
+      if (this.#streamValidationService.isEnabled()) {
+        this.#logger.info(`🔍 Iniciando validación temprana de ${allChannelsForValidation.length} canales...`);
+        
+        const validationResult = await this.#streamValidationService.validateChannelsBatch(
+          allChannelsForValidation,
+          {
+            concurrency: this.#config.validation?.earlyValidationConcurrency || 15,
+            showProgress: true
+          }
+        );
+        
+        // Filtrar solo canales válidos para deduplicación inteligente
+        const validChannels = validationResult.validated
+          .filter(result => result.isValid)
+          .map(result => result.channel);
+        
+        const invalidChannels = validationResult.validated
+          .filter(result => !result.isValid)
+          .map(result => result.channel);
+        
+        this.#logger.info(
+          `✅ Validación completada: ${validChannels.length} válidos, ${invalidChannels.length} inválidos de ${allChannelsForValidation.length} totales`
+        );
+        
+        // Usar solo canales válidos para deduplicación
+        validatedChannels = validChannels;
+        
+        // Marcar canales inválidos como desactivados
+        invalidChannels.forEach(channel => {
+          this.#deactivatedChannels.add(channel.id);
+        });
+        
+      } else {
+        this.#logger.info('🔄 Validación temprana deshabilitada, usando todos los canales');
+      }
+      
+      // 5. Deduplicación inteligente con prioridad CSV
+      this.#channels = [];
+      this.#channelMap.clear();
+      
+      // Separar canales por fuente para deduplicación inteligente
+      const csvValidated = validatedChannels.filter(ch => csvChannels.some(csv => csv.id === ch.id));
+      const m3uValidated = validatedChannels.filter(ch => !csvChannels.some(csv => csv.id === ch.id));
+      
+      // Agregar CSV primero (prioridad absoluta)
+      csvValidated.forEach(channel => {
+        this.#channels.push(channel);
+        this.#channelMap.set(channel.id, channel);
+      });
+      
+      // Agregar M3U solo si no existe en CSV
+      let m3uAdded = 0;
+      let m3uDuplicates = 0;
+      
+      m3uValidated.forEach(channel => {
+        if (!this.#channelMap.has(channel.id)) {
+          this.#channels.push(channel);
+          this.#channelMap.set(channel.id, channel);
+          m3uAdded++;
+        } else {
+          m3uDuplicates++;
+        }
+      });
+      
+      this.#logger.info(
+        `📊 Deduplicación completada: ${csvValidated.length} CSV + ${m3uAdded} M3U = ${this.#channels.length} canales finales (${m3uDuplicates} duplicados M3U omitidos)`
+      );
+      
       this.#lastLoadTime = new Date();
       this.#isInitialized = true;
-      this.#logger.info(`Repositorio híbrido inicializado: ${this.#channels.length} canales totales`);
+      this.#logger.info(`🎯 Repositorio híbrido inicializado: ${this.#channels.length} canales válidos y únicos`);
       
     } catch (error) {
       throw new RepositoryError(`Error inicializando repositorio híbrido: ${error.message}`, error);
@@ -185,42 +240,85 @@ export class HybridChannelRepository extends ChannelRepository {
       this.#channelMap.clear();
       csvChannels.forEach(channel => this.#channelMap.set(channel.id, channel));
       
-      // Refrescar y agregar M3U (manteniendo prioridad CSV)
-      let totalM3uAdded = 0;
-      let totalM3uDuplicates = 0;
-      
+      // Cargar todos los canales M3U para validación
+      const allM3uChannels = [];
       for (let i = 0; i < this.#m3uRepositories.length; i++) {
         const m3uRepo = this.#m3uRepositories[i];
         try {
           await m3uRepo.refreshFromRemote();
           const m3uChannels = await m3uRepo.getAllChannelsUnfiltered();
-          
-          // Agregar solo canales que no existan en CSV (CSV mantiene prioridad)
-          let addedCount = 0;
-          let duplicatesCount = 0;
-          
-          m3uChannels.forEach(channel => {
-            if (!this.#channelMap.has(channel.id)) {
-              this.#channels.push(channel);
-              this.#channelMap.set(channel.id, channel);
-              addedCount++;
-            } else {
-              duplicatesCount++;
-            }
-          });
-          
-          totalM3uAdded += addedCount;
-          totalM3uDuplicates += duplicatesCount;
-          
-          this.#logger.debug(`Refresco M3U ${i + 1}: ${addedCount} nuevos, ${duplicatesCount} duplicados omitidos por prioridad CSV`);
-          
+          allM3uChannels.push(...m3uChannels);
+          this.#logger.debug(`Refresco M3U ${i + 1}: ${m3uChannels.length} canales cargados`);
         } catch (error) {
           this.#logger.error(`Error refrescando fuente M3U ${i + 1}:`, error);
         }
       }
       
+      // Validación temprana durante refresco
+      const allChannelsForValidation = [...csvChannels, ...allM3uChannels];
+      let validatedChannels = allChannelsForValidation;
+      
+      if (this.#streamValidationService.isEnabled()) {
+        this.#logger.info(`🔍 Validación temprana durante refresco: ${allChannelsForValidation.length} canales`);
+        
+        const validationResult = await this.#streamValidationService.validateChannelsBatch(
+          allChannelsForValidation,
+          {
+            concurrency: this.#config.validation?.earlyValidationConcurrency || 15,
+            showProgress: false // Menos verbose durante refresco
+          }
+        );
+        
+        const validChannels = validationResult.validated
+          .filter(result => result.isValid)
+          .map(result => result.channel);
+        
+        const invalidChannels = validationResult.validated
+          .filter(result => !result.isValid)
+          .map(result => result.channel);
+        
+        this.#logger.info(
+          `✅ Refresco validado: ${validChannels.length} válidos, ${invalidChannels.length} inválidos`
+        );
+        
+        validatedChannels = validChannels;
+        
+        // Actualizar canales desactivados
+        this.#deactivatedChannels.clear();
+        invalidChannels.forEach(channel => {
+          this.#deactivatedChannels.add(channel.id);
+        });
+      }
+      
+      // Deduplicación inteligente con prioridad CSV
+      this.#channels = [];
+      this.#channelMap.clear();
+      
+      const csvValidated = validatedChannels.filter(ch => csvChannels.some(csv => csv.id === ch.id));
+      const m3uValidated = validatedChannels.filter(ch => !csvChannels.some(csv => csv.id === ch.id));
+      
+      // Agregar CSV primero
+      csvValidated.forEach(channel => {
+        this.#channels.push(channel);
+        this.#channelMap.set(channel.id, channel);
+      });
+      
+      // Agregar M3U únicos
+      let totalM3uAdded = 0;
+      let totalM3uDuplicates = 0;
+      
+      m3uValidated.forEach(channel => {
+        if (!this.#channelMap.has(channel.id)) {
+          this.#channels.push(channel);
+          this.#channelMap.set(channel.id, channel);
+          totalM3uAdded++;
+        } else {
+          totalM3uDuplicates++;
+        }
+      });
+      
       if (this.#m3uRepositories.length > 0) {
-        this.#logger.info(`Refresco M3U completado: ${totalM3uAdded} canales agregados, ${totalM3uDuplicates} duplicados omitidos por prioridad CSV`);
+        this.#logger.info(`📊 Refresco completado: ${csvValidated.length} CSV + ${totalM3uAdded} M3U = ${this.#channels.length} canales (${totalM3uDuplicates} duplicados omitidos)`);
       }
       
       this.#lastLoadTime = new Date();
