@@ -141,39 +141,41 @@ export class HybridChannelRepository extends ChannelRepository {
         }
       }
       
-      // 4. Validación temprana de streams (antes de deduplicación)
-      const allChannelsForValidation = [...csvChannels, ...allM3uChannels];
-      let validatedChannels = allChannelsForValidation;
+      // 4. Validación temprana de streams M3U (CSV tiene prioridad absoluta)
+      let validatedM3uChannels = allM3uChannels;
       
       if (this.#streamValidationService.isEnabled()) {
-        this.#logger.info(`🔍 Iniciando validación temprana de ${allChannelsForValidation.length} canales...`);
+        this.#logger.info(`🔍 Iniciando validación temprana de ${allM3uChannels.length} canales M3U (CSV exento)...`);
         
         const validationResult = await this.#streamValidationService.validateChannelsBatch(
-          allChannelsForValidation,
+          allM3uChannels,
           {
             concurrency: this.#config.validation?.earlyValidationConcurrency || 15,
             showProgress: true
           }
         );
         
-        // Filtrar solo canales válidos para deduplicación inteligente
-        const validChannels = validationResult.validated
+        // Filtrar solo canales M3U válidos
+        const validM3uChannels = validationResult.validated
           .filter(result => result.isValid)
           .map(result => result.channel);
         
-        const invalidChannels = validationResult.validated
+        const invalidM3uChannels = validationResult.validated
           .filter(result => !result.isValid)
           .map(result => result.channel);
         
         this.#logger.info(
-          `✅ Validación completada: ${validChannels.length} válidos, ${invalidChannels.length} inválidos de ${allChannelsForValidation.length} totales`
+          `✅ Validación M3U completada: ${validM3uChannels.length} válidos, ${invalidM3uChannels.length} inválidos de ${allM3uChannels.length} totales`
+        );
+        this.#logger.info(
+          `📋 Canales CSV preservados: ${csvChannels.length} (prioridad absoluta, sin validación)`
         );
         
-        // Usar solo canales válidos para deduplicación
-        validatedChannels = validChannels;
+        // Usar solo canales M3U válidos para deduplicación
+        validatedM3uChannels = validM3uChannels;
         
-        // Marcar canales inválidos como desactivados
-        invalidChannels.forEach(channel => {
+        // Marcar solo canales M3U inválidos como desactivados
+        invalidM3uChannels.forEach(channel => {
           this.#deactivatedChannels.add(channel.id);
         });
         
@@ -181,25 +183,21 @@ export class HybridChannelRepository extends ChannelRepository {
         this.#logger.info('🔄 Validación temprana deshabilitada, usando todos los canales');
       }
       
-      // 5. Deduplicación inteligente con prioridad CSV
+      // 5. Deduplicación inteligente con prioridad CSV absoluta
       this.#channels = [];
       this.#channelMap.clear();
       
-      // Separar canales por fuente para deduplicación inteligente
-      const csvValidated = validatedChannels.filter(ch => csvChannels.some(csv => csv.id === ch.id));
-      const m3uValidated = validatedChannels.filter(ch => !csvChannels.some(csv => csv.id === ch.id));
-      
-      // Agregar CSV primero (prioridad absoluta)
-      csvValidated.forEach(channel => {
+      // Agregar TODOS los canales CSV primero (prioridad absoluta, sin validación)
+      csvChannels.forEach(channel => {
         this.#channels.push(channel);
         this.#channelMap.set(channel.id, channel);
       });
       
-      // Agregar M3U solo si no existe en CSV
+      // Agregar M3U validados solo si no existe en CSV
       let m3uAdded = 0;
       let m3uDuplicates = 0;
       
-      m3uValidated.forEach(channel => {
+      validatedM3uChannels.forEach(channel => {
         if (!this.#channelMap.has(channel.id)) {
           this.#channels.push(channel);
           this.#channelMap.set(channel.id, channel);
@@ -210,7 +208,7 @@ export class HybridChannelRepository extends ChannelRepository {
       });
       
       this.#logger.info(
-        `📊 Deduplicación completada: ${csvValidated.length} CSV + ${m3uAdded} M3U = ${this.#channels.length} canales finales (${m3uDuplicates} duplicados M3U omitidos)`
+        `📊 Deduplicación completada: ${csvChannels.length} CSV (preservados) + ${m3uAdded} M3U (validados) = ${this.#channels.length} canales finales (${m3uDuplicates} duplicados M3U omitidos)`
       );
       
       this.#lastLoadTime = new Date();
@@ -254,60 +252,66 @@ export class HybridChannelRepository extends ChannelRepository {
         }
       }
       
-      // Validación temprana durante refresco
-      const allChannelsForValidation = [...csvChannels, ...allM3uChannels];
-      let validatedChannels = allChannelsForValidation;
+      // Validación temprana M3U durante refresco (CSV preservado)
+      let validatedM3uChannels = allM3uChannels;
       
       if (this.#streamValidationService.isEnabled()) {
-        this.#logger.info(`🔍 Validación temprana durante refresco: ${allChannelsForValidation.length} canales`);
+        this.#logger.info(`🔍 Validación temprana durante refresco: ${allM3uChannels.length} canales M3U (CSV exento)`);
         
         const validationResult = await this.#streamValidationService.validateChannelsBatch(
-          allChannelsForValidation,
+          allM3uChannels,
           {
             concurrency: this.#config.validation?.earlyValidationConcurrency || 15,
             showProgress: false // Menos verbose durante refresco
           }
         );
         
-        const validChannels = validationResult.validated
+        const validM3uChannels = validationResult.validated
           .filter(result => result.isValid)
           .map(result => result.channel);
         
-        const invalidChannels = validationResult.validated
+        const invalidM3uChannels = validationResult.validated
           .filter(result => !result.isValid)
           .map(result => result.channel);
         
         this.#logger.info(
-          `✅ Refresco validado: ${validChannels.length} válidos, ${invalidChannels.length} inválidos`
+          `✅ Refresco M3U validado: ${validM3uChannels.length} válidos, ${invalidM3uChannels.length} inválidos`
+        );
+        this.#logger.info(
+          `📋 Canales CSV preservados durante refresco: ${csvChannels.length}`
         );
         
-        validatedChannels = validChannels;
+        validatedM3uChannels = validM3uChannels;
         
-        // Actualizar canales desactivados
+        // Actualizar solo canales M3U desactivados
+        // Limpiar solo los IDs de M3U, preservar cualquier estado de CSV
+        const csvChannelIds = new Set(csvChannels.map(ch => ch.id));
+        const currentDeactivated = Array.from(this.#deactivatedChannels)
+          .filter(id => csvChannelIds.has(id)); // Preservar estados CSV
+        
         this.#deactivatedChannels.clear();
-        invalidChannels.forEach(channel => {
+        currentDeactivated.forEach(id => this.#deactivatedChannels.add(id));
+        
+        invalidM3uChannels.forEach(channel => {
           this.#deactivatedChannels.add(channel.id);
         });
       }
       
-      // Deduplicación inteligente con prioridad CSV
+      // Deduplicación inteligente con prioridad CSV absoluta
       this.#channels = [];
       this.#channelMap.clear();
       
-      const csvValidated = validatedChannels.filter(ch => csvChannels.some(csv => csv.id === ch.id));
-      const m3uValidated = validatedChannels.filter(ch => !csvChannels.some(csv => csv.id === ch.id));
-      
-      // Agregar CSV primero
-      csvValidated.forEach(channel => {
+      // Agregar TODOS los canales CSV primero (prioridad absoluta)
+      csvChannels.forEach(channel => {
         this.#channels.push(channel);
         this.#channelMap.set(channel.id, channel);
       });
       
-      // Agregar M3U únicos
+      // Agregar M3U validados únicos
       let totalM3uAdded = 0;
       let totalM3uDuplicates = 0;
       
-      m3uValidated.forEach(channel => {
+      validatedM3uChannels.forEach(channel => {
         if (!this.#channelMap.has(channel.id)) {
           this.#channels.push(channel);
           this.#channelMap.set(channel.id, channel);
