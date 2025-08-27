@@ -553,7 +553,7 @@ LOG_LEVEL=debug bun run dev
 ## 🔄 Flujo de Actualización de Datos
 
 1. **Auto-actualización**: Repositorios remotos se actualizan cada `UPDATE_INTERVAL_HOURS`
-2. **Validación periódica**: Streams se validan cada `VALIDATE_STREAMS_INTERVAL_HOURS`
+2. **Validación manual**: Streams se validan solo al inicio del sistema o manualmente
 3. **Cache refresh**: Datos se recargan según `CACHE_CHANNELS_HOURS`
 4. **Failover automático**: Si falla M3U principal, usa backup
 

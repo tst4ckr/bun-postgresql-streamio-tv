@@ -107,11 +107,12 @@ graph TD
 - **Prioridad**: CSV local > M3U principal > M3U backup
 - **Acción**: Los duplicados se omiten automáticamente
 
-### 3. Validación Periódica
+### 3. Validación Manual
 
-- **Frecuencia**: Cada 15 minutos (configurable)
+- **Frecuencia**: Solo al inicio del sistema o manualmente
 - **Alcance**: Todos los canales de todas las fuentes
 - **Resultado**: Activación/desactivación automática según estado
+- **Nota**: La validación periódica automática ha sido removida
 
 ## Uso Práctico
 
@@ -297,11 +298,12 @@ node scripts/test-hybrid-repository.js
 **Síntoma**: Proceso de validación toma mucho tiempo
 **Solución**:
 ```bash
-# Reducir frecuencia de validación
-VALIDATE_STREAMS_INTERVAL_MINUTES=30
+# Deshabilitar validación al inicio si no es necesaria
+VALIDATE_STREAMS_ON_STARTUP=false
 
-# Validar por muestras en lugar de todos
-VALIDATE_ALL_CHANNELS=false
+# Ajustar configuración de validación
+STREAM_VALIDATION_TIMEOUT=15000
+MAX_VALIDATION_CONCURRENCY=5
 ```
 
 ### Logs de Diagnóstico

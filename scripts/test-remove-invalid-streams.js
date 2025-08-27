@@ -15,7 +15,8 @@ import { InvalidChannelManagementService } from '../src/application/services/Inv
 const TEST_CONFIG = {
   validation: {
     removeInvalidStreams: true,
-    validateStreamsIntervalHours: 1
+    validateStreamsOnStartup: true
+    // Nota: validateStreamsIntervalMinutes removido - sin validación periódica
   },
   dataSources: {
     type: 'csv',

@@ -111,51 +111,24 @@ async getChannelsPaginatedUnfiltered(skip, limit)
 - Los canales que dejen de funcionar pueden ser excluidos del conteo
 - Se mantiene la integridad de la lista original para futuras validaciones
 
-#### 3. Integración en Validación Periódica
+#### 3. Integración en Validación Manual
 
 **Ubicación**: `src/index.js` - método `#scheduleMaintenanceTasks`
 
+**NOTA**: La validación periódica automática ha sido removida. La validación solo se ejecuta:
+- Al inicio del sistema (si `VALIDATE_STREAMS_ON_STARTUP=true`)
+- Manualmente a través de endpoints de la API
+
 ```javascript
-if (validation.validateStreamsIntervalHours > 0) {
-  setInterval(async () => {
-    let report;
-    
-    if (validation.validateAllChannels) {
-      // Validar todos los canales en lotes (incluye desactivados)
-      const getChannelsFunction = (offset, limit) => 
-        this.#channelRepository.getChannelsPaginatedUnfiltered ?
-          this.#channelRepository.getChannelsPaginatedUnfiltered(offset, limit) :
-          this.#channelRepository.getChannelsPaginated(offset, limit);
-      
-      report = await this.#healthService.validateAllChannelsBatched(
-        getChannelsFunction,
-        {
-          batchSize: validation.validationBatchSize,
-          concurrency: validation.maxValidationConcurrency,
-          showProgress: true
-        }
-      );
-    } else {
-      // Validar muestra de la lista completa original (incluye desactivados)
-      const sample = this.#channelRepository.getChannelsPaginatedUnfiltered ? 
-        await this.#channelRepository.getChannelsPaginatedUnfiltered(0, 30) :
-        await this.#channelRepository.getChannelsPaginated(0, 30);
-      report = await this.#healthService.checkChannels(sample, 10, false);
-    }
-    
-    // Procesar resultados automáticamente
-    if (report.results) {
-      await this.#invalidChannelService.processValidationResults(report.results);
-    }
-  }, intervalMs);
-}
+// Código de validación periódica REMOVIDO
+// Solo queda disponible la validación manual y al inicio del sistema
 ```
 
 ## Flujo de Funcionamiento
 
-### 1. Validación Periódica
-1. El sistema ejecuta validación cada `validateStreamsIntervalHours`
-2. Se obtiene una muestra de canales (30 por defecto)
+### 1. Validación Manual
+1. La validación se ejecuta solo al inicio del sistema (si está habilitada) o manualmente
+2. Se obtiene una muestra de canales o todos los canales según configuración
 3. `StreamHealthService` valida cada canal concurrentemente
 4. Se generan resultados con estado `ok: true/false`
 
@@ -192,12 +165,15 @@ Cuando `REMOVE_INVALID_STREAMS=true`, los canales desactivados se excluyen de:
 # Habilitar desactivación automática
 REMOVE_INVALID_STREAMS=true
 
-# Intervalo de validación (horas)
-VALIDATE_STREAMS_INTERVAL_HOURS=24
+# Validación al inicio del sistema
+VALIDATE_STREAMS_ON_STARTUP=true
 
 # Configuración de validación de streams
-STREAM_VALIDATION_TIMEOUT=10000
-STREAM_VALIDATION_MAX_RETRIES=3
+STREAM_VALIDATION_TIMEOUT=15000
+STREAM_VALIDATION_MAX_RETRIES=2
+STREAM_VALIDATION_RETRY_DELAY=2000
+VALIDATION_BATCH_SIZE=50
+MAX_VALIDATION_CONCURRENCY=5
 ```
 
 ## Eventos Emitidos
