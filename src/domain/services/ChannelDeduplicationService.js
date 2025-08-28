@@ -191,6 +191,24 @@ export class ChannelDeduplicationService {
    * @returns {Promise<Array<Channel>>}
    */
   async #performDeduplication(channels) {
+    // Para criterios de similitud, necesitamos comparar todos los canales entre sí
+    if (this.#config.criteria === DeduplicationCriteria.NAME_SIMILARITY || 
+        this.#config.criteria === DeduplicationCriteria.URL_SIMILARITY ||
+        this.#config.criteria === DeduplicationCriteria.COMBINED) {
+      return await this.#performSimilarityBasedDeduplication(channels);
+    }
+    
+    // Para ID exacto, usar el algoritmo original más eficiente
+    return await this.#performExactKeyDeduplication(channels);
+  }
+
+  /**
+   * Deduplicación basada en claves exactas (más eficiente)
+   * @private
+   * @param {Array<Channel>} channels
+   * @returns {Promise<Array<Channel>>}
+   */
+  async #performExactKeyDeduplication(channels) {
     const channelMap = new Map();
     const processedIds = new Set();
 
@@ -226,6 +244,65 @@ export class ChannelDeduplicationService {
     }
 
     return Array.from(channelMap.values());
+  }
+
+  /**
+   * Deduplicación basada en similitud (compara todos los canales)
+   * @private
+   * @param {Array<Channel>} channels
+   * @returns {Promise<Array<Channel>>}
+   */
+  async #performSimilarityBasedDeduplication(channels) {
+    const uniqueChannels = [];
+    const removedChannels = [];
+
+    for (const channel of channels) {
+      let isDuplicate = false;
+      let duplicateIndex = -1;
+
+      // Comparar con todos los canales únicos existentes
+      for (let i = 0; i < uniqueChannels.length; i++) {
+        const existingChannel = uniqueChannels[i];
+        
+        if (this.#areChannelsDuplicate(existingChannel, channel)) {
+          isDuplicate = true;
+          duplicateIndex = i;
+          break;
+        }
+      }
+
+      if (isDuplicate) {
+        // Canal duplicado encontrado
+        const existingChannel = uniqueChannels[duplicateIndex];
+        const resolution = await this.#resolveConflict(existingChannel, channel);
+        
+        this.#metrics.addDuplicate(
+          channel.metadata?.source || 'unknown',
+          this.#config.criteria,
+          resolution.strategy
+        );
+
+        if (resolution.shouldReplace) {
+          // Reemplazar el canal existente
+          uniqueChannels[duplicateIndex] = resolution.selectedChannel;
+          removedChannels.push(existingChannel);
+          
+          if (resolution.strategy === 'hd_upgrade') {
+            this.#metrics.addHdUpgrade();
+            this.#logger.info(`🔄 Canal actualizado a HD: ${channel.name} (${existingChannel.quality.value} → ${channel.quality.value})`);
+          }
+        } else {
+          // Mantener el canal existente, ignorar el nuevo
+          removedChannels.push(channel);
+          this.#logger.warn(`[WARN] Canal duplicado ignorado: ${channel.id}`);
+        }
+      } else {
+        // Canal único, agregar a la lista
+        uniqueChannels.push(channel);
+      }
+    }
+
+    return uniqueChannels;
   }
 
   /**
