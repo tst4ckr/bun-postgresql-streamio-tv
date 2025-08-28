@@ -155,7 +155,6 @@ tv_canal_4_720p_geoblocked,Canal 4 (720p) [Geo-blocked],http://alba-cr-repretel-
 tv_canal_4_catalunya_1080p,Canal 4 Catalunya (1080p),http://limited35.todostreaming.es/live/mitjans-livestream.m3u8,,,,Auto,https://i.imgur.com/tQh8C3s.png,m3u,true,true
 tv_canal_4_mallorca_1080p,Canal 4 Mallorca (1080p),http://limited35.todostreaming.es/live/mitjans-livestream1.m3u8,,,,Auto,https://i.imgur.com/tQh8C3s.png,m3u,true,true
 tv_canal_45_576p,Canal 45 (576p),http://nlb1-live.emitstream.com/hls/625csn5et2iszm9oze65/master.m3u8,,,,Auto,https://i.imgur.com/yEfSnGt.png,m3u,true,true
-tv_canal_5_el_lder_720p_not_247,Canal 5 El Líder (720p) [Not 24/7],http://mdstrm.com/live-stream-playlist/6287fda8ea3b8b397d1ca2ed.m3u8,,,,Auto,https://i.imgur.com/4hEYFa9.png,m3u,true,true
 tv_canal_55_telemorisco_tv_720p,Canal 55 Telemorisco TV (720p),http://canal.mediaserver.com.co/live/telemorisco.m3u8,,,,Auto,https://i.imgur.com/9BwZyhM.jpg,m3u,true,true
 tv_canal_56_576p_not_247,Canal 56 (576p) [Not 24/7],http://videos.canal56.com/directe/stream/index.m3u8,,,,Auto,https://i.imgur.com/pwRVbCz.png,m3u,true,true
 tv_canal_56_720p,Canal 56 (720p),http://vdopanel.jlahozconsulting.com/p/3124/hybrid/play.m3u8,,,,Auto,https://i.imgur.com/HcLs5eM.png,m3u,true,true
@@ -308,7 +307,7 @@ tv_el_tiempo_tv_1080p_not_247,El Tiempo TV (1080p) [Not 24/7],http://ythls.armel
 tv_el_toro_tv_720p,El Toro TV (720p),http://streaming-1.eltorotv.com/lb0/eltorotv-streaming-web/index.m3u8,,,,Auto,https://upload.wikimedia.org/wikipedia/commons/9/93/Eltorotv.png,m3u,true,true
 tv_el_trece,El Trece,http://190.123.90.146:8000/play/a00n/index.m3u8?checkedby:iptvcat.com,,,,Auto,,m3u,true,true
 tv_el_trece_1080p,El Trece (1080p),http://live-01-02-eltrece.vodgc.net/eltrecetv/index.m3u8,,,,Auto,https://i.imgur.com/TrgBAdA.png,m3u,true,true
-tv_elytv_360p,ElyTV (360p),http://stmv1.srvsite.com/ely/ely/playlist.m3u8?checkedby:iptvcat.com,,,,Auto,https://i.imgur.com/1eHNe91.png,m3u,true,true
+tv_elytv_360p,ElyTV (360p),http://stmv1.srvsite.com/ely/ely/playlist.m3u8,,,,Auto,https://i.imgur.com/1eHNe91.png,m3u,true,true
 tv_energeek_720p_not_247,EnerGeek (720p) [Not 24/7],http://backend.energeek.cl/webtv/egretroweb/index.m3u8?token=ZZDemoIPTVGH,,,,Auto,https://cdn.energeek.cl/logos/Marca-512.png,m3u,true,true
 tv_energeek_fan,EnerGeek Fan,http://backend.energeek.cl/webtv/egfanweb/index.m3u8?token=ZZDemoIPTVGH&checkedby:iptvcat.com,,,,Auto,,m3u,true,true
 tv_energeek_radio_1080p,EnerGeek Radio (1080p),http://backend.energeek.cl/webtv/egradioweb/index.m3u8?token=ZZDemoIPTVGH,,,,Auto,https://i.imgur.com/euaoN1A.png,m3u,true,true
@@ -519,15 +518,13 @@ tv_nayarit_comunica,Nayarit Comunica,http://live.iplanay.gob.mx/hls/nayarittv.m3
 tv_nba_720p_geoblocked,NBA (720p) [Geo-blocked],http://aegis-cloudfront-1.tubi.video/c987b155-8d7e-4307-bd24-720bb2843d42/playlist.m3u8?checkedby:iptvcat.com,,,,HD,https://upload.wikimedia.org/wikipedia/en/thumb/d/d2/NBA_TV.svg/512px-NBA_TV.svg.png,m3u,true,true
 tv_nba_tv,NBA TV,http://fl3.moveonjoy.com/NBA_TV/index.m3u8?checkedby:iptvcat.com,,,,Auto,,m3u,true,true
 tv_nba_tv_canada_1080p,NBA TV Canada (1080p),http://user.scalecdn.co:8080/live/54706135/09221986/3092.m3u8?checkedby:iptvcat.com,,,,Auto,https://upload.wikimedia.org/wikipedia/en/a/a4/NBA_TV_Canada_2020.png,m3u,true,true
-tv_nbc_sports_philadelphia_720p,NBC Sports Philadelphia (720p),http://tvpass.org/live/nbc-sports-philadelphia/hd?checkedby:iptvcat.com,,,,HD,https://upload.wikimedia.org/wikipedia/commons/thumb/0/01/NBC_Sports_Philadelphia.png/512px-NBC_Sports_Philadelphia.png,m3u,true,false
+tv_nbc_sports_boston_1080p,NBC Sports Boston (1080p),http://tvpass.org/live/nbc-sports-boston/hd?checkedby:iptvcat.com,,,,HD,https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/NBC_Sports_Boston.png/512px-NBC_Sports_Boston.png,m3u,true,false
 tv_nbc_universo_west_720p,NBC Universo West (720p),http://190.11.225.124:5000/live/universo_hd/playlist.m3u8,,,,HD,https://i.imgur.com/RZ8pIKe.png,m3u,true,true
 tv_ncm_educational_kids_channel,NCM Educational & Kids Channel,http://reflect-npa.cablecast.tv/live-9/live/live.m3u8,,,,Auto,https://i.imgur.com/3YPvfPn.png,m3u,true,true
 tv_nctv_1080p,NCTV (1080p),http://pantera1-100gb-cl-movistar.dps.live/nctv/nctv.smil/playlist.m3u8,,,,Auto,https://i.imgur.com/oo5vDBv.png,m3u,true,true
 tv_negocios_tv_1080p,Negocios TV (1080p),http://streaming013.gestec-video.com/hls/negociostv.m3u8,,,,Auto,https://m.media-amazon.com/images/I/21HEgSJn2gL.png,m3u,true,true
-tv_nei_monggol_tv_children_channel,Nei Monggol TV Children Channel,http://play1-qk.nmtv.cn/live/1686560464515368.m3u8,,,,Auto,https://i.imgur.com/MOMEgMQ.png,m3u,true,true
 tv_net_tv_720p,NET TV (720p),http://unlimited1-us.dps.live/nettv/nettv.smil/playlist.m3u8,,,,Auto,https://i.imgur.com/IhJ0BjF.png,m3u,true,true
 tv_net_tv_720p_not_247,Net TV (720p) [Not 24/7],http://unlimited1-us.dps.live/nettv/nettv.smil/playlist.m3u8?checkedby:iptvcat.com,,,,Auto,,m3u,true,true
-tv_nfl_redzone_720p,NFL RedZone (720p),http://tvpass.org/live/NFLRedZone/hd?checkedby:iptvcat.com,,,,HD,,m3u,true,false
 tv_ng_federal_720p,NG Federal (720p),http://www.coninfo.net:1935/tvlink/live/playlist.m3u8,,,,Auto,https://i.imgur.com/lJCIqYn.png,m3u,true,true
 tv_nick_hd_1080p_not_247,Nick HD+ (1080p) [Not 24/7],http://116.90.120.149:8000/play/a0cw/index.m3u8,,,,Auto,https://i.imgur.com/nJPbTet.png,m3u,true,true
 tv_nick_jr_east,Nick Jr East,http://fl3.moveonjoy.com/NICK_JR/index.m3u8,,,,Auto,https://i.imgur.com/KT4tdQs.png,m3u,true,true
@@ -542,6 +539,7 @@ tv_nicoya_tv_720p_not_247,Nicoya TV (720p) [Not 24/7],http://59ef525c24caa.strea
 tv_ninja_kidz_tv,Ninja Kidz TV,http://playworksdigital-ninjakidztv-1-us.xumo.wurl.tv/playlist.m3u8,,,,SD,https://i.imgur.com/7EngqUi.png,m3u,true,true
 tv_nms_media_1080p,NMás Media (1080p),http://channel04-notusa.akamaized.net/hls/live/2029754-b/event01/index.m3u8,,,,Auto,https://i.imgur.com/rFRx3d5.png,m3u,true,true
 tv_nortena_mix,Norteña Mix,http://live-evg25.tv360.bitel.com.pe/bitel/nortenamix/playlist.m3u8?uid=,,,,HD,https://img-evg3.tv360.bitel.com.pe/peru-image/2025/08/19/05/1755554671660/df4bd224bd53_480_270.jpg,csv,true,true
+tv_nos_pas_720p_not_247,Nos Païs (720p) [Not 24/7],http://5f86a49aedff6.streamlock.net/nos_pais_24_7/nos_pais_24_7/playlist.m3u8,,,,Auto,https://i.imgur.com/ZUob2uZ.png,m3u,true,true
 tv_nova_era_tv,Nova Era TV,http://wz3.dnip.com.br:1935/novaeratv/novaeratv.sdp/live.m3u8?checkedby:iptvcat.com,,,,SD,https://i.imgur.com/IK3F9Uq.png,m3u,true,true
 tv_nova_era_tv_1080p_not_247,Nova Era TV (1080p) [Not 24/7],http://wz3.dnip.com.br:1935/novaeratv/novaeratv.sdp/live.m3u8,,,,SD,https://i.imgur.com/IK3F9Uq.png,m3u,true,true
 tv_nova,Nova TV,http://live-evg25.tv360.bitel.com.pe/bitel/novatv/playlist.m3u8?uid=,,,,HD,https://img-evg3.tv360.bitel.com.pe/peru-image/2025/04/16/02/1744744885980/fe2d329ae60f_480_270.png,csv,true,true
@@ -642,7 +640,6 @@ tv_pluto_tv_vaya_semanita_720p,Pluto TV Vaya semanita (720p),http://service-stit
 tv_pluto_tv_velocidad_720p,Pluto TV Velocidad​ (720p),http://service-stitcher.clusters.pluto.tv/stitch/hls/channel/5dd6dc7480e3550009133d4a/master.m3u8?advertisingId=&appName=web&appVersion=5.14.0-0f5ca04c21649b8c8aad4e56266a23b96d73b83a&app_name=web&clientDeviceType=0&clientID=6fbead95-26b1-415d-998f-1bdef62d10be&clientModelNumber=na&deviceDNT=false&deviceId=6fbead95-26b1-415d-998f-1bdef62d10be&deviceLat=19.4358&deviceLon=-99.1441&deviceMake=Chrome&deviceModel=web&deviceType=web&deviceVersion=88.0.4324.150&marketingRegion=VE&serverSideAds=false&sessionID=b8e5a857-714a-11eb-b532-0242ac110002&sid=b8e5a857-714a-11eb-b532-0242ac110002&userId=,,,,SD,https://i.imgur.com/4HNGHEf.png,m3u,true,true
 tv_pluto_tv_viajes_720p,Pluto TV Viajes (720p),http://service-stitcher.clusters.pluto.tv/stitch/hls/channel/5dcddfbdb7cf0e0009ae09ea/master.m3u8?advertisingId=&appName=web&appVersion=5.14.0-0f5ca04c21649b8c8aad4e56266a23b96d73b83a&app_name=web&clientDeviceType=0&clientID=6fbead95-26b1-415d-998f-1bdef62d10be&clientModelNumber=na&deviceDNT=false&deviceId=6fbead95-26b1-415d-998f-1bdef62d10be&deviceLat=19.4358&deviceLon=-99.1441&deviceMake=Chrome&deviceModel=web&deviceType=web&deviceVersion=88.0.4324.150&marketingRegion=VE&serverSideAds=false&sessionID=b8e5a857-714a-11eb-b532-0242ac110002&sid=b8e5a857-714a-11eb-b532-0242ac110002&userId=,,,,Auto,https://i.imgur.com/kFbvw9R.png,m3u,true,true
 tv_pluto_tv_vida_real_720p,Pluto TV Vida Real (720p),http://service-stitcher.clusters.pluto.tv/v1/stitch/embed/hls/channel/5f32d4d9ec194100070c7449/master.m3u8?advertisingId=channel&appName=rokuchannel&appVersion=1.0&bmodel=bm1&channel_id=channel&content=channel&content_rating=ROKU_ADS_CONTENT_RATING&content_type=livefeed&coppa=false&deviceDNT=1&deviceId=channel&deviceMake=rokuChannel&deviceModel=web&deviceType=rokuChannel&deviceVersion=1.0&embedPartner=rokuChannel&genre=ROKU_ADS_CONTENT_GENRE&is_lat=1&platform=web&rdid=channel&studio_id=viacom&tags=ROKU_CONTENT_TAGS,,,,Auto,https://i.imgur.com/dRbBbxP.png,m3u,true,true
-tv_pooya_tv_plus,Pooya TV Plus,http://ncdn.telewebion.com/javaneh/live/playlist.m3u8,,,,Auto,https://upload.wikimedia.org/wikipedia/fa/5/5a/POOYA_tv_2.png,m3u,true,true
 tv_popular_tv_murcia_1080p_not_247,Popular TV Murcia (1080p) [Not 24/7],http://cloud.fastchannel.es/mic/manifiest/populartvrm.m3u8,,,,Auto,https://i.imgur.com/jFg9dGO.png,m3u,true,true
 tv_powerhd,PowerHD,http://live2.tensila.com/1-1-1.power-tv/hls/master.m3u8?checkedby:iptvcat.com,,,,Auto,https://www.radiopower.com.ar/powerhd/webroot/img/logoPwrHD_small.png,m3u,true,true
 tv_pridetv_latam_1080p,PRIDEtv LATAM (1080p),http://backend.energeek.cl/webtv/pridetvweb/index.m3u8?token=ZZDemoIPTVGH,,,,Auto,https://neotv.cl/img/pridetv-512.png,m3u,true,true
@@ -820,7 +817,6 @@ tv_the_parliament_of_guyana_720p_not_247,The Parliament of Guyana (720p) [Not 24
 tv_the_pet_collective,The Pet Collective,http://the-pet-collective-international-es.samsung.wurl.tv/playlist.m3u8,,,,Auto,https://i.imgur.com/yH7n2dF.png,m3u,true,true
 tv_thema_televisin_la_serena_720p_not_247,Thema Televisión (La Serena) (720p) [Not 24/7],http://unlimited1-us.dps.live/thema/thema.smil/playlist.m3u8,,,,Auto,https://www.thematelevision.cl/wp-content/uploads/2019/08/fffffffff.png,m3u,true,true
 tv_times_brasil_1080p,Times Brasil (1080p),http://cr7v.short.gy/ManoTV/TimesBrasil/Whats75991634025/CNBC/Index.m3u8,,,,Auto,https://i.ibb.co/X726G1j/Times-Brasil-CNBC-logo-svg-1.png,m3u,true,true
-tv_tma_1080p,TMA (1080p),http://hls.tmacaraibes.com/live/index.m3u8,,,,Auto,https://i.imgur.com/1iOAl2j.png,m3u,true,true
 tv_tnh,TNH,http://dvrfl03.bozztv.com/hdirect/hdirect-tnhtv2/index.m3u8,,,,HD,https://i.imgur.com/8nvCXzt.png,m3u,true,true
 tv_tno_radio_720p,TNO Radio (720p),http://stmv1.srvstm.com/tnovideo1/tnovideo1/playlist.m3u8,,,,Auto,https://i.ibb.co/0rYsbRk/Logo-TNO-2021-white.png,m3u,true,true
 tv_tom_and_jerry_720p,Tom And Jerry (720p),http://live20.bozztv.com/giatvplayout7/giatv-208314/playlist.m3u8,,,,Auto,https://gia.tv/streams/pptv/208314.jpg?1750373428,m3u,true,true
@@ -835,7 +831,6 @@ tv_tracy_education_and_governmental_access_channel_tr,Tracy Education and Govern
 tv_trece_720p,Trece (720p),http://stream.logicideas.media/canaltrece-live/smil:live.smil/playlist.m3u8,,,,Auto,https://i.imgur.com/nEBsIlf.png,m3u,true,true
 tv_trivu_1080p_not_247,Trivu (1080p) [Not 24/7],http://www.chasquirouter.com/salida/sd/trivu.m3u8,,,,SD,https://i.imgur.com/QrUYjOS.png,m3u,true,true
 tv_trt_diyanet_ocuk_720p,TRT Diyanet Çocuk (720p),http://tv-trtdiyanetcocuk.medya.trt.com.tr/master.m3u8,,,,Auto,https://i.imgur.com/8PmXz9t.png,m3u,true,true
-tv_tsi_720p_not_247,TSi (720p) [Not 24/7],http://mdstrm.com/live-stream-playlist/6287fdc9303e3008289ab711.m3u8,,,,Auto,https://i.imgur.com/GEyxDnf.png,m3u,true,true
 tv_turbomix,Turbomix,http://live-evg25.tv360.bitel.com.pe/bitel/turbomix/playlist.m3u8?uid=,,,,HD,https://img-evg3.tv360.bitel.com.pe/peru-image/2025/02/04/03/1738613680550/07bbfddbde4f_480_270.png,csv,true,true
 tv_turf_movil_720p,Turf Movil (720p),http://tvturf4.janus.cl/playlist/stream.m3u8?d=w&id=,,,,Auto,https://i.imgur.com/TwIe4lK.png,m3u,true,true
 tv_turismo_hd_720p,Turismo HD (720p),http://live20.bozztv.com/giatvplayout7/giatv-208343/playlist.m3u8,,,,Auto,https://gia.tv/streams/pstream/208343.jpg?1751121896,m3u,true,true
@@ -933,7 +928,7 @@ tv_uestv_720p,UESTV (720p),http://tls-cl.cdnz.cl/uestv/live/playlist.m3u8,,,,Aut
 tv_un_web_tv_540p,UN Web TV (540p),http://cdnapi.kaltura.com/p/2503451/sp/250345100/playManifest/entryId/1_gb6tjmle/protocol/https/format/applehttp/a.m3u8,,,,Auto,https://i.imgur.com/UcAwBep.png,m3u,true,true
 tv_unah_utv_360p_not_247,UNAH UTV (360p) [Not 24/7],http://live-utv.unah.edu.hn/web/salida.m3u8,,,,Auto,https://i.imgur.com/GhzaYbK.png,m3u,true,true
 tv_une_vinalop_576p_not_247,Une Vinalopó (576p) [Not 24/7],http://streamingtvi.gestec-video.com/hls/unesd.m3u8,,,,SD,https://i.imgur.com/WpGR7RQ.png,m3u,true,true
-tv_unife_tv,Unife TV,http://cdn.mycloudstream.io/hls/live/broadcast/ic1frrzz/index.m3u8?checkedby:iptvcat.com,,,,Auto,https://i.imgur.com/lVpDLVU.png,m3u,true,true
+tv_unife_tv,Unife TV,http://cdn.mycloudstream.io/hls/live/broadcast/ic1frrzz/index.m3u8,,,,Auto,https://i.imgur.com/lVpDLVU.png,m3u,true,true
 tv_uniontv,UnionTV,http://tigocloud.desdeparaguay.net/800tv/800tv/playlist.m3u8,,,,SD,https://i.imgur.com/No9YzNC.png,m3u,true,true
 tv_unisul_tv_720p,UNISUL TV (720p),http://sitetv.brasilstream.com.br/hls/sitetv/index.m3u8?token=,,,,Auto,https://i.imgur.com/N0TvAFz.png,m3u,true,true
 tv_univalle_televisin_1080p,Univalle Televisión (1080p),http://master.tucableip.com/univalletv/playlist.m3u8,,,,Auto,https://i.imgur.com/qgrWDIs.png,m3u,true,true
@@ -951,6 +946,7 @@ tv_vam_vids_more_720p,VAM Vid's & More (720p),http://sincerecloud.stream/loadbal
 tv_vb_media_tv_1080p,VB Media TV (1080p),http://capomo01-enitv.eninetworks.com/locales_vbmedia_publico/index.m3u8,,,,Auto,https://i.imgur.com/5qlVblr.png,m3u,true,true
 tv_venevision_480p,Venevision (480p),http://venevision-ioriver-cdn.encoders.immergo.tv/3/streamPlaylist.m3u8,,,,Auto,https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/Logotipo_de_Venevisi%C3%B3n.svg/512px-Logotipo_de_Venevisi%C3%B3n.svg.png,m3u,true,true
 tv_venevisin_internacional_720p,Venevisión Internacional (720p),http://vod2live.univtec.com/manifest/4c41c0d8-e2e4-43cc-bd43-79afe715e1b3.m3u8,,,,Auto,https://i.imgur.com/vtGED07.jpg,m3u,true,true
+tv_venus_media_720p,Venus Media (720p),http://rds3gen.desdeparaguay.net/venusmedia/venusmedia/.m3u8,,,,SD,https://i.imgur.com/XwmUbfp.png,m3u,true,true
 tv_vepaco_tv_480p,Vepaco TV (480p),http://cloud.fastchannel.es/manifiest/hls/prog9/vepacotv.m3u8,,,,Auto,https://i.imgur.com/0bqJksL.png,m3u,true,true
 tv_va_altomayo_720p_not_247,Vía Altomayo (720p) [Not 24/7],http://live.obslivestream.com/viaaltomayomux/index.m3u8,,,,Auto,https://i.imgur.com/aJ4XExn.png,m3u,true,true
 tv_video_tour_channel_480p_not_247,Video Tour Channel (480p) [Not 24/7],http://k4.usastreams.com/videotour/videotour/playlist.m3u8,,,,Auto,https://i.imgur.com/zEi8eMC.png,m3u,true,true
