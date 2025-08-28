@@ -462,6 +462,24 @@ export class ChannelDeduplicationService {
       };
     }
     
+    // REGLA NUEVA: Canal sin patrones de calidad debe ser reemplazado por canal HD
+    if (!existingIsHighQuality && !existingIsLowQuality && newIsHighQuality) {
+      return {
+        shouldReplace: true,
+        selectedChannel: newChannel,
+        strategy: 'upgrade_generic_to_hd'
+      };
+    }
+    
+    // REGLA NUEVA: Canal HD nunca debe ser reemplazado por canal sin patrones de calidad
+    if (existingIsHighQuality && !newIsHighQuality && !newIsLowQuality) {
+      return {
+        shouldReplace: false,
+        selectedChannel: existingChannel,
+        strategy: 'protect_hd_from_generic'
+      };
+    }
+    
     // Si ambos tienen patrones de calidad, usar lógica avanzada
     if ((existingIsHighQuality || existingIsLowQuality) && (newIsHighQuality || newIsLowQuality)) {
       return this.#resolveQualityPatternConflict(existingChannel, newChannel);
