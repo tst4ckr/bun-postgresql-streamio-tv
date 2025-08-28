@@ -127,17 +127,18 @@ async function optimizeDeduplicationConfig() {
       
       // Crear una copia de los canales para la prueba, filtrando canales inválidos
       const testChannels = csvChannels
-        .filter(ch => ch.stream && typeof ch.stream === 'string' && ch.stream.trim().length > 0)
+        .filter(ch => ch.streamUrl && typeof ch.streamUrl === 'string' && ch.streamUrl.trim().length > 0)
         .map(ch => new Channel({
           id: ch.id,
           name: ch.name,
-          url: ch.url || ch.stream,
-          stream: ch.stream,
           logo: ch.logo,
+          streamUrl: ch.streamUrl,
           genre: ch.genre,
           country: ch.country,
           language: ch.language,
           quality: ch.quality,
+          type: ch.type,
+          isActive: ch.isActive,
           metadata: { ...ch.metadata, source: 'csv' }
         }));
       
@@ -181,6 +182,13 @@ async function optimizeDeduplicationConfig() {
       console.log('');
     });
     
+    // Verificar si hay resultados para analizar
+    if (results.length === 0) {
+      console.log('❌ No se pudieron probar configuraciones debido a falta de canales válidos.');
+      console.log('💡 Verifica que los canales en el CSV tengan URLs de stream válidas.');
+      return;
+    }
+
     // Encontrar la configuración óptima
     const optimalConfig = results.reduce((best, current) => {
       // Priorizar configuraciones que conserven más canales pero aún eliminen algunos duplicados
