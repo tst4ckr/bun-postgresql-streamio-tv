@@ -380,7 +380,7 @@ export class HybridChannelRepository extends ChannelRepository {
       });
       
       if (this.#m3uRepositories.length > 0) {
-        this.#logger.info(`📊 Refresco completado: ${csvValidated.length} CSV + ${totalM3uAdded} M3U = ${this.#channels.length} canales (${totalM3uDuplicates} duplicados omitidos)`);
+        this.#logger.info(`📊 Refresco completado: ${csvChannels.length} CSV + ${totalM3uAdded} M3U = ${this.#channels.length} canales (${totalM3uDuplicates} duplicados omitidos)`);
       }
       
       this.#lastLoadTime = new Date();
@@ -442,21 +442,30 @@ export class HybridChannelRepository extends ChannelRepository {
       this.#logger.info('Aplicando conversión HTTPS a HTTP y validación de streams...');
       
       try {
-        const conversionResult = await this.#httpsToHttpService.processChannels(activeChannels, {
+        // Separar canales CSV de canales M3U para preservar CSV
+        const csvChannelIds = new Set((await this.#csvRepository.getAllChannelsUnfiltered()).map(ch => ch.id));
+        const csvChannels = activeChannels.filter(ch => csvChannelIds.has(ch.id));
+        const m3uChannels = activeChannels.filter(ch => !csvChannelIds.has(ch.id));
+        
+        this.#logger.info(`🔄 Procesando ${m3uChannels.length} canales M3U (${csvChannels.length} canales CSV preservados)`);
+        
+        // Procesar solo canales M3U con validación HTTP
+        const conversionResult = await this.#httpsToHttpService.processChannels(m3uChannels, {
           concurrency: this.#config.validation?.maxValidationConcurrency || 10,
           showProgress: true,
           onlyWorkingHttp: true
         });
         
         // Log estadísticas de conversión
-        this.#logger.info(`Conversión HTTPS a HTTP completada: ${conversionResult.stats.total} canales procesados, ${conversionResult.stats.converted} convertidos, ${conversionResult.stats.httpWorking} validados`);
+        this.#logger.info(`Conversión HTTPS a HTTP completada: ${conversionResult.stats.total} canales M3U procesados, ${conversionResult.stats.converted} convertidos, ${conversionResult.stats.httpWorking} validados`);
         
         if (conversionResult.stats.failed > 0) {
-          this.#logger.warn(`${conversionResult.stats.failed} canales fallaron en la conversión/validación`);
+          this.#logger.warn(`${conversionResult.stats.failed} canales M3U fallaron en la conversión/validación`);
         }
         
-        // Usar los canales procesados (ya filtrados por onlyWorkingHttp: true)
-        activeChannels = conversionResult.processed;
+        // Combinar canales CSV preservados + canales M3U validados
+        activeChannels = [...csvChannels, ...conversionResult.processed];
+        this.#logger.info(`📋 Resultado final: ${csvChannels.length} canales CSV preservados + ${conversionResult.processed.length} canales M3U validados = ${activeChannels.length} canales totales`);
         
       } catch (error) {
         this.#logger.error('Error durante conversión HTTPS a HTTP:', error);
