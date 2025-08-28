@@ -159,8 +159,6 @@ tv_canal_ipe_1080p,Canal IPe (1080p),http://cdnhd.iblups.com/hls/3f2cb1658d114f2
 tv_canal_j_hd,Canal J HD,http://viamotionhsi.netplus.ch/live/eds/canalj/browser-HLS8/canalj.m3u8,,,,Auto,https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Canal_J_2019_Logo.png/512px-Canal_J_2019_Logo.png,m3u,true,true
 tv_canal_mlaga_rtv_720p_not_247,Canal Málaga RTV (720p) [Not 24/7],http://canalmalaga-tv-live.flumotion.com/playlist.m3u8,,,,Auto,https://i.imgur.com/QSUOxtM.png,m3u,true,true
 tv_canal_ms_televisin_720p,Canal Más Televisión (720p),http://movil.ejeserver.com/live/teledoradahd.m3u8,,,,HD,https://i.imgur.com/ODMa27W.jpg,m3u,true,true
-tv_canal_parlamento_360p_not_247,Canal Parlamento (360p) [Not 24/7],http://congresodirecto.akamaized.net/hls/live/2037973/canalparlamento/master.m3u8,,,,Auto,https://i.imgur.com/BUO0wH6.png,m3u,true,true
-tv_canal_provincial_360p,Canal Provincial (360p),http://streaming.telered.com.ar/provincial/streaming/mystream.m3u8,,,,Auto,https://i.imgur.com/bXHHtcb.png,m3u,true,true
 tv_canal_pyc,Canal PyC,http://edge.teveo.net/live/AeAAAgAkAANqA1IAyADIUDAAAAGAAAAAAmg02rRAIAByAAAA/playlist.m3u8?checkedby:iptvcat.com,,,,Auto,,m3u,true,true
 tv_canal_san_roque_1080p_not_247,Canal San Roque (1080p) [Not 24/7],http://cdnlivevlc.codev8.net/aytosanroquelive/smil:channel1.smil/playlist.m3u8,,,,Auto,https://i.imgur.com/QBzvCJc.png,m3u,true,true
 tv_canal_sur_andalucia_1080p,Canal Sur Andalucia (1080p),http://dfk2a268yviz9.cloudfront.net/v1/master/3722c60a815c199d9c0ef36c5b73da68a62b09d1/cc-ddiii1m6jt6of/CanalSurAndaluciaES.m3u8,,,,Auto,https://upload.wikimedia.org/wikipedia/commons/c/cd/CanalSur_Andaluc%C3%ADa.png,m3u,true,true
@@ -208,14 +206,7 @@ tv_colosal_tv_720p_not_247,Colosal TV (720p) [Not 24/7],http://tv.ticosmedia.com
 tv_conectado2,Conectado 2,http://live-evg25.tv360.bitel.com.pe/bitel/conectado2/playlist.m3u8?uid=,,,,HD,https://img-evg3.tv360.bitel.com.pe/peru-image/2025/01/02/23/1735835700676/85e8fdc6061a_480_270.png,csv,true,true
 tv_conectv_brasil_720p,ConecTV Brasil (720p),http://stream01.msolutionbrasil.com.br/hls/conectv/live.m3u8,,,,Auto,https://i.imgur.com/XN6jjMR.png,m3u,true,true
 tv_conexo_tv_720p,Conexão TV (720p),http://5a57bda70564a.streamlock.net/conexaotv/conexaotv.sdp/playlist.m3u8,,,,SD,https://i.imgur.com/CJ9SPsZ.png,m3u,true,true
-tv_congreso_de_los_diputados_1_360p_not_247,Congreso de los Diputados 1 (360p) [Not 24/7],http://congresodirecto.akamaized.net/hls/live/2038274/canal1/master.m3u8,,,,Auto,https://i.imgur.com/3Qxpe72.png,m3u,true,true
-tv_congreso_de_los_diputados_2_360p_not_247,Congreso de los Diputados 2 (360p) [Not 24/7],http://congresodirecto.akamaized.net/hls/live/2038275/canal2/master.m3u8,,,,Auto,https://i.imgur.com/ffN2LE3.png,m3u,true,true
-tv_congreso_de_los_diputados_3_360p_not_247,Congreso de los Diputados 3 (360p) [Not 24/7],http://congresodirecto.akamaized.net/hls/live/2038276/canal3/master.m3u8,,,,Auto,https://i.imgur.com/2LAzcH8.jpg,m3u,true,true
-tv_congreso_de_los_diputados_4_360p_not_247,Congreso de los Diputados 4 (360p) [Not 24/7],http://congresodirecto.akamaized.net/hls/live/2038277/canal4/master.m3u8,,,,Auto,https://i.imgur.com/2LAzcH8.jpg,m3u,true,true
-tv_congreso_de_los_diputados_5_360p_not_247,Congreso de los Diputados 5 (360p) [Not 24/7],http://congresodirecto.akamaized.net/hls/live/2038278/canal5/master.m3u8,,,,Auto,https://i.imgur.com/2LAzcH8.jpg,m3u,true,true
-tv_congreso_tv,Congreso TV,http://ccstreaming.packet.mx/WebRTCAppEE/streams/45.1_kd5oiNTTWO0gEOFc431277834.m3u8,,,,Auto,https://i.imgur.com/r0foZ5t.png,m3u,true,true
 tv_contivision_720p,Contivision (720p),http://unlimited6-cl.dps.live/cm/cm.smil/playlist.m3u8,,,,Auto,https://i.imgur.com/Lz2OlKf.png,m3u,true,true
-tv_controversia_tv_720p_not_247,Controversia TV (720p) [Not 24/7],http://live.obslivestream.com/controversiatv/index.m3u8,,,,Auto,https://i.imgur.com/X7cPyP2.png,m3u,true,true
 tv_cool_fm_989_720p,Cool FM 98.9 (720p),http://live2.tensila.com/cool-v-1.arubara/hls/master.m3u8,,,,Auto,https://i.imgur.com/uGE6lZ2.png,m3u,true,true
 tv_cosmovision_720p,Cosmovision (720p),http://videohls2.cosmovision.tv/hls/sd.m3u8,,,,SD,https://i.imgur.com/QlvYfEJ.png,m3u,true,true
 tv_costa_noroeste_tv_1080p_not_247,Costa Noroeste TV (1080p) [Not 24/7],http://limited31.todostreaming.es/live/noroestetv-livestream.m3u8,,,,Auto,https://i.imgur.com/iM9AN6Z.png,m3u,true,true
@@ -402,7 +393,6 @@ tv_mara_visin_mexico_360p_not_247,María Visión Mexico (360p) [Not 24/7],http:/
 tv_maravisin_medjugorje_720p,María+Visión Medjugorje (720p),http://1601580044.rsc.cdn77.org/live/_jcn_/amlst:Italiasette/playlist.m3u8,,,,Auto,https://i.imgur.com/xUOspBx.png,m3u,true,true
 tv_marin_tv_community_channel_san_rafael_ca_1080p,Marin TV Community Channel (San Rafael CA) (1080p),http://96.68.164.217/live-13/live/live.m3u8,,,,Auto,https://i.imgur.com/HsBBu8g.png,m3u,true,true
 tv_marin_tv_educational_channel_san_rafael_ca_1080p,Marin TV Educational Channel (San Rafael CA) (1080p),http://96.68.164.217/live-15/live/live.m3u8,,,,Auto,https://i.imgur.com/HsBBu8g.png,m3u,true,true
-tv_marin_tv_government_channel_san_rafael_ca_1080p,Marin TV Government Channel (San Rafael CA) (1080p),http://96.68.164.217/live-14/live/live.m3u8,,,,Auto,https://i.imgur.com/HsBBu8g.png,m3u,true,true
 tv_ms_talk_1080p,Más Talk (1080p),http://vod2live.univtec.com/manifest/89290956-94ab-4950-accb-a54bbd7e176f.m3u8,,,,Auto,https://i.imgur.com/unE2LGz.jpg,m3u,true,true
 tv_masmusica_fm_720p,MasMusica FM (720p),http://movil.ejeserver.com/live/masmusica.m3u8,,,,Auto,https://i.imgur.com/tCg7owd.png,m3u,true,true
 tv_maxivisin_tv_720p,Maxivisión TV (720p),http://video03.logicahost.com.br/maxivisiontv/maxivisiontv/playlist.m3u8,,,,Auto,https://i.imgur.com/UC8WrEN.jpg,m3u,true,true
@@ -453,7 +443,6 @@ tv_nctv_1080p,NCTV (1080p),http://pantera1-100gb-cl-movistar.dps.live/nctv/nctv.
 tv_negocios_tv_1080p,Negocios TV (1080p),http://streaming013.gestec-video.com/hls/negociostv.m3u8,,,,Auto,https://m.media-amazon.com/images/I/21HEgSJn2gL.png,m3u,true,true
 tv_net_tv_720p,NET TV (720p),http://unlimited1-us.dps.live/nettv/nettv.smil/playlist.m3u8,,,,Auto,https://i.imgur.com/IhJ0BjF.png,m3u,true,true
 tv_net_tv_720p_not_247,Net TV (720p) [Not 24/7],http://unlimited1-us.dps.live/nettv/nettv.smil/playlist.m3u8?checkedby:iptvcat.com,,,,Auto,,m3u,true,true
-tv_ng_federal_720p,NG Federal (720p),http://www.coninfo.net:1935/tvlink/live/playlist.m3u8,,,,Auto,https://i.imgur.com/lJCIqYn.png,m3u,true,true
 tv_nick_hd_1080p_not_247,Nick HD+ (1080p) [Not 24/7],http://116.90.120.149:8000/play/a0cw/index.m3u8,,,,Auto,https://i.imgur.com/nJPbTet.png,m3u,true,true
 tv_nick_jr_east,Nick Jr East,http://fl3.moveonjoy.com/NICK_JR/index.m3u8,,,,Auto,https://i.imgur.com/KT4tdQs.png,m3u,true,true
 tv_nick_music_720p,Nick Music (720p),http://fl3.moveonjoy.com/NICK_MUSIC/index.m3u8?checkedby:iptvcat.com,,,,Auto,https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/NickMusic.svg/512px-NickMusic.svg.png,m3u,true,true
@@ -652,7 +641,6 @@ tv_ten_canal_10_720p_not_247,TEN Canal 10 (720p) [Not 24/7],http://raw.githubuse
 tv_tevesur,Tevesur,http://live-evg25.tv360.bitel.com.pe/bitel/tevesur/playlist.m3u8?uid=,,,,HD,https://img-evg3.tv360.bitel.com.pe/peru-image/2025/01/02/22/173583024433/9c82ee39dc3e_480_270.jpg,csv,true,true
 tv_tevex_720p_not_247,Tevex (720p) [Not 24/7],http://v4.tustreaming.cl/tevexinter/index.m3u8,,,,Auto,https://i.imgur.com/FnInQRd.png,m3u,true,true
 tv_the_florida_channel_480p,The Florida Channel (480p),http://cdnapisec.kaltura.com/p/2593311/sp/259331100/playManifest/entryId/1_1tqjk60s/protocol/https/format/applehttp/a.m3u8,,,,Auto,https://upload.wikimedia.org/wikipedia/en/3/3c/FloridaChannel.png,m3u,true,true
-tv_the_parliament_of_guyana_720p_not_247,The Parliament of Guyana (720p) [Not 24/7],http://ythls.armelin.one/channel/UCFcGxVIBPlx_l5eXfEl7jgw.m3u8?checkedby:iptvcat.com,,,,Auto,,m3u,true,true
 tv_the_pet_collective,The Pet Collective,http://the-pet-collective-international-es.samsung.wurl.tv/playlist.m3u8,,,,Auto,https://i.imgur.com/yH7n2dF.png,m3u,true,true
 tv_thema_televisin_la_serena_720p_not_247,Thema Televisión (La Serena) (720p) [Not 24/7],http://unlimited1-us.dps.live/thema/thema.smil/playlist.m3u8,,,,Auto,https://www.thematelevision.cl/wp-content/uploads/2019/08/fffffffff.png,m3u,true,true
 tv_times_brasil_1080p,Times Brasil (1080p),http://cr7v.short.gy/ManoTV/TimesBrasil/Whats75991634025/CNBC/Index.m3u8,,,,Auto,https://i.ibb.co/X726G1j/Times-Brasil-CNBC-logo-svg-1.png,m3u,true,true
@@ -664,7 +652,6 @@ tv_toonami_aftermath_east_480p,Toonami Aftermath East (480p),http://api.toonamia
 tv_top_latino,Top Latino,http://live-evg25.tv360.bitel.com.pe/bitel/toplatino/playlist.m3u8?uid=,,,,HD,https://img-evg3.tv360.bitel.com.pe/peru-image/2025/01/02/23/1735835622757/0fb19a3b961d_480_270.jpg,csv,true,true
 tv_tra_2_576p,TRA 2 (576p),http://live20.bozztv.com/akamaissh101/ssh101/rctvhdtra/playlist.m3u8,,,,HD,https://i.imgur.com/iwJ42rD.png,m3u,true,true
 tv_trace_sports_stars_1080p,Trace Sports Stars (1080p),http://tracesportstars-klowdtv.amagi.tv/playlist.m3u8?checkedby:iptvcat.com,,,,Auto,,m3u,true,true
-tv_tracy_education_and_governmental_access_channel_tr,Tracy Education and Governmental Access Channel (Tracy CA) (720p),http://cdn3.wowza.com/5/dk84U1p2UUdoMGxT/tracy-ca/G0950_002/playlist.m3u8?checkedby:iptvcat.com,,,,Auto,,m3u,true,true
 tv_trece_720p,Trece (720p),http://stream.logicideas.media/canaltrece-live/smil:live.smil/playlist.m3u8,,,,Auto,https://i.imgur.com/nEBsIlf.png,m3u,true,true
 tv_trivu_1080p_not_247,Trivu (1080p) [Not 24/7],http://www.chasquirouter.com/salida/sd/trivu.m3u8,,,,SD,https://i.imgur.com/QrUYjOS.png,m3u,true,true
 tv_turbomix,Turbomix,http://live-evg25.tv360.bitel.com.pe/bitel/turbomix/playlist.m3u8?uid=,,,,HD,https://img-evg3.tv360.bitel.com.pe/peru-image/2025/02/04/03/1738613680550/07bbfddbde4f_480_270.png,csv,true,true
@@ -719,7 +706,6 @@ tv_tv_rio_preto,TV Rio Preto,http://video02.logicahost.com.br/tvriopreto/tvriopr
 tv_tv_rio_preto_720p,TV Rio Preto (720p),http://video02.logicahost.com.br/tvriopreto/tvriopreto/playlist.m3u8,,,,Auto,https://i.imgur.com/9EqSKLc.png,m3u,true,true
 tv_tv_san_jorge_1080p_not_247,TV San Jorge (1080p) [Not 24/7],http://asucap.com/livestream/asucap_envivo.m3u8,,,,Auto,https://i.imgur.com/vLU4Tcu.png,m3u,true,true
 tv_tv_so_raimundo_268p,TV São Raimundo (268p),http://stmv1.voxtvhd.com.br/9030/9030/playlist.m3u8,,,,HD,https://i.imgur.com/f34CQIG.png,m3u,true,true
-tv_tv_senado_360p,TV Senado (360p),http://janus-tv-ply.senado.cl/playlist/playlist.m3u8,,,,Auto,https://i.imgur.com/CNUZ6ig.png,m3u,true,true
 tv_tv_series_1_as_panteras_480p,TV Series 1 As Panteras (480p),http://stmv1.srvif.com/tvserie/tvserie/playlist.m3u8,,,,Auto,https://i.imgur.com/Ff5mj0o.png,m3u,true,true
 tv_tv_sistemas_cuzco_360p_not_247,TV Sistemas Cuzco (360p) [Not 24/7],http://stmv1.voxhdnet.com/sistemascusco/sistemascusco/playlist.m3u8,,,,HD,https://i.imgur.com/yo1oTIh.png,m3u,true,true
 tv_tv_sol_comunidade_480p_not_247,TV Sol Comunidade (480p) [Not 24/7],http://streaming03.zas.media:1935/tvsol/tvsol/playlist.m3u8,,,,Auto,https://tvsolcomunidade.com.br/wp-content/uploads/2019/01/logo-tv-sol.png,m3u,true,true
