@@ -41,7 +41,7 @@ class DeduplicationConfig {
   constructor({
     criteria = DeduplicationCriteria.COMBINED,
     strategy = ConflictResolutionStrategy.PRIORITIZE_SOURCE,
-    nameSimilarityThreshold = 0.85,
+    nameSimilarityThreshold = 0.95,
     urlSimilarityThreshold = 0.90,
     enableIntelligentDeduplication = true,
     preserveSourcePriority = true,
@@ -69,7 +69,7 @@ class DeduplicationConfig {
     return new DeduplicationConfig({
       enableIntelligentDeduplication: process.env.ENABLE_INTELLIGENT_DEDUPLICATION !== 'false',
       enableHdUpgrade: process.env.ENABLE_HD_UPGRADE !== 'false',
-      nameSimilarityThreshold: parseFloat(process.env.NAME_SIMILARITY_THRESHOLD || '0.85'),
+      nameSimilarityThreshold: parseFloat(process.env.NAME_SIMILARITY_THRESHOLD || '0.95'),
       urlSimilarityThreshold: parseFloat(process.env.URL_SIMILARITY_THRESHOLD || '0.90')
     });
   }
@@ -165,7 +165,9 @@ export class ChannelDeduplicationService {
       const deduplicatedChannels = await this.#performDeduplication(channels);
       
       this.#metrics.processingTimeMs = Math.max(1, Date.now() - startTime);
-      this.#metrics.duplicatesRemoved = channels.length - deduplicatedChannels.length;
+      // CORRECCIÓN: duplicatesRemoved debe ser igual a duplicatesFound
+      // ya que cada duplicado encontrado resulta en la eliminación de un canal
+      this.#metrics.duplicatesRemoved = this.#metrics.duplicatesFound;
 
       const stats = this.#metrics.getStats();
       this.#logger.info(`✅ Deduplicación completada: ${deduplicatedChannels.length} canales únicos (${stats.duplicatesRemoved} duplicados removidos)`);
@@ -390,6 +392,12 @@ export class ChannelDeduplicationService {
       return true;
     }
 
+    // Verificación por URL exacta (100% de igualdad)
+    if (channel1.streamUrl && channel2.streamUrl && 
+        channel1.streamUrl === channel2.streamUrl) {
+      return true;
+    }
+
     // Verificación por similitud de nombre
     let nameSimilarity;
     
@@ -411,17 +419,7 @@ export class ChannelDeduplicationService {
       );
     }
 
-    if (nameSimilarity >= this.#config.nameSimilarityThreshold) {
-      return true;
-    }
-
-    // Verificación por similitud de URL
-    const urlSimilarity = this.#calculateStringSimilarity(
-      this.#normalizeUrl(channel1.streamUrl),
-      this.#normalizeUrl(channel2.streamUrl)
-    );
-
-    return urlSimilarity >= this.#config.urlSimilarityThreshold;
+    return nameSimilarity >= this.#config.nameSimilarityThreshold;
   }
 
   /**
