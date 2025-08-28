@@ -206,7 +206,8 @@ export class Channel {
            this.#streamUrl.startsWith('rtmp://') ||
            this.#streamUrl.startsWith('rtmps://') ||
            this.#streamUrl.includes('stream') ||
-           this.#streamUrl.startsWith('https://');
+           this.#streamUrl.startsWith('https://') ||
+           this.#streamUrl.startsWith('http://');
   }
 
   /**
