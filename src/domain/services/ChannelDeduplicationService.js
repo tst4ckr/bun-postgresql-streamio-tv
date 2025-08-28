@@ -41,8 +41,8 @@ class DeduplicationConfig {
   constructor({
     criteria = DeduplicationCriteria.COMBINED,
     strategy = ConflictResolutionStrategy.PRIORITIZE_SOURCE,
-    nameSimilarityThreshold = 0.95,
-    urlSimilarityThreshold = 0.90,
+    nameSimilarityThreshold = 0.85,
+    urlSimilarityThreshold = 0.99,
     enableIntelligentDeduplication = true,
     preserveSourcePriority = true,
     sourcePriority = ['csv', 'm3u'],
@@ -69,7 +69,7 @@ class DeduplicationConfig {
     return new DeduplicationConfig({
       enableIntelligentDeduplication: process.env.ENABLE_INTELLIGENT_DEDUPLICATION !== 'false',
       enableHdUpgrade: process.env.ENABLE_HD_UPGRADE !== 'false',
-      nameSimilarityThreshold: parseFloat(process.env.NAME_SIMILARITY_THRESHOLD || '0.95'),
+      nameSimilarityThreshold: parseFloat(process.env.NAME_SIMILARITY_THRESHOLD || '0.85'),
       urlSimilarityThreshold: parseFloat(process.env.URL_SIMILARITY_THRESHOLD || '0.90')
     });
   }
@@ -401,15 +401,15 @@ export class ChannelDeduplicationService {
     // Verificación por similitud de nombre
     let nameSimilarity;
     
-    // Si ambos canales tienen patrones HD, usar normalización específica
-    const channel1HasHD = this.#hasHDPatterns(channel1.name);
-    const channel2HasHD = this.#hasHDPatterns(channel2.name);
+    // Si ambos canales tienen patrones de calidad, usar normalización específica
+    const channel1HasQuality = this.#hasQualityPatterns(channel1.name);
+    const channel2HasQuality = this.#hasQualityPatterns(channel2.name);
     
-    if (channel1HasHD && channel2HasHD) {
-      // Usar normalización que remueve patrones HD para comparación
+    if (channel1HasQuality && channel2HasQuality) {
+      // Usar normalización que remueve patrones de calidad para comparación
       nameSimilarity = this.#calculateStringSimilarity(
-        this.#normalizeChannelNameForHDPatterns(channel1.name),
-        this.#normalizeChannelNameForHDPatterns(channel2.name)
+        this.#normalizeChannelNameForQualityPatterns(channel1.name),
+        this.#normalizeChannelNameForQualityPatterns(channel2.name)
       );
     } else {
       // Usar normalización estándar
@@ -423,7 +423,7 @@ export class ChannelDeduplicationService {
   }
 
   /**
-   * Resuelve conflicto priorizando versiones HD
+   * Resuelve conflicto priorizando versiones de mayor calidad
    * @private
    * @param {Channel} existingChannel
    * @param {Channel} newChannel
@@ -438,26 +438,55 @@ export class ChannelDeduplicationService {
       };
     }
 
-    // Verificar si ambos canales tienen patrones HD
-    const existingHasHD = this.#hasHDPatterns(existingChannel.name);
-    const newHasHD = this.#hasHDPatterns(newChannel.name);
+    // Verificar calidad por nombre del canal
+    const existingIsHighQuality = this.#isHighQuality(existingChannel.name);
+    const newIsHighQuality = this.#isHighQuality(newChannel.name);
+    const existingIsLowQuality = this.#isLowQuality(existingChannel.name);
+    const newIsLowQuality = this.#isLowQuality(newChannel.name);
     
-    // Si ambos tienen patrones HD, usar lógica avanzada
-    if (existingHasHD && newHasHD) {
-      return this.#resolveHDPatternConflict(existingChannel, newChannel);
+    // REGLA PRINCIPAL: Los canales HD nunca deben ser eliminados por canales SD
+    if (existingIsHighQuality && newIsLowQuality) {
+      return {
+        shouldReplace: false,
+        selectedChannel: existingChannel,
+        strategy: 'protect_hd_from_sd'
+      };
     }
-
-    const existingQuality = existingChannel.quality?.value || 'SD';
-    const newQuality = newChannel.quality?.value || 'SD';
     
-    const existingIsHd = existingQuality === 'HD' || existingQuality === 'FHD' || existingQuality === '4K';
-    const newIsHd = newQuality === 'HD' || newQuality === 'FHD' || newQuality === '4K';
-
-    if (newIsHd && !existingIsHd) {
+    // REGLA PRINCIPAL: Los canales SD deben ser reemplazados por canales HD
+    if (existingIsLowQuality && newIsHighQuality) {
       return {
         shouldReplace: true,
         selectedChannel: newChannel,
-        strategy: 'hd_upgrade'
+        strategy: 'upgrade_sd_to_hd'
+      };
+    }
+    
+    // Si ambos tienen patrones de calidad, usar lógica avanzada
+    if ((existingIsHighQuality || existingIsLowQuality) && (newIsHighQuality || newIsLowQuality)) {
+      return this.#resolveQualityPatternConflict(existingChannel, newChannel);
+    }
+
+    // Verificar calidad por objeto quality (fallback)
+    const existingQuality = existingChannel.quality?.value || 'SD';
+    const newQuality = newChannel.quality?.value || 'SD';
+    
+    const existingIsHdByObject = existingQuality === 'HD' || existingQuality === 'FHD' || existingQuality === '4K';
+    const newIsHdByObject = newQuality === 'HD' || newQuality === 'FHD' || newQuality === '4K';
+
+    if (newIsHdByObject && !existingIsHdByObject) {
+      return {
+        shouldReplace: true,
+        selectedChannel: newChannel,
+        strategy: 'hd_upgrade_by_object'
+      };
+    }
+    
+    if (existingIsHdByObject && !newIsHdByObject) {
+      return {
+        shouldReplace: false,
+        selectedChannel: existingChannel,
+        strategy: 'protect_hd_by_object'
       };
     }
 
@@ -469,63 +498,96 @@ export class ChannelDeduplicationService {
   }
 
   /**
-   * Resuelve conflictos específicos entre canales con patrones HD
+   * Resuelve conflictos específicos entre canales con patrones de calidad
    * @private
    * @param {Channel} existingChannel
    * @param {Channel} newChannel
    * @returns {Object}
    */
-  #resolveHDPatternConflict(existingChannel, newChannel) {
-    const existingPattern = this.#getHDPatternType(existingChannel.name);
-    const newPattern = this.#getHDPatternType(newChannel.name);
+  #resolveQualityPatternConflict(existingChannel, newChannel) {
+    const existingPattern = this.#getQualityPatternType(existingChannel.name);
+    const newPattern = this.#getQualityPatternType(newChannel.name);
     
-    // Prioridad de patrones HD (mayor a menor)
+    // Prioridad de patrones de calidad (mayor a menor)
     const patternPriority = {
-      'numbered_hd': 100,  // ESPN 4HD, 6HD, etc. - máxima prioridad
-      '4k': 90,
-      'uhd': 80,
-      'fhd': 70,
-      '_hd': 60,
-      'hd_word': 50,
+      // Alta calidad
+      '4k': 100,           // 4K - máxima prioridad
+      'uhd': 95,           // UHD
+      'fhd': 90,           // FHD
+      'numbered_hd': 85,   // ESPN 4HD, 6HD, etc.
+      '_hd': 80,           // _HD
+      'hd_word': 75,       // HD como palabra
+      
+      // Baja calidad (siempre menor que alta calidad)
+      'sd_variant': 25,    // SD_IN, SD_OUT, etc.
+      '_sd': 20,           // _SD
+      'numbered_sd': 15,   // 1SD, 2SD, etc.
+      'sd_word': 10,       // SD como palabra
+      
       'none': 0
     };
     
     const existingPriority = patternPriority[existingPattern] || 0;
     const newPriority = patternPriority[newPattern] || 0;
     
-    // Si el nuevo canal tiene mayor prioridad de patrón
+    // REGLA FUNDAMENTAL: Cualquier patrón HD (75+) tiene prioridad sobre cualquier patrón SD (25-)
+    const existingIsHD = existingPriority >= 75;
+    const newIsHD = newPriority >= 75;
+    const existingIsSD = existingPriority > 0 && existingPriority <= 25;
+    const newIsSD = newPriority > 0 && newPriority <= 25;
+    
+    // Proteger HD de SD
+    if (existingIsHD && newIsSD) {
+      return {
+        shouldReplace: false,
+        selectedChannel: existingChannel,
+        strategy: 'protect_hd_pattern_from_sd'
+      };
+    }
+    
+    // Actualizar SD a HD
+    if (existingIsSD && newIsHD) {
+      return {
+        shouldReplace: true,
+        selectedChannel: newChannel,
+        strategy: 'upgrade_sd_pattern_to_hd'
+      };
+    }
+    
+    // Si el nuevo canal tiene mayor prioridad de patrón (dentro de la misma categoría)
     if (newPriority > existingPriority) {
       return {
         shouldReplace: true,
         selectedChannel: newChannel,
-        strategy: 'hd_pattern_upgrade'
+        strategy: 'quality_pattern_upgrade'
       };
     }
     
     // Si tienen la misma prioridad de patrón, usar criterios adicionales
     if (newPriority === existingPriority && newPriority > 0) {
-      return this.#resolveHDPatternTieBreaker(existingChannel, newChannel);
+      return this.#resolveQualityPatternTieBreaker(existingChannel, newChannel);
     }
     
     return {
       shouldReplace: false,
       selectedChannel: existingChannel,
-      strategy: 'hd_pattern_keep_existing'
+      strategy: 'quality_pattern_keep_existing'
     };
   }
 
   /**
-   * Resuelve empates entre canales con el mismo tipo de patrón HD
+   * Resuelve empates entre canales con el mismo tipo de patrón de calidad
    * @private
    * @param {Channel} existingChannel
    * @param {Channel} newChannel
    * @returns {Object}
    */
-  #resolveHDPatternTieBreaker(existingChannel, newChannel) {
-    // Para canales numbered_hd, priorizar números más altos (ESPN 7HD > ESPN 4HD)
-    const existingPattern = this.#getHDPatternType(existingChannel.name);
+  #resolveQualityPatternTieBreaker(existingChannel, newChannel) {
+    const existingPattern = this.#getQualityPatternType(existingChannel.name);
+    const newPattern = this.#getQualityPatternType(newChannel.name);
     
-    if (existingPattern === 'numbered_hd') {
+    // Para canales numbered_hd, priorizar números más altos (ESPN 7HD > ESPN 4HD)
+    if (existingPattern === 'numbered_hd' && newPattern === 'numbered_hd') {
       const existingNumber = this.#extractNumberFromHDPattern(existingChannel.name);
       const newNumber = this.#extractNumberFromHDPattern(newChannel.name);
       
@@ -533,7 +595,46 @@ export class ChannelDeduplicationService {
         return {
           shouldReplace: true,
           selectedChannel: newChannel,
-          strategy: 'hd_numbered_upgrade'
+          strategy: 'numbered_hd_upgrade'
+        };
+      }
+    }
+    
+    // Para canales numbered_sd, priorizar números más altos también
+    if (existingPattern === 'numbered_sd' && newPattern === 'numbered_sd') {
+      const existingNumber = this.#extractNumberFromSDPattern(existingChannel.name);
+      const newNumber = this.#extractNumberFromSDPattern(newChannel.name);
+      
+      if (newNumber > existingNumber) {
+        return {
+          shouldReplace: true,
+          selectedChannel: newChannel,
+          strategy: 'numbered_sd_upgrade'
+        };
+      }
+    }
+    
+    // Para variantes SD (SD_IN, SD_OUT), priorizar por especificidad
+    if (existingPattern === 'sd_variant' && newPattern === 'sd_variant') {
+      // Priorizar variantes más específicas o comunes
+      const variantPriority = {
+        'sd_in': 30,
+        'sd_out': 25,
+        'sd_hd': 20,  // Casos híbridos
+        'sd_default': 10
+      };
+      
+      const existingVariant = this.#extractSDVariant(existingChannel.name);
+      const newVariant = this.#extractSDVariant(newChannel.name);
+      
+      const existingVariantPriority = variantPriority[existingVariant] || 10;
+      const newVariantPriority = variantPriority[newVariant] || 10;
+      
+      if (newVariantPriority > existingVariantPriority) {
+        return {
+          shouldReplace: true,
+          selectedChannel: newChannel,
+          strategy: 'sd_variant_upgrade'
         };
       }
     }
@@ -546,14 +647,14 @@ export class ChannelDeduplicationService {
       return {
         shouldReplace: true,
         selectedChannel: newChannel,
-        strategy: 'hd_specificity_upgrade'
+        strategy: 'quality_specificity_upgrade'
       };
     }
     
     return {
       shouldReplace: false,
       selectedChannel: existingChannel,
-      strategy: 'hd_pattern_tie_keep_existing'
+      strategy: 'quality_pattern_tie_keep_existing'
     };
   }
 
@@ -566,6 +667,37 @@ export class ChannelDeduplicationService {
   #extractNumberFromHDPattern(name) {
     const match = name.toLowerCase().match(/\b(\d+)hd\b/);
     return match ? parseInt(match[1], 10) : 0;
+  }
+
+  /**
+   * Extrae el número de un patrón SD numerado
+   * @private
+   * @param {string} name
+   * @returns {number}
+   */
+  #extractNumberFromSDPattern(name) {
+    const match = name.toLowerCase().match(/\b(\d+)sd\b/);
+    return match ? parseInt(match[1], 10) : 0;
+  }
+
+  /**
+   * Extrae la variante específica de un patrón SD
+   * @private
+   * @param {string} name
+   * @returns {string}
+   */
+  #extractSDVariant(name) {
+    const lowerName = name.toLowerCase();
+    
+    if (/\bsd_in\b/.test(lowerName)) return 'sd_in';
+    if (/\bsd_out\b/.test(lowerName)) return 'sd_out';
+    if (/\bsd_hd\b/.test(lowerName)) return 'sd_hd';
+    if (/\bsd_\w+\b/.test(lowerName)) {
+      const match = lowerName.match(/\bsd_(\w+)\b/);
+      return match ? `sd_${match[1]}` : 'sd_default';
+    }
+    
+    return 'sd_default';
   }
 
   /**
@@ -647,20 +779,55 @@ export class ChannelDeduplicationService {
     if (!name || typeof name !== 'string') {
       return '';
     }
-    return name
+    
+    let normalized = name
       .toLowerCase()
-      .replace(/[^a-z0-9\s]/g, '')
-      .replace(/\s+/g, ' ')
+      .replace(/[^a-z0-9\s]/g, '') // Remover caracteres especiales
+      .replace(/\s+/g, ' ')        // Normalizar espacios
       .trim();
+    
+    // Remover prefijos numéricos comunes (ej: "105-CNN" -> "CNN")
+    normalized = normalized.replace(/^\d+\s*-?\s*/, '');
+    
+    // Remover sufijos de calidad comunes
+    normalized = normalized
+      .replace(/\s+(hd|sd|fhd|uhd|4k)$/g, '')
+      .replace(/\s+\d+hd$/g, '') // Remover variantes como "6hd"
+      .replace(/_hd$/g, '');     // Remover "_hd"
+    
+    // Normalizar números romanos a arábigos para mejor comparación
+    const romanToArabic = {
+      'i': '1', 'ii': '2', 'iii': '3', 'iv': '4', 'v': '5',
+      'vi': '6', 'vii': '7', 'viii': '8', 'ix': '9', 'x': '10'
+    };
+    
+    // Reemplazar números romanos al final del nombre
+    normalized = normalized.replace(/\s+(i{1,3}|iv|v|vi{1,3}|ix|x)$/g, (match, roman) => {
+      return ' ' + (romanToArabic[roman] || roman);
+    });
+    
+    // Normalizar variaciones de "canal" (ej: "canal 1", "canal uno" -> "canal 1")
+    const numberWords = {
+      'uno': '1', 'dos': '2', 'tres': '3', 'cuatro': '4', 'cinco': '5',
+      'seis': '6', 'siete': '7', 'ocho': '8', 'nueve': '9', 'diez': '10',
+      'once': '11', 'doce': '12', 'trece': '13', 'catorce': '14', 'quince': '15'
+    };
+    
+    Object.entries(numberWords).forEach(([word, number]) => {
+      const regex = new RegExp(`\\b${word}\\b`, 'g');
+      normalized = normalized.replace(regex, number);
+    });
+    
+    return normalized.trim();
   }
 
   /**
-   * Normaliza nombre de canal removiendo patrones HD específicos
+   * Normaliza el nombre del canal removiendo patrones de calidad específicos
    * @private
    * @param {string} name
    * @returns {string}
    */
-  #normalizeChannelNameForHDPatterns(name) {
+  #normalizeChannelNameForQualityPatterns(name) {
     if (!name || typeof name !== 'string') {
       return '';
     }
@@ -669,32 +836,90 @@ export class ChannelDeduplicationService {
       .toLowerCase()
       .replace(/[^a-z0-9\s]/g, '') // Remover caracteres especiales
       .replace(/\s+/g, ' ')        // Normalizar espacios
+      // Remueve patrones HD numerados
+      .replace(/\b\d+hd\b/g, '')
+      .replace(/\bhd\s*\d+\b/g, '')
+      // Remueve patrones SD numerados
+      .replace(/\b\d+sd\b/g, '')
+      .replace(/\bsd\s*\d+\b/g, '')
+      // Remueve indicadores de calidad HD
       .replace(/_hd\b/g, '')       // Remover _hd
       .replace(/\bhd\b/g, '')      // Remover hd como palabra completa
-      .replace(/\b\d+hd\b/g, '')   // Remover variantes numéricas (4hd, 6hd, etc.)
       .replace(/\buhd\b/g, '')     // Remover uhd
       .replace(/\bfhd\b/g, '')     // Remover fhd
       .replace(/\b4k\b/g, '')      // Remover 4k
-      .replace(/\bsd\b/g, '')      // Remover sd
+      // Remueve indicadores de calidad SD y variantes
+      .replace(/\bsd(_\w+)?\b/g, '') // Remover sd y variantes como sd_in, sd_out
+      .replace(/_sd\b/g, '')       // Remover _sd
       .replace(/\s+/g, ' ')        // Normalizar espacios nuevamente
       .trim();
   }
 
   /**
-   * Detecta si un canal tiene patrones HD específicos
+   * Normaliza nombre de canal removiendo patrones HD específicos (compatibilidad)
+   * @private
+   * @param {string} name
+   * @returns {string}
+   */
+  #normalizeChannelNameForHDPatterns(name) {
+    return this.#normalizeChannelNameForQualityPatterns(name);
+  }
+
+  /**
+   * Detecta si un canal tiene patrones de calidad específicos (HD, SD, etc.)
    * @private
    * @param {string} name
    * @returns {boolean}
    */
-  #hasHDPatterns(name) {
+  #hasQualityPatterns(name) {
     if (!name || typeof name !== 'string') {
       return false;
     }
     
     const lowerName = name.toLowerCase();
     
-    // Patrones HD específicos
-    const hdPatterns = [
+    // Patrones de calidad específicos (HD y SD)
+    const qualityPatterns = [
+      /_hd\b/,           // _hd
+      /\bhd\b/,          // hd como palabra completa
+      /\b\d+hd\b/,       // variantes numéricas (4hd, 6hd, etc.)
+      /\buhd\b/,         // uhd
+      /\bfhd\b/,         // fhd
+      /\b4k\b/,          // 4k
+      /\bsd\b/,          // sd como palabra completa
+      /_sd\b/,           // _sd
+      /\bsd_\w+\b/,      // sd_in, sd_out, etc.
+      /\b\d+sd\b/        // variantes numéricas SD (1sd, 2sd, etc.)
+    ];
+    
+    return qualityPatterns.some(pattern => pattern.test(lowerName));
+  }
+
+  /**
+   * Detecta si un canal tiene patrones HD específicos (mantener compatibilidad)
+   * @private
+   * @param {string} name
+   * @returns {boolean}
+   */
+  #hasHDPatterns(name) {
+    return this.#hasQualityPatterns(name) && this.#isHighQuality(name);
+  }
+
+  /**
+   * Determina si un canal es de alta calidad (HD, 4K, UHD, FHD)
+   * @private
+   * @param {string} name
+   * @returns {boolean}
+   */
+  #isHighQuality(name) {
+    if (!name || typeof name !== 'string') {
+      return false;
+    }
+    
+    const lowerName = name.toLowerCase();
+    
+    // Patrones de alta calidad
+    const highQualityPatterns = [
       /_hd\b/,           // _hd
       /\bhd\b/,          // hd como palabra completa
       /\b\d+hd\b/,       // variantes numéricas (4hd, 6hd, etc.)
@@ -703,28 +928,76 @@ export class ChannelDeduplicationService {
       /\b4k\b/           // 4k
     ];
     
-    return hdPatterns.some(pattern => pattern.test(lowerName));
+    return highQualityPatterns.some(pattern => pattern.test(lowerName));
   }
 
   /**
-   * Obtiene el tipo de patrón HD de un canal
+   * Determina si un canal es de baja calidad (SD)
+   * @private
+   * @param {string} name
+   * @returns {boolean}
+   */
+  #isLowQuality(name) {
+    if (!name || typeof name !== 'string') {
+      return false;
+    }
+    
+    const lowerName = name.toLowerCase();
+    
+    // Patrones de baja calidad
+    const lowQualityPatterns = [
+      /\bsd\b/,          // sd como palabra completa
+      /_sd\b/,           // _sd
+      /\bsd_\w+\b/,      // sd_in, sd_out, etc.
+      /\b\d+sd\b/        // variantes numéricas SD (1sd, 2sd, etc.)
+    ];
+    
+    return lowQualityPatterns.some(pattern => pattern.test(lowerName));
+  }
+
+  /**
+   * Obtiene el tipo de patrón de calidad de un canal
    * @private
    * @param {string} name
    * @returns {string}
    */
-  #getHDPatternType(name) {
+  #getQualityPatternType(name) {
     if (!name || typeof name !== 'string') {
       return 'none';
     }
     
     const lowerName = name.toLowerCase();
     
-    if (/_hd\b/.test(lowerName)) return '_hd';
-    if (/\b\d+hd\b/.test(lowerName)) return 'numbered_hd';
+    // Patrones de alta calidad (orden de prioridad)
+    if (/\b4k\b/.test(lowerName)) return '4k';
     if (/\buhd\b/.test(lowerName)) return 'uhd';
     if (/\bfhd\b/.test(lowerName)) return 'fhd';
-    if (/\b4k\b/.test(lowerName)) return '4k';
+    if (/\b\d+hd\b/.test(lowerName)) return 'numbered_hd';
+    if (/_hd\b/.test(lowerName)) return '_hd';
     if (/\bhd\b/.test(lowerName)) return 'hd_word';
+    
+    // Patrones de baja calidad
+    if (/\bsd_\w+\b/.test(lowerName)) return 'sd_variant';
+    if (/_sd\b/.test(lowerName)) return '_sd';
+    if (/\b\d+sd\b/.test(lowerName)) return 'numbered_sd';
+    if (/\bsd\b/.test(lowerName)) return 'sd_word';
+    
+    return 'none';
+  }
+
+  /**
+   * Obtiene el tipo de patrón HD de un canal (mantener compatibilidad)
+   * @private
+   * @param {string} name
+   * @returns {string}
+   */
+  #getHDPatternType(name) {
+    const qualityType = this.#getQualityPatternType(name);
+    
+    // Solo retornar tipos HD
+    if (['4k', 'uhd', 'fhd', 'numbered_hd', '_hd', 'hd_word'].includes(qualityType)) {
+      return qualityType;
+    }
     
     return 'none';
   }
@@ -748,7 +1021,7 @@ export class ChannelDeduplicationService {
   }
 
   /**
-   * Calcula similitud entre dos strings usando algoritmo Jaro-Winkler simplificado
+   * Calcula similitud entre dos strings usando algoritmo mejorado
    * @private
    * @param {string} str1
    * @param {string} str2
@@ -758,7 +1031,17 @@ export class ChannelDeduplicationService {
     if (str1 === str2) return 1.0;
     if (str1.length === 0 || str2.length === 0) return 0.0;
 
-    // Algoritmo simplificado de distancia de Levenshtein normalizada
+    // Verificar si uno es subcadena del otro (para casos como "CNN" vs "105-CNN")
+    const shorter = str1.length < str2.length ? str1 : str2;
+    const longer = str1.length < str2.length ? str2 : str1;
+    
+    if (longer.includes(shorter) && shorter.length >= 3) {
+      // Bonus por subcadena, pero penalizar por diferencia de longitud
+      const lengthRatio = shorter.length / longer.length;
+      return Math.min(0.95, 0.7 + (lengthRatio * 0.25));
+    }
+
+    // Algoritmo de distancia de Levenshtein normalizada
     const maxLength = Math.max(str1.length, str2.length);
     const distance = this.#levenshteinDistance(str1, str2);
     
