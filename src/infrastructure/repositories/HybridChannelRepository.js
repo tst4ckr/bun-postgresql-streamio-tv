@@ -12,6 +12,7 @@ import ContentFilterService from '../../domain/services/ContentFilterService.js'
 import { HttpsToHttpConversionService } from '../services/HttpsToHttpConversionService.js';
 import { StreamHealthService } from '../services/StreamHealthService.js';
 import { StreamValidationService } from '../services/StreamValidationService.js';
+import { ChannelDeduplicationService, DeduplicationConfig } from '../../domain/services/ChannelDeduplicationService.js';
 
 /**
  * Repositorio híbrido que combina múltiples fuentes de canales
@@ -41,6 +42,7 @@ export class HybridChannelRepository extends ChannelRepository {
   #contentFilter; // Servicio de filtrado de contenido
   #httpsToHttpService; // Servicio de conversión HTTPS a HTTP
   #streamValidationService; // Servicio de validación temprana de streams
+  #deduplicationService; // Servicio de deduplicación de canales
 
   /**
    * @param {string} csvPath - Ruta al archivo CSV local
@@ -64,6 +66,9 @@ export class HybridChannelRepository extends ChannelRepository {
     
     // Inicializar servicio de validación temprana de streams
     this.#streamValidationService = new StreamValidationService(config, logger);
+    
+    // Inicializar servicio de deduplicación
+    this.#deduplicationService = new ChannelDeduplicationService(DeduplicationConfig.fromEnvironment());
     
     // Crear repositorio CSV principal
     this.#csvRepository = new CSVChannelRepository(csvPath, config, logger);
@@ -255,40 +260,24 @@ export class HybridChannelRepository extends ChannelRepository {
       this.#channels = [];
       this.#channelMap.clear();
       
-      // Agregar TODOS los canales CSV primero (prioridad absoluta, sin validación)
-      allCsvChannels.forEach(channel => {
-        this.#channels.push(channel);
+      // Combinar todos los canales para deduplicación centralizada
+      const allChannels = [...allCsvChannels, ...validatedM3uChannels];
+      
+      // Aplicar deduplicación centralizada
+      const deduplicationResult = await this.#deduplicationService.deduplicateChannels(allChannels);
+      
+      // Actualizar canales y mapa con resultados deduplicados
+      this.#channels = deduplicationResult.channels;
+      this.#channelMap.clear();
+      this.#channels.forEach(channel => {
         this.#channelMap.set(channel.id, channel);
       });
       
-      // Deduplicación inteligente con priorización HD
-      let m3uAdded = 0;
-      let m3uDuplicates = 0;
-      let hdUpgrades = 0;
-      
-      validatedM3uChannels.forEach(channel => {
-        if (!this.#channelMap.has(channel.id)) {
-          // Canal nuevo, agregar directamente
-          this.#channels.push(channel);
-          this.#channelMap.set(channel.id, channel);
-          m3uAdded++;
-        } else {
-          // Canal duplicado, verificar si el M3U es HD y el CSV no
-          const existingChannel = this.#channelMap.get(channel.id);
-          if (this.#shouldReplaceWithHDChannel(existingChannel, channel)) {
-            // Reemplazar canal existente con versión HD
-            const channelIndex = this.#channels.findIndex(ch => ch.id === channel.id);
-            if (channelIndex !== -1) {
-              this.#channels[channelIndex] = channel;
-              this.#channelMap.set(channel.id, channel);
-              hdUpgrades++;
-              this.#logger.info(`🔄 Canal actualizado a HD: ${channel.name} (${existingChannel.quality.value} → ${channel.quality.value})`);
-            }
-          } else {
-            m3uDuplicates++;
-          }
-        }
-      });
+      // Extraer métricas para logging
+      const metrics = deduplicationResult.metrics;
+      const m3uAdded = this.#channels.length - allCsvChannels.length;
+      const m3uDuplicates = metrics.duplicatesRemoved;
+      const hdUpgrades = metrics.hdUpgrades;
       
       this.#logger.info(
         `📊 Deduplicación completada: ${allCsvChannels.length} CSV (preservados) + ${m3uAdded} M3U (validados) = ${this.#channels.length} canales finales (${m3uDuplicates} duplicados omitidos, ${hdUpgrades} actualizados a HD)`
@@ -409,39 +398,24 @@ export class HybridChannelRepository extends ChannelRepository {
       this.#channels = [];
       this.#channelMap.clear();
       
-      // Agregar TODOS los canales CSV primero (prioridad absoluta)
-      csvChannels.forEach(channel => {
-        this.#channels.push(channel);
+      // Combinar todos los canales para deduplicación centralizada
+      const allChannels = [...csvChannels, ...validatedM3uChannels];
+      
+      // Aplicar deduplicación centralizada
+      const deduplicationResult = await this.#deduplicationService.deduplicateChannels(allChannels);
+      
+      // Actualizar canales y mapa con resultados deduplicados
+      this.#channels = deduplicationResult.channels;
+      this.#channelMap.clear();
+      this.#channels.forEach(channel => {
         this.#channelMap.set(channel.id, channel);
       });
       
-      // Agregar M3U validados con priorización HD
-      let totalM3uAdded = 0;
-      let totalM3uDuplicates = 0;
-      let totalHdUpgrades = 0;
-      
-      validatedM3uChannels.forEach(channel => {
-        if (!this.#channelMap.has(channel.id)) {
-          this.#channels.push(channel);
-          this.#channelMap.set(channel.id, channel);
-          totalM3uAdded++;
-        } else {
-          // Canal duplicado, verificar si el M3U es HD y el CSV no
-          const existingChannel = this.#channelMap.get(channel.id);
-          if (this.#shouldReplaceWithHDChannel(existingChannel, channel)) {
-            // Reemplazar canal existente con versión HD
-            const channelIndex = this.#channels.findIndex(ch => ch.id === channel.id);
-            if (channelIndex !== -1) {
-              this.#channels[channelIndex] = channel;
-              this.#channelMap.set(channel.id, channel);
-              totalHdUpgrades++;
-              this.#logger.info(`🔄 Canal actualizado a HD durante refresco: ${channel.name} (${existingChannel.quality.value} → ${channel.quality.value})`);
-            }
-          } else {
-            totalM3uDuplicates++;
-          }
-        }
-      });
+      // Extraer métricas para logging
+      const metrics = deduplicationResult.metrics;
+      const totalM3uAdded = this.#channels.length - csvChannels.length;
+      const totalM3uDuplicates = metrics.duplicatesRemoved;
+      const totalHdUpgrades = metrics.hdUpgrades;
       
       if (this.#m3uRepositories.length > 0) {
         this.#logger.info(`📊 Refresco completado: ${csvChannels.length} CSV + ${totalM3uAdded} M3U = ${this.#channels.length} canales (${totalM3uDuplicates} duplicados omitidos, ${totalHdUpgrades} actualizados a HD)`);
@@ -456,43 +430,7 @@ export class HybridChannelRepository extends ChannelRepository {
     }
   }
 
-  /**
-   * Determina si un canal duplicado debe ser reemplazado por una versión HD
-   * @private
-   * @param {Channel} existingChannel - Canal existente
-   * @param {Channel} newChannel - Canal candidato a reemplazo
-   * @returns {boolean}
-   */
-  #shouldReplaceWithHDChannel(existingChannel, newChannel) {
-    // Solo permitir reemplazo si la deduplicación inteligente está habilitada
-    if (!this.#config.validation?.enableIntelligentDeduplication) {
-      return false;
-    }
-    
-    // No reemplazar canales CSV (tienen prioridad absoluta)
-    const csvChannelIds = new Set();
-    if (this.#csvRepository) {
-      // Verificar si el canal existente es de CSV
-      // Los canales CSV se cargan primero, por lo que si existe, probablemente sea CSV
-      // Para mayor precisión, podríamos agregar metadata de fuente al canal
-    }
-    
-    // Verificar si el nuevo canal es HD y el existente no
-    const newIsHD = newChannel.isHighDefinition();
-    const existingIsHD = existingChannel.isHighDefinition();
-    
-    // Solo reemplazar si:
-    // 1. El nuevo canal es HD
-    // 2. El canal existente NO es HD
-    // 3. Ambos canales tienen el mismo nombre (verificación adicional)
-    if (newIsHD && !existingIsHD && 
-        newChannel.name.toLowerCase().trim() === existingChannel.name.toLowerCase().trim()) {
-      return true;
-    }
-    
-    // Si ambos son HD o ambos no son HD, mantener el existente (prioridad CSV)
-    return false;
-  }
+
 
   /**
    * Verifica si necesita refresco
