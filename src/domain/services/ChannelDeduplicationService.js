@@ -518,6 +518,9 @@ export class ChannelDeduplicationService {
    * @returns {string}
    */
   #normalizeChannelName(name) {
+    if (!name || typeof name !== 'string') {
+      return '';
+    }
     return name
       .toLowerCase()
       .replace(/[^a-z0-9\s]/g, '')
@@ -532,6 +535,9 @@ export class ChannelDeduplicationService {
    * @returns {string}
    */
   #normalizeUrl(url) {
+    if (!url || typeof url !== 'string') {
+      return '';
+    }
     try {
       const urlObj = new URL(url);
       return `${urlObj.hostname}${urlObj.pathname}`.toLowerCase();

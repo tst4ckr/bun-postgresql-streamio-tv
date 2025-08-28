@@ -224,7 +224,8 @@ export class CSVChannelRepository extends ChannelRepository {
       const removedCount = beforeCount - afterCount;
       
       if (removedCount > 0) {
-        const stats = this.#contentFilter.getFilteringStats();
+        const originalChannels = this.#channels.slice(0, beforeCount);
+        const stats = this.#contentFilter.getFilterStats(originalChannels, channels);
         this.#logger.info(`Filtros de contenido aplicados: ${removedCount} canales removidos`, {
           religious: stats.removedByCategory.religious,
           adult: stats.removedByCategory.adult,
