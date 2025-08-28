@@ -381,6 +381,7 @@ export class ChannelDeduplicationService {
 
   /**
    * Verifica si dos canales son realmente duplicados
+   * Implementa estrategia de dos fases: primero URLs idénticas, luego nombres normalizados
    * @private
    * @param {Channel} channel1
    * @param {Channel} channel2
@@ -392,34 +393,53 @@ export class ChannelDeduplicationService {
       return true;
     }
 
-    // Verificación por URL exacta (100% de igualdad)
+    // FASE 1: Verificación por URL exacta (100% de igualdad) - PRIORIDAD MÁXIMA
     if (channel1.streamUrl && channel2.streamUrl && 
         channel1.streamUrl === channel2.streamUrl) {
       return true;
     }
 
-    // Verificación por similitud de nombre
-    let nameSimilarity;
-    
-    // Si ambos canales tienen patrones de calidad, usar normalización específica
-    const channel1HasQuality = this.#hasQualityPatterns(channel1.name);
-    const channel2HasQuality = this.#hasQualityPatterns(channel2.name);
-    
-    if (channel1HasQuality && channel2HasQuality) {
-      // Usar normalización que remueve patrones de calidad para comparación
-      nameSimilarity = this.#calculateStringSimilarity(
-        this.#normalizeChannelNameForQualityPatterns(channel1.name),
-        this.#normalizeChannelNameForQualityPatterns(channel2.name)
-      );
-    } else {
-      // Usar normalización estándar
-      nameSimilarity = this.#calculateStringSimilarity(
-        this.#normalizeChannelName(channel1.name),
-        this.#normalizeChannelName(channel2.name)
-      );
+    // FASE 2: Verificación por similitud de URL (si está habilitada)
+    if (this.#config.criteria === DeduplicationCriteria.URL_SIMILARITY ||
+        this.#config.criteria === DeduplicationCriteria.COMBINED) {
+      if (channel1.streamUrl && channel2.streamUrl) {
+        const urlSimilarity = this.#calculateStringSimilarity(
+          this.#normalizeUrl(channel1.streamUrl),
+          this.#normalizeUrl(channel2.streamUrl)
+        );
+        if (urlSimilarity >= this.#config.urlSimilarityThreshold) {
+          return true;
+        }
+      }
     }
 
-    return nameSimilarity >= this.#config.nameSimilarityThreshold;
+    // FASE 3: Verificación por similitud de nombre normalizado
+    if (this.#config.criteria === DeduplicationCriteria.NAME_SIMILARITY ||
+        this.#config.criteria === DeduplicationCriteria.COMBINED) {
+      let nameSimilarity;
+      
+      // Si ambos canales tienen patrones de calidad, usar normalización específica
+      const channel1HasQuality = this.#hasQualityPatterns(channel1.name);
+      const channel2HasQuality = this.#hasQualityPatterns(channel2.name);
+      
+      if (channel1HasQuality && channel2HasQuality) {
+        // Usar normalización que remueve patrones de calidad para comparación
+        nameSimilarity = this.#calculateStringSimilarity(
+          this.#normalizeChannelNameForQualityPatterns(channel1.name),
+          this.#normalizeChannelNameForQualityPatterns(channel2.name)
+        );
+      } else {
+        // Usar normalización estándar (remueve prefijos numéricos y normaliza)
+        nameSimilarity = this.#calculateStringSimilarity(
+          this.#normalizeChannelName(channel1.name),
+          this.#normalizeChannelName(channel2.name)
+        );
+      }
+
+      return nameSimilarity >= this.#config.nameSimilarityThreshold;
+    }
+
+    return false;
   }
 
   /**
@@ -804,8 +824,9 @@ export class ChannelDeduplicationService {
       .replace(/\s+/g, ' ')        // Normalizar espacios
       .trim();
     
-    // Remover prefijos numéricos comunes (ej: "105-CNN" -> "CNN")
-    normalized = normalized.replace(/^\d+\s*-?\s*/, '');
+    // Remover SOLO prefijos numéricos que están claramente separados por guión
+    // Preservar números que son parte del nombre del canal (ej: "Fox Sports 2")
+    normalized = normalized.replace(/^\d+\s*-\s*/, '');
     
     // Remover sufijos de calidad comunes
     normalized = normalized
@@ -1049,11 +1070,31 @@ export class ChannelDeduplicationService {
     if (str1 === str2) return 1.0;
     if (str1.length === 0 || str2.length === 0) return 0.0;
 
+    // Verificar si ambas cadenas contienen números al final
+    const hasNumber1 = /\d+$/.test(str1.trim());
+    const hasNumber2 = /\d+$/.test(str2.trim());
+    
+    // Si ambas tienen números al final, deben ser exactamente iguales para ser consideradas duplicadas
+    if (hasNumber1 && hasNumber2) {
+      return str1 === str2 ? 1.0 : 0.0;
+    }
+
     // Verificar si uno es subcadena del otro (para casos como "CNN" vs "105-CNN")
     const shorter = str1.length < str2.length ? str1 : str2;
     const longer = str1.length < str2.length ? str2 : str1;
     
     if (longer.includes(shorter) && shorter.length >= 3) {
+      // Si la cadena más corta tiene números al final, ser más estricto
+      if (hasNumber1 || hasNumber2) {
+        // Solo considerar duplicado si la diferencia es solo prefijos numéricos
+        const withoutPrefix = longer.replace(/^\d+/, '');
+        if (withoutPrefix === shorter) {
+          const lengthRatio = shorter.length / longer.length;
+          return Math.min(0.95, 0.7 + (lengthRatio * 0.25));
+        }
+        return 0.0;
+      }
+      
       // Bonus por subcadena, pero penalizar por diferencia de longitud
       const lengthRatio = shorter.length / longer.length;
       return Math.min(0.95, 0.7 + (lengthRatio * 0.25));
