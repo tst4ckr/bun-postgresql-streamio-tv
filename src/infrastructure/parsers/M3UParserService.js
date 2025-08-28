@@ -143,22 +143,14 @@ export class M3UParserService {
    */
   async #processEntries(rawEntries) {
     const channels = [];
-    const processedIds = new Set();
 
     for (const entry of rawEntries) {
       try {
         const channelData = await this.#parseEntry(entry);
         
         if (channelData) {
-          // Evitar duplicados por ID
-          if (processedIds.has(channelData.id)) {
-            console.warn(`Canal duplicado ignorado: ${channelData.id}`);
-            continue;
-          }
-
           const channel = Channel.fromM3U(channelData);
           channels.push(channel);
-          processedIds.add(channelData.id);
         }
       } catch (error) {
         if (this.#config.skipInvalidEntries) {
