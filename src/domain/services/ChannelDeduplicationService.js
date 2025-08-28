@@ -317,6 +317,10 @@ export class ChannelDeduplicationService {
         return channel.id;
       
       case DeduplicationCriteria.NAME_SIMILARITY:
+        // Si el canal tiene patrones HD, usar normalización específica
+        if (this.#hasHDPatterns(channel.name)) {
+          return this.#normalizeChannelNameForHDPatterns(channel.name);
+        }
         return this.#normalizeChannelName(channel.name);
       
       case DeduplicationCriteria.URL_SIMILARITY:
@@ -387,10 +391,25 @@ export class ChannelDeduplicationService {
     }
 
     // Verificación por similitud de nombre
-    const nameSimilarity = this.#calculateStringSimilarity(
-      this.#normalizeChannelName(channel1.name),
-      this.#normalizeChannelName(channel2.name)
-    );
+    let nameSimilarity;
+    
+    // Si ambos canales tienen patrones HD, usar normalización específica
+    const channel1HasHD = this.#hasHDPatterns(channel1.name);
+    const channel2HasHD = this.#hasHDPatterns(channel2.name);
+    
+    if (channel1HasHD && channel2HasHD) {
+      // Usar normalización que remueve patrones HD para comparación
+      nameSimilarity = this.#calculateStringSimilarity(
+        this.#normalizeChannelNameForHDPatterns(channel1.name),
+        this.#normalizeChannelNameForHDPatterns(channel2.name)
+      );
+    } else {
+      // Usar normalización estándar
+      nameSimilarity = this.#calculateStringSimilarity(
+        this.#normalizeChannelName(channel1.name),
+        this.#normalizeChannelName(channel2.name)
+      );
+    }
 
     if (nameSimilarity >= this.#config.nameSimilarityThreshold) {
       return true;
@@ -421,6 +440,15 @@ export class ChannelDeduplicationService {
       };
     }
 
+    // Verificar si ambos canales tienen patrones HD
+    const existingHasHD = this.#hasHDPatterns(existingChannel.name);
+    const newHasHD = this.#hasHDPatterns(newChannel.name);
+    
+    // Si ambos tienen patrones HD, usar lógica avanzada
+    if (existingHasHD && newHasHD) {
+      return this.#resolveHDPatternConflict(existingChannel, newChannel);
+    }
+
     const existingQuality = existingChannel.quality?.value || 'SD';
     const newQuality = newChannel.quality?.value || 'SD';
     
@@ -440,6 +468,106 @@ export class ChannelDeduplicationService {
       selectedChannel: existingChannel,
       strategy: 'hd_keep_existing'
     };
+  }
+
+  /**
+   * Resuelve conflictos específicos entre canales con patrones HD
+   * @private
+   * @param {Channel} existingChannel
+   * @param {Channel} newChannel
+   * @returns {Object}
+   */
+  #resolveHDPatternConflict(existingChannel, newChannel) {
+    const existingPattern = this.#getHDPatternType(existingChannel.name);
+    const newPattern = this.#getHDPatternType(newChannel.name);
+    
+    // Prioridad de patrones HD (mayor a menor)
+    const patternPriority = {
+      'numbered_hd': 100,  // ESPN 4HD, 6HD, etc. - máxima prioridad
+      '4k': 90,
+      'uhd': 80,
+      'fhd': 70,
+      '_hd': 60,
+      'hd_word': 50,
+      'none': 0
+    };
+    
+    const existingPriority = patternPriority[existingPattern] || 0;
+    const newPriority = patternPriority[newPattern] || 0;
+    
+    // Si el nuevo canal tiene mayor prioridad de patrón
+    if (newPriority > existingPriority) {
+      return {
+        shouldReplace: true,
+        selectedChannel: newChannel,
+        strategy: 'hd_pattern_upgrade'
+      };
+    }
+    
+    // Si tienen la misma prioridad de patrón, usar criterios adicionales
+    if (newPriority === existingPriority && newPriority > 0) {
+      return this.#resolveHDPatternTieBreaker(existingChannel, newChannel);
+    }
+    
+    return {
+      shouldReplace: false,
+      selectedChannel: existingChannel,
+      strategy: 'hd_pattern_keep_existing'
+    };
+  }
+
+  /**
+   * Resuelve empates entre canales con el mismo tipo de patrón HD
+   * @private
+   * @param {Channel} existingChannel
+   * @param {Channel} newChannel
+   * @returns {Object}
+   */
+  #resolveHDPatternTieBreaker(existingChannel, newChannel) {
+    // Para canales numbered_hd, priorizar números más altos (ESPN 7HD > ESPN 4HD)
+    const existingPattern = this.#getHDPatternType(existingChannel.name);
+    
+    if (existingPattern === 'numbered_hd') {
+      const existingNumber = this.#extractNumberFromHDPattern(existingChannel.name);
+      const newNumber = this.#extractNumberFromHDPattern(newChannel.name);
+      
+      if (newNumber > existingNumber) {
+        return {
+          shouldReplace: true,
+          selectedChannel: newChannel,
+          strategy: 'hd_numbered_upgrade'
+        };
+      }
+    }
+    
+    // Criterios adicionales: longitud del nombre (más específico)
+    const existingSpecificity = existingChannel.name.length;
+    const newSpecificity = newChannel.name.length;
+    
+    if (newSpecificity > existingSpecificity) {
+      return {
+        shouldReplace: true,
+        selectedChannel: newChannel,
+        strategy: 'hd_specificity_upgrade'
+      };
+    }
+    
+    return {
+      shouldReplace: false,
+      selectedChannel: existingChannel,
+      strategy: 'hd_pattern_tie_keep_existing'
+    };
+  }
+
+  /**
+   * Extrae el número de un patrón HD numerado
+   * @private
+   * @param {string} name
+   * @returns {number}
+   */
+  #extractNumberFromHDPattern(name) {
+    const match = name.toLowerCase().match(/\b(\d+)hd\b/);
+    return match ? parseInt(match[1], 10) : 0;
   }
 
   /**
@@ -526,6 +654,81 @@ export class ChannelDeduplicationService {
       .replace(/[^a-z0-9\s]/g, '')
       .replace(/\s+/g, ' ')
       .trim();
+  }
+
+  /**
+   * Normaliza nombre de canal removiendo patrones HD específicos
+   * @private
+   * @param {string} name
+   * @returns {string}
+   */
+  #normalizeChannelNameForHDPatterns(name) {
+    if (!name || typeof name !== 'string') {
+      return '';
+    }
+    
+    return name
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, '') // Remover caracteres especiales
+      .replace(/\s+/g, ' ')        // Normalizar espacios
+      .replace(/_hd\b/g, '')       // Remover _hd
+      .replace(/\bhd\b/g, '')      // Remover hd como palabra completa
+      .replace(/\b\d+hd\b/g, '')   // Remover variantes numéricas (4hd, 6hd, etc.)
+      .replace(/\buhd\b/g, '')     // Remover uhd
+      .replace(/\bfhd\b/g, '')     // Remover fhd
+      .replace(/\b4k\b/g, '')      // Remover 4k
+      .replace(/\bsd\b/g, '')      // Remover sd
+      .replace(/\s+/g, ' ')        // Normalizar espacios nuevamente
+      .trim();
+  }
+
+  /**
+   * Detecta si un canal tiene patrones HD específicos
+   * @private
+   * @param {string} name
+   * @returns {boolean}
+   */
+  #hasHDPatterns(name) {
+    if (!name || typeof name !== 'string') {
+      return false;
+    }
+    
+    const lowerName = name.toLowerCase();
+    
+    // Patrones HD específicos
+    const hdPatterns = [
+      /_hd\b/,           // _hd
+      /\bhd\b/,          // hd como palabra completa
+      /\b\d+hd\b/,       // variantes numéricas (4hd, 6hd, etc.)
+      /\buhd\b/,         // uhd
+      /\bfhd\b/,         // fhd
+      /\b4k\b/           // 4k
+    ];
+    
+    return hdPatterns.some(pattern => pattern.test(lowerName));
+  }
+
+  /**
+   * Obtiene el tipo de patrón HD de un canal
+   * @private
+   * @param {string} name
+   * @returns {string}
+   */
+  #getHDPatternType(name) {
+    if (!name || typeof name !== 'string') {
+      return 'none';
+    }
+    
+    const lowerName = name.toLowerCase();
+    
+    if (/_hd\b/.test(lowerName)) return '_hd';
+    if (/\b\d+hd\b/.test(lowerName)) return 'numbered_hd';
+    if (/\buhd\b/.test(lowerName)) return 'uhd';
+    if (/\bfhd\b/.test(lowerName)) return 'fhd';
+    if (/\b4k\b/.test(lowerName)) return '4k';
+    if (/\bhd\b/.test(lowerName)) return 'hd_word';
+    
+    return 'none';
   }
 
   /**
