@@ -1,0 +1,2109 @@
+{
+  "metadata": {
+    "baseUrl": "http://181.188.216.5:18000/play",
+    "totalChannels": 300,
+    "generatedAt": "2025-08-28T13:51:32.365Z"
+  },
+  "channels": [
+    {
+      "id": "a001",
+      "number": 1,
+      "url": "http://181.188.216.5:18000/play/a001/index.m3u8",
+      "name": "Canal A001",
+      "type": "stream"
+    },
+    {
+      "id": "a002",
+      "number": 2,
+      "url": "http://181.188.216.5:18000/play/a002/index.m3u8",
+      "name": "Canal A002",
+      "type": "stream"
+    },
+    {
+      "id": "a003",
+      "number": 3,
+      "url": "http://181.188.216.5:18000/play/a003/index.m3u8",
+      "name": "Canal A003",
+      "type": "stream"
+    },
+    {
+      "id": "a004",
+      "number": 4,
+      "url": "http://181.188.216.5:18000/play/a004/index.m3u8",
+      "name": "Canal A004",
+      "type": "stream"
+    },
+    {
+      "id": "a005",
+      "number": 5,
+      "url": "http://181.188.216.5:18000/play/a005/index.m3u8",
+      "name": "Canal A005",
+      "type": "stream"
+    },
+    {
+      "id": "a006",
+      "number": 6,
+      "url": "http://181.188.216.5:18000/play/a006/index.m3u8",
+      "name": "Canal A006",
+      "type": "stream"
+    },
+    {
+      "id": "a007",
+      "number": 7,
+      "url": "http://181.188.216.5:18000/play/a007/index.m3u8",
+      "name": "Canal A007",
+      "type": "stream"
+    },
+    {
+      "id": "a008",
+      "number": 8,
+      "url": "http://181.188.216.5:18000/play/a008/index.m3u8",
+      "name": "Canal A008",
+      "type": "stream"
+    },
+    {
+      "id": "a009",
+      "number": 9,
+      "url": "http://181.188.216.5:18000/play/a009/index.m3u8",
+      "name": "Canal A009",
+      "type": "stream"
+    },
+    {
+      "id": "a00a",
+      "number": 10,
+      "url": "http://181.188.216.5:18000/play/a00a/index.m3u8",
+      "name": "Canal A00A",
+      "type": "stream"
+    },
+    {
+      "id": "a00b",
+      "number": 11,
+      "url": "http://181.188.216.5:18000/play/a00b/index.m3u8",
+      "name": "Canal A00B",
+      "type": "stream"
+    },
+    {
+      "id": "a00c",
+      "number": 12,
+      "url": "http://181.188.216.5:18000/play/a00c/index.m3u8",
+      "name": "Canal A00C",
+      "type": "stream"
+    },
+    {
+      "id": "a00d",
+      "number": 13,
+      "url": "http://181.188.216.5:18000/play/a00d/index.m3u8",
+      "name": "Canal A00D",
+      "type": "stream"
+    },
+    {
+      "id": "a00e",
+      "number": 14,
+      "url": "http://181.188.216.5:18000/play/a00e/index.m3u8",
+      "name": "Canal A00E",
+      "type": "stream"
+    },
+    {
+      "id": "a00f",
+      "number": 15,
+      "url": "http://181.188.216.5:18000/play/a00f/index.m3u8",
+      "name": "Canal A00F",
+      "type": "stream"
+    },
+    {
+      "id": "a010",
+      "number": 16,
+      "url": "http://181.188.216.5:18000/play/a010/index.m3u8",
+      "name": "Canal A010",
+      "type": "stream"
+    },
+    {
+      "id": "a011",
+      "number": 17,
+      "url": "http://181.188.216.5:18000/play/a011/index.m3u8",
+      "name": "Canal A011",
+      "type": "stream"
+    },
+    {
+      "id": "a012",
+      "number": 18,
+      "url": "http://181.188.216.5:18000/play/a012/index.m3u8",
+      "name": "Canal A012",
+      "type": "stream"
+    },
+    {
+      "id": "a013",
+      "number": 19,
+      "url": "http://181.188.216.5:18000/play/a013/index.m3u8",
+      "name": "Canal A013",
+      "type": "stream"
+    },
+    {
+      "id": "a014",
+      "number": 20,
+      "url": "http://181.188.216.5:18000/play/a014/index.m3u8",
+      "name": "Canal A014",
+      "type": "stream"
+    },
+    {
+      "id": "a015",
+      "number": 21,
+      "url": "http://181.188.216.5:18000/play/a015/index.m3u8",
+      "name": "Canal A015",
+      "type": "stream"
+    },
+    {
+      "id": "a016",
+      "number": 22,
+      "url": "http://181.188.216.5:18000/play/a016/index.m3u8",
+      "name": "Canal A016",
+      "type": "stream"
+    },
+    {
+      "id": "a017",
+      "number": 23,
+      "url": "http://181.188.216.5:18000/play/a017/index.m3u8",
+      "name": "Canal A017",
+      "type": "stream"
+    },
+    {
+      "id": "a018",
+      "number": 24,
+      "url": "http://181.188.216.5:18000/play/a018/index.m3u8",
+      "name": "Canal A018",
+      "type": "stream"
+    },
+    {
+      "id": "a019",
+      "number": 25,
+      "url": "http://181.188.216.5:18000/play/a019/index.m3u8",
+      "name": "Canal A019",
+      "type": "stream"
+    },
+    {
+      "id": "a01a",
+      "number": 26,
+      "url": "http://181.188.216.5:18000/play/a01a/index.m3u8",
+      "name": "Canal A01A",
+      "type": "stream"
+    },
+    {
+      "id": "a01b",
+      "number": 27,
+      "url": "http://181.188.216.5:18000/play/a01b/index.m3u8",
+      "name": "Canal A01B",
+      "type": "stream"
+    },
+    {
+      "id": "a01c",
+      "number": 28,
+      "url": "http://181.188.216.5:18000/play/a01c/index.m3u8",
+      "name": "Canal A01C",
+      "type": "stream"
+    },
+    {
+      "id": "a01d",
+      "number": 29,
+      "url": "http://181.188.216.5:18000/play/a01d/index.m3u8",
+      "name": "Canal A01D",
+      "type": "stream"
+    },
+    {
+      "id": "a01e",
+      "number": 30,
+      "url": "http://181.188.216.5:18000/play/a01e/index.m3u8",
+      "name": "Canal A01E",
+      "type": "stream"
+    },
+    {
+      "id": "a01f",
+      "number": 31,
+      "url": "http://181.188.216.5:18000/play/a01f/index.m3u8",
+      "name": "Canal A01F",
+      "type": "stream"
+    },
+    {
+      "id": "a020",
+      "number": 32,
+      "url": "http://181.188.216.5:18000/play/a020/index.m3u8",
+      "name": "Canal A020",
+      "type": "stream"
+    },
+    {
+      "id": "a021",
+      "number": 33,
+      "url": "http://181.188.216.5:18000/play/a021/index.m3u8",
+      "name": "Canal A021",
+      "type": "stream"
+    },
+    {
+      "id": "a022",
+      "number": 34,
+      "url": "http://181.188.216.5:18000/play/a022/index.m3u8",
+      "name": "Canal A022",
+      "type": "stream"
+    },
+    {
+      "id": "a023",
+      "number": 35,
+      "url": "http://181.188.216.5:18000/play/a023/index.m3u8",
+      "name": "Canal A023",
+      "type": "stream"
+    },
+    {
+      "id": "a024",
+      "number": 36,
+      "url": "http://181.188.216.5:18000/play/a024/index.m3u8",
+      "name": "Canal A024",
+      "type": "stream"
+    },
+    {
+      "id": "a025",
+      "number": 37,
+      "url": "http://181.188.216.5:18000/play/a025/index.m3u8",
+      "name": "Canal A025",
+      "type": "stream"
+    },
+    {
+      "id": "a026",
+      "number": 38,
+      "url": "http://181.188.216.5:18000/play/a026/index.m3u8",
+      "name": "Canal A026",
+      "type": "stream"
+    },
+    {
+      "id": "a027",
+      "number": 39,
+      "url": "http://181.188.216.5:18000/play/a027/index.m3u8",
+      "name": "Canal A027",
+      "type": "stream"
+    },
+    {
+      "id": "a028",
+      "number": 40,
+      "url": "http://181.188.216.5:18000/play/a028/index.m3u8",
+      "name": "Canal A028",
+      "type": "stream"
+    },
+    {
+      "id": "a029",
+      "number": 41,
+      "url": "http://181.188.216.5:18000/play/a029/index.m3u8",
+      "name": "Canal A029",
+      "type": "stream"
+    },
+    {
+      "id": "a02a",
+      "number": 42,
+      "url": "http://181.188.216.5:18000/play/a02a/index.m3u8",
+      "name": "Canal A02A",
+      "type": "stream"
+    },
+    {
+      "id": "a02b",
+      "number": 43,
+      "url": "http://181.188.216.5:18000/play/a02b/index.m3u8",
+      "name": "Canal A02B",
+      "type": "stream"
+    },
+    {
+      "id": "a02c",
+      "number": 44,
+      "url": "http://181.188.216.5:18000/play/a02c/index.m3u8",
+      "name": "Canal A02C",
+      "type": "stream"
+    },
+    {
+      "id": "a02d",
+      "number": 45,
+      "url": "http://181.188.216.5:18000/play/a02d/index.m3u8",
+      "name": "Canal A02D",
+      "type": "stream"
+    },
+    {
+      "id": "a02e",
+      "number": 46,
+      "url": "http://181.188.216.5:18000/play/a02e/index.m3u8",
+      "name": "Canal A02E",
+      "type": "stream"
+    },
+    {
+      "id": "a02f",
+      "number": 47,
+      "url": "http://181.188.216.5:18000/play/a02f/index.m3u8",
+      "name": "Canal A02F",
+      "type": "stream"
+    },
+    {
+      "id": "a030",
+      "number": 48,
+      "url": "http://181.188.216.5:18000/play/a030/index.m3u8",
+      "name": "Canal A030",
+      "type": "stream"
+    },
+    {
+      "id": "a031",
+      "number": 49,
+      "url": "http://181.188.216.5:18000/play/a031/index.m3u8",
+      "name": "Canal A031",
+      "type": "stream"
+    },
+    {
+      "id": "a032",
+      "number": 50,
+      "url": "http://181.188.216.5:18000/play/a032/index.m3u8",
+      "name": "Canal A032",
+      "type": "stream"
+    },
+    {
+      "id": "a033",
+      "number": 51,
+      "url": "http://181.188.216.5:18000/play/a033/index.m3u8",
+      "name": "Canal A033",
+      "type": "stream"
+    },
+    {
+      "id": "a034",
+      "number": 52,
+      "url": "http://181.188.216.5:18000/play/a034/index.m3u8",
+      "name": "Canal A034",
+      "type": "stream"
+    },
+    {
+      "id": "a035",
+      "number": 53,
+      "url": "http://181.188.216.5:18000/play/a035/index.m3u8",
+      "name": "Canal A035",
+      "type": "stream"
+    },
+    {
+      "id": "a036",
+      "number": 54,
+      "url": "http://181.188.216.5:18000/play/a036/index.m3u8",
+      "name": "Canal A036",
+      "type": "stream"
+    },
+    {
+      "id": "a037",
+      "number": 55,
+      "url": "http://181.188.216.5:18000/play/a037/index.m3u8",
+      "name": "Canal A037",
+      "type": "stream"
+    },
+    {
+      "id": "a038",
+      "number": 56,
+      "url": "http://181.188.216.5:18000/play/a038/index.m3u8",
+      "name": "Canal A038",
+      "type": "stream"
+    },
+    {
+      "id": "a039",
+      "number": 57,
+      "url": "http://181.188.216.5:18000/play/a039/index.m3u8",
+      "name": "Canal A039",
+      "type": "stream"
+    },
+    {
+      "id": "a03a",
+      "number": 58,
+      "url": "http://181.188.216.5:18000/play/a03a/index.m3u8",
+      "name": "Canal A03A",
+      "type": "stream"
+    },
+    {
+      "id": "a03b",
+      "number": 59,
+      "url": "http://181.188.216.5:18000/play/a03b/index.m3u8",
+      "name": "Canal A03B",
+      "type": "stream"
+    },
+    {
+      "id": "a03c",
+      "number": 60,
+      "url": "http://181.188.216.5:18000/play/a03c/index.m3u8",
+      "name": "Canal A03C",
+      "type": "stream"
+    },
+    {
+      "id": "a03d",
+      "number": 61,
+      "url": "http://181.188.216.5:18000/play/a03d/index.m3u8",
+      "name": "Canal A03D",
+      "type": "stream"
+    },
+    {
+      "id": "a03e",
+      "number": 62,
+      "url": "http://181.188.216.5:18000/play/a03e/index.m3u8",
+      "name": "Canal A03E",
+      "type": "stream"
+    },
+    {
+      "id": "a03f",
+      "number": 63,
+      "url": "http://181.188.216.5:18000/play/a03f/index.m3u8",
+      "name": "Canal A03F",
+      "type": "stream"
+    },
+    {
+      "id": "a040",
+      "number": 64,
+      "url": "http://181.188.216.5:18000/play/a040/index.m3u8",
+      "name": "Canal A040",
+      "type": "stream"
+    },
+    {
+      "id": "a041",
+      "number": 65,
+      "url": "http://181.188.216.5:18000/play/a041/index.m3u8",
+      "name": "Canal A041",
+      "type": "stream"
+    },
+    {
+      "id": "a042",
+      "number": 66,
+      "url": "http://181.188.216.5:18000/play/a042/index.m3u8",
+      "name": "Canal A042",
+      "type": "stream"
+    },
+    {
+      "id": "a043",
+      "number": 67,
+      "url": "http://181.188.216.5:18000/play/a043/index.m3u8",
+      "name": "Canal A043",
+      "type": "stream"
+    },
+    {
+      "id": "a044",
+      "number": 68,
+      "url": "http://181.188.216.5:18000/play/a044/index.m3u8",
+      "name": "Canal A044",
+      "type": "stream"
+    },
+    {
+      "id": "a045",
+      "number": 69,
+      "url": "http://181.188.216.5:18000/play/a045/index.m3u8",
+      "name": "Canal A045",
+      "type": "stream"
+    },
+    {
+      "id": "a046",
+      "number": 70,
+      "url": "http://181.188.216.5:18000/play/a046/index.m3u8",
+      "name": "Canal A046",
+      "type": "stream"
+    },
+    {
+      "id": "a047",
+      "number": 71,
+      "url": "http://181.188.216.5:18000/play/a047/index.m3u8",
+      "name": "Canal A047",
+      "type": "stream"
+    },
+    {
+      "id": "a048",
+      "number": 72,
+      "url": "http://181.188.216.5:18000/play/a048/index.m3u8",
+      "name": "Canal A048",
+      "type": "stream"
+    },
+    {
+      "id": "a049",
+      "number": 73,
+      "url": "http://181.188.216.5:18000/play/a049/index.m3u8",
+      "name": "Canal A049",
+      "type": "stream"
+    },
+    {
+      "id": "a04a",
+      "number": 74,
+      "url": "http://181.188.216.5:18000/play/a04a/index.m3u8",
+      "name": "Canal A04A",
+      "type": "stream"
+    },
+    {
+      "id": "a04b",
+      "number": 75,
+      "url": "http://181.188.216.5:18000/play/a04b/index.m3u8",
+      "name": "Canal A04B",
+      "type": "stream"
+    },
+    {
+      "id": "a04c",
+      "number": 76,
+      "url": "http://181.188.216.5:18000/play/a04c/index.m3u8",
+      "name": "Canal A04C",
+      "type": "stream"
+    },
+    {
+      "id": "a04d",
+      "number": 77,
+      "url": "http://181.188.216.5:18000/play/a04d/index.m3u8",
+      "name": "Canal A04D",
+      "type": "stream"
+    },
+    {
+      "id": "a04e",
+      "number": 78,
+      "url": "http://181.188.216.5:18000/play/a04e/index.m3u8",
+      "name": "Canal A04E",
+      "type": "stream"
+    },
+    {
+      "id": "a04f",
+      "number": 79,
+      "url": "http://181.188.216.5:18000/play/a04f/index.m3u8",
+      "name": "Canal A04F",
+      "type": "stream"
+    },
+    {
+      "id": "a050",
+      "number": 80,
+      "url": "http://181.188.216.5:18000/play/a050/index.m3u8",
+      "name": "Canal A050",
+      "type": "stream"
+    },
+    {
+      "id": "a051",
+      "number": 81,
+      "url": "http://181.188.216.5:18000/play/a051/index.m3u8",
+      "name": "Canal A051",
+      "type": "stream"
+    },
+    {
+      "id": "a052",
+      "number": 82,
+      "url": "http://181.188.216.5:18000/play/a052/index.m3u8",
+      "name": "Canal A052",
+      "type": "stream"
+    },
+    {
+      "id": "a053",
+      "number": 83,
+      "url": "http://181.188.216.5:18000/play/a053/index.m3u8",
+      "name": "Canal A053",
+      "type": "stream"
+    },
+    {
+      "id": "a054",
+      "number": 84,
+      "url": "http://181.188.216.5:18000/play/a054/index.m3u8",
+      "name": "Canal A054",
+      "type": "stream"
+    },
+    {
+      "id": "a055",
+      "number": 85,
+      "url": "http://181.188.216.5:18000/play/a055/index.m3u8",
+      "name": "Canal A055",
+      "type": "stream"
+    },
+    {
+      "id": "a056",
+      "number": 86,
+      "url": "http://181.188.216.5:18000/play/a056/index.m3u8",
+      "name": "Canal A056",
+      "type": "stream"
+    },
+    {
+      "id": "a057",
+      "number": 87,
+      "url": "http://181.188.216.5:18000/play/a057/index.m3u8",
+      "name": "Canal A057",
+      "type": "stream"
+    },
+    {
+      "id": "a058",
+      "number": 88,
+      "url": "http://181.188.216.5:18000/play/a058/index.m3u8",
+      "name": "Canal A058",
+      "type": "stream"
+    },
+    {
+      "id": "a059",
+      "number": 89,
+      "url": "http://181.188.216.5:18000/play/a059/index.m3u8",
+      "name": "Canal A059",
+      "type": "stream"
+    },
+    {
+      "id": "a05a",
+      "number": 90,
+      "url": "http://181.188.216.5:18000/play/a05a/index.m3u8",
+      "name": "Canal A05A",
+      "type": "stream"
+    },
+    {
+      "id": "a05b",
+      "number": 91,
+      "url": "http://181.188.216.5:18000/play/a05b/index.m3u8",
+      "name": "Canal A05B",
+      "type": "stream"
+    },
+    {
+      "id": "a05c",
+      "number": 92,
+      "url": "http://181.188.216.5:18000/play/a05c/index.m3u8",
+      "name": "Canal A05C",
+      "type": "stream"
+    },
+    {
+      "id": "a05d",
+      "number": 93,
+      "url": "http://181.188.216.5:18000/play/a05d/index.m3u8",
+      "name": "Canal A05D",
+      "type": "stream"
+    },
+    {
+      "id": "a05e",
+      "number": 94,
+      "url": "http://181.188.216.5:18000/play/a05e/index.m3u8",
+      "name": "Canal A05E",
+      "type": "stream"
+    },
+    {
+      "id": "a05f",
+      "number": 95,
+      "url": "http://181.188.216.5:18000/play/a05f/index.m3u8",
+      "name": "Canal A05F",
+      "type": "stream"
+    },
+    {
+      "id": "a060",
+      "number": 96,
+      "url": "http://181.188.216.5:18000/play/a060/index.m3u8",
+      "name": "Canal A060",
+      "type": "stream"
+    },
+    {
+      "id": "a061",
+      "number": 97,
+      "url": "http://181.188.216.5:18000/play/a061/index.m3u8",
+      "name": "Canal A061",
+      "type": "stream"
+    },
+    {
+      "id": "a062",
+      "number": 98,
+      "url": "http://181.188.216.5:18000/play/a062/index.m3u8",
+      "name": "Canal A062",
+      "type": "stream"
+    },
+    {
+      "id": "a063",
+      "number": 99,
+      "url": "http://181.188.216.5:18000/play/a063/index.m3u8",
+      "name": "Canal A063",
+      "type": "stream"
+    },
+    {
+      "id": "a064",
+      "number": 100,
+      "url": "http://181.188.216.5:18000/play/a064/index.m3u8",
+      "name": "Canal A064",
+      "type": "stream"
+    },
+    {
+      "id": "a065",
+      "number": 101,
+      "url": "http://181.188.216.5:18000/play/a065/index.m3u8",
+      "name": "Canal A065",
+      "type": "stream"
+    },
+    {
+      "id": "a066",
+      "number": 102,
+      "url": "http://181.188.216.5:18000/play/a066/index.m3u8",
+      "name": "Canal A066",
+      "type": "stream"
+    },
+    {
+      "id": "a067",
+      "number": 103,
+      "url": "http://181.188.216.5:18000/play/a067/index.m3u8",
+      "name": "Canal A067",
+      "type": "stream"
+    },
+    {
+      "id": "a068",
+      "number": 104,
+      "url": "http://181.188.216.5:18000/play/a068/index.m3u8",
+      "name": "Canal A068",
+      "type": "stream"
+    },
+    {
+      "id": "a069",
+      "number": 105,
+      "url": "http://181.188.216.5:18000/play/a069/index.m3u8",
+      "name": "Canal A069",
+      "type": "stream"
+    },
+    {
+      "id": "a06a",
+      "number": 106,
+      "url": "http://181.188.216.5:18000/play/a06a/index.m3u8",
+      "name": "Canal A06A",
+      "type": "stream"
+    },
+    {
+      "id": "a06b",
+      "number": 107,
+      "url": "http://181.188.216.5:18000/play/a06b/index.m3u8",
+      "name": "Canal A06B",
+      "type": "stream"
+    },
+    {
+      "id": "a06c",
+      "number": 108,
+      "url": "http://181.188.216.5:18000/play/a06c/index.m3u8",
+      "name": "Canal A06C",
+      "type": "stream"
+    },
+    {
+      "id": "a06d",
+      "number": 109,
+      "url": "http://181.188.216.5:18000/play/a06d/index.m3u8",
+      "name": "Canal A06D",
+      "type": "stream"
+    },
+    {
+      "id": "a06e",
+      "number": 110,
+      "url": "http://181.188.216.5:18000/play/a06e/index.m3u8",
+      "name": "Canal A06E",
+      "type": "stream"
+    },
+    {
+      "id": "a06f",
+      "number": 111,
+      "url": "http://181.188.216.5:18000/play/a06f/index.m3u8",
+      "name": "Canal A06F",
+      "type": "stream"
+    },
+    {
+      "id": "a070",
+      "number": 112,
+      "url": "http://181.188.216.5:18000/play/a070/index.m3u8",
+      "name": "Canal A070",
+      "type": "stream"
+    },
+    {
+      "id": "a071",
+      "number": 113,
+      "url": "http://181.188.216.5:18000/play/a071/index.m3u8",
+      "name": "Canal A071",
+      "type": "stream"
+    },
+    {
+      "id": "a072",
+      "number": 114,
+      "url": "http://181.188.216.5:18000/play/a072/index.m3u8",
+      "name": "Canal A072",
+      "type": "stream"
+    },
+    {
+      "id": "a073",
+      "number": 115,
+      "url": "http://181.188.216.5:18000/play/a073/index.m3u8",
+      "name": "Canal A073",
+      "type": "stream"
+    },
+    {
+      "id": "a074",
+      "number": 116,
+      "url": "http://181.188.216.5:18000/play/a074/index.m3u8",
+      "name": "Canal A074",
+      "type": "stream"
+    },
+    {
+      "id": "a075",
+      "number": 117,
+      "url": "http://181.188.216.5:18000/play/a075/index.m3u8",
+      "name": "Canal A075",
+      "type": "stream"
+    },
+    {
+      "id": "a076",
+      "number": 118,
+      "url": "http://181.188.216.5:18000/play/a076/index.m3u8",
+      "name": "Canal A076",
+      "type": "stream"
+    },
+    {
+      "id": "a077",
+      "number": 119,
+      "url": "http://181.188.216.5:18000/play/a077/index.m3u8",
+      "name": "Canal A077",
+      "type": "stream"
+    },
+    {
+      "id": "a078",
+      "number": 120,
+      "url": "http://181.188.216.5:18000/play/a078/index.m3u8",
+      "name": "Canal A078",
+      "type": "stream"
+    },
+    {
+      "id": "a079",
+      "number": 121,
+      "url": "http://181.188.216.5:18000/play/a079/index.m3u8",
+      "name": "Canal A079",
+      "type": "stream"
+    },
+    {
+      "id": "a07a",
+      "number": 122,
+      "url": "http://181.188.216.5:18000/play/a07a/index.m3u8",
+      "name": "Canal A07A",
+      "type": "stream"
+    },
+    {
+      "id": "a07b",
+      "number": 123,
+      "url": "http://181.188.216.5:18000/play/a07b/index.m3u8",
+      "name": "Canal A07B",
+      "type": "stream"
+    },
+    {
+      "id": "a07c",
+      "number": 124,
+      "url": "http://181.188.216.5:18000/play/a07c/index.m3u8",
+      "name": "Canal A07C",
+      "type": "stream"
+    },
+    {
+      "id": "a07d",
+      "number": 125,
+      "url": "http://181.188.216.5:18000/play/a07d/index.m3u8",
+      "name": "Canal A07D",
+      "type": "stream"
+    },
+    {
+      "id": "a07e",
+      "number": 126,
+      "url": "http://181.188.216.5:18000/play/a07e/index.m3u8",
+      "name": "Canal A07E",
+      "type": "stream"
+    },
+    {
+      "id": "a07f",
+      "number": 127,
+      "url": "http://181.188.216.5:18000/play/a07f/index.m3u8",
+      "name": "Canal A07F",
+      "type": "stream"
+    },
+    {
+      "id": "a080",
+      "number": 128,
+      "url": "http://181.188.216.5:18000/play/a080/index.m3u8",
+      "name": "Canal A080",
+      "type": "stream"
+    },
+    {
+      "id": "a081",
+      "number": 129,
+      "url": "http://181.188.216.5:18000/play/a081/index.m3u8",
+      "name": "Canal A081",
+      "type": "stream"
+    },
+    {
+      "id": "a082",
+      "number": 130,
+      "url": "http://181.188.216.5:18000/play/a082/index.m3u8",
+      "name": "Canal A082",
+      "type": "stream"
+    },
+    {
+      "id": "a083",
+      "number": 131,
+      "url": "http://181.188.216.5:18000/play/a083/index.m3u8",
+      "name": "Canal A083",
+      "type": "stream"
+    },
+    {
+      "id": "a084",
+      "number": 132,
+      "url": "http://181.188.216.5:18000/play/a084/index.m3u8",
+      "name": "Canal A084",
+      "type": "stream"
+    },
+    {
+      "id": "a085",
+      "number": 133,
+      "url": "http://181.188.216.5:18000/play/a085/index.m3u8",
+      "name": "Canal A085",
+      "type": "stream"
+    },
+    {
+      "id": "a086",
+      "number": 134,
+      "url": "http://181.188.216.5:18000/play/a086/index.m3u8",
+      "name": "Canal A086",
+      "type": "stream"
+    },
+    {
+      "id": "a087",
+      "number": 135,
+      "url": "http://181.188.216.5:18000/play/a087/index.m3u8",
+      "name": "Canal A087",
+      "type": "stream"
+    },
+    {
+      "id": "a088",
+      "number": 136,
+      "url": "http://181.188.216.5:18000/play/a088/index.m3u8",
+      "name": "Canal A088",
+      "type": "stream"
+    },
+    {
+      "id": "a089",
+      "number": 137,
+      "url": "http://181.188.216.5:18000/play/a089/index.m3u8",
+      "name": "Canal A089",
+      "type": "stream"
+    },
+    {
+      "id": "a08a",
+      "number": 138,
+      "url": "http://181.188.216.5:18000/play/a08a/index.m3u8",
+      "name": "Canal A08A",
+      "type": "stream"
+    },
+    {
+      "id": "a08b",
+      "number": 139,
+      "url": "http://181.188.216.5:18000/play/a08b/index.m3u8",
+      "name": "Canal A08B",
+      "type": "stream"
+    },
+    {
+      "id": "a08c",
+      "number": 140,
+      "url": "http://181.188.216.5:18000/play/a08c/index.m3u8",
+      "name": "Canal A08C",
+      "type": "stream"
+    },
+    {
+      "id": "a08d",
+      "number": 141,
+      "url": "http://181.188.216.5:18000/play/a08d/index.m3u8",
+      "name": "Canal A08D",
+      "type": "stream"
+    },
+    {
+      "id": "a08e",
+      "number": 142,
+      "url": "http://181.188.216.5:18000/play/a08e/index.m3u8",
+      "name": "Canal A08E",
+      "type": "stream"
+    },
+    {
+      "id": "a08f",
+      "number": 143,
+      "url": "http://181.188.216.5:18000/play/a08f/index.m3u8",
+      "name": "Canal A08F",
+      "type": "stream"
+    },
+    {
+      "id": "a090",
+      "number": 144,
+      "url": "http://181.188.216.5:18000/play/a090/index.m3u8",
+      "name": "Canal A090",
+      "type": "stream"
+    },
+    {
+      "id": "a091",
+      "number": 145,
+      "url": "http://181.188.216.5:18000/play/a091/index.m3u8",
+      "name": "Canal A091",
+      "type": "stream"
+    },
+    {
+      "id": "a092",
+      "number": 146,
+      "url": "http://181.188.216.5:18000/play/a092/index.m3u8",
+      "name": "Canal A092",
+      "type": "stream"
+    },
+    {
+      "id": "a093",
+      "number": 147,
+      "url": "http://181.188.216.5:18000/play/a093/index.m3u8",
+      "name": "Canal A093",
+      "type": "stream"
+    },
+    {
+      "id": "a094",
+      "number": 148,
+      "url": "http://181.188.216.5:18000/play/a094/index.m3u8",
+      "name": "Canal A094",
+      "type": "stream"
+    },
+    {
+      "id": "a095",
+      "number": 149,
+      "url": "http://181.188.216.5:18000/play/a095/index.m3u8",
+      "name": "Canal A095",
+      "type": "stream"
+    },
+    {
+      "id": "a096",
+      "number": 150,
+      "url": "http://181.188.216.5:18000/play/a096/index.m3u8",
+      "name": "Canal A096",
+      "type": "stream"
+    },
+    {
+      "id": "a097",
+      "number": 151,
+      "url": "http://181.188.216.5:18000/play/a097/index.m3u8",
+      "name": "Canal A097",
+      "type": "stream"
+    },
+    {
+      "id": "a098",
+      "number": 152,
+      "url": "http://181.188.216.5:18000/play/a098/index.m3u8",
+      "name": "Canal A098",
+      "type": "stream"
+    },
+    {
+      "id": "a099",
+      "number": 153,
+      "url": "http://181.188.216.5:18000/play/a099/index.m3u8",
+      "name": "Canal A099",
+      "type": "stream"
+    },
+    {
+      "id": "a09a",
+      "number": 154,
+      "url": "http://181.188.216.5:18000/play/a09a/index.m3u8",
+      "name": "Canal A09A",
+      "type": "stream"
+    },
+    {
+      "id": "a09b",
+      "number": 155,
+      "url": "http://181.188.216.5:18000/play/a09b/index.m3u8",
+      "name": "Canal A09B",
+      "type": "stream"
+    },
+    {
+      "id": "a09c",
+      "number": 156,
+      "url": "http://181.188.216.5:18000/play/a09c/index.m3u8",
+      "name": "Canal A09C",
+      "type": "stream"
+    },
+    {
+      "id": "a09d",
+      "number": 157,
+      "url": "http://181.188.216.5:18000/play/a09d/index.m3u8",
+      "name": "Canal A09D",
+      "type": "stream"
+    },
+    {
+      "id": "a09e",
+      "number": 158,
+      "url": "http://181.188.216.5:18000/play/a09e/index.m3u8",
+      "name": "Canal A09E",
+      "type": "stream"
+    },
+    {
+      "id": "a09f",
+      "number": 159,
+      "url": "http://181.188.216.5:18000/play/a09f/index.m3u8",
+      "name": "Canal A09F",
+      "type": "stream"
+    },
+    {
+      "id": "a0a0",
+      "number": 160,
+      "url": "http://181.188.216.5:18000/play/a0a0/index.m3u8",
+      "name": "Canal A0A0",
+      "type": "stream"
+    },
+    {
+      "id": "a0a1",
+      "number": 161,
+      "url": "http://181.188.216.5:18000/play/a0a1/index.m3u8",
+      "name": "Canal A0A1",
+      "type": "stream"
+    },
+    {
+      "id": "a0a2",
+      "number": 162,
+      "url": "http://181.188.216.5:18000/play/a0a2/index.m3u8",
+      "name": "Canal A0A2",
+      "type": "stream"
+    },
+    {
+      "id": "a0a3",
+      "number": 163,
+      "url": "http://181.188.216.5:18000/play/a0a3/index.m3u8",
+      "name": "Canal A0A3",
+      "type": "stream"
+    },
+    {
+      "id": "a0a4",
+      "number": 164,
+      "url": "http://181.188.216.5:18000/play/a0a4/index.m3u8",
+      "name": "Canal A0A4",
+      "type": "stream"
+    },
+    {
+      "id": "a0a5",
+      "number": 165,
+      "url": "http://181.188.216.5:18000/play/a0a5/index.m3u8",
+      "name": "Canal A0A5",
+      "type": "stream"
+    },
+    {
+      "id": "a0a6",
+      "number": 166,
+      "url": "http://181.188.216.5:18000/play/a0a6/index.m3u8",
+      "name": "Canal A0A6",
+      "type": "stream"
+    },
+    {
+      "id": "a0a7",
+      "number": 167,
+      "url": "http://181.188.216.5:18000/play/a0a7/index.m3u8",
+      "name": "Canal A0A7",
+      "type": "stream"
+    },
+    {
+      "id": "a0a8",
+      "number": 168,
+      "url": "http://181.188.216.5:18000/play/a0a8/index.m3u8",
+      "name": "Canal A0A8",
+      "type": "stream"
+    },
+    {
+      "id": "a0a9",
+      "number": 169,
+      "url": "http://181.188.216.5:18000/play/a0a9/index.m3u8",
+      "name": "Canal A0A9",
+      "type": "stream"
+    },
+    {
+      "id": "a0aa",
+      "number": 170,
+      "url": "http://181.188.216.5:18000/play/a0aa/index.m3u8",
+      "name": "Canal A0AA",
+      "type": "stream"
+    },
+    {
+      "id": "a0ab",
+      "number": 171,
+      "url": "http://181.188.216.5:18000/play/a0ab/index.m3u8",
+      "name": "Canal A0AB",
+      "type": "stream"
+    },
+    {
+      "id": "a0ac",
+      "number": 172,
+      "url": "http://181.188.216.5:18000/play/a0ac/index.m3u8",
+      "name": "Canal A0AC",
+      "type": "stream"
+    },
+    {
+      "id": "a0ad",
+      "number": 173,
+      "url": "http://181.188.216.5:18000/play/a0ad/index.m3u8",
+      "name": "Canal A0AD",
+      "type": "stream"
+    },
+    {
+      "id": "a0ae",
+      "number": 174,
+      "url": "http://181.188.216.5:18000/play/a0ae/index.m3u8",
+      "name": "Canal A0AE",
+      "type": "stream"
+    },
+    {
+      "id": "a0af",
+      "number": 175,
+      "url": "http://181.188.216.5:18000/play/a0af/index.m3u8",
+      "name": "Canal A0AF",
+      "type": "stream"
+    },
+    {
+      "id": "a0b0",
+      "number": 176,
+      "url": "http://181.188.216.5:18000/play/a0b0/index.m3u8",
+      "name": "Canal A0B0",
+      "type": "stream"
+    },
+    {
+      "id": "a0b1",
+      "number": 177,
+      "url": "http://181.188.216.5:18000/play/a0b1/index.m3u8",
+      "name": "Canal A0B1",
+      "type": "stream"
+    },
+    {
+      "id": "a0b2",
+      "number": 178,
+      "url": "http://181.188.216.5:18000/play/a0b2/index.m3u8",
+      "name": "Canal A0B2",
+      "type": "stream"
+    },
+    {
+      "id": "a0b3",
+      "number": 179,
+      "url": "http://181.188.216.5:18000/play/a0b3/index.m3u8",
+      "name": "Canal A0B3",
+      "type": "stream"
+    },
+    {
+      "id": "a0b4",
+      "number": 180,
+      "url": "http://181.188.216.5:18000/play/a0b4/index.m3u8",
+      "name": "Canal A0B4",
+      "type": "stream"
+    },
+    {
+      "id": "a0b5",
+      "number": 181,
+      "url": "http://181.188.216.5:18000/play/a0b5/index.m3u8",
+      "name": "Canal A0B5",
+      "type": "stream"
+    },
+    {
+      "id": "a0b6",
+      "number": 182,
+      "url": "http://181.188.216.5:18000/play/a0b6/index.m3u8",
+      "name": "Canal A0B6",
+      "type": "stream"
+    },
+    {
+      "id": "a0b7",
+      "number": 183,
+      "url": "http://181.188.216.5:18000/play/a0b7/index.m3u8",
+      "name": "Canal A0B7",
+      "type": "stream"
+    },
+    {
+      "id": "a0b8",
+      "number": 184,
+      "url": "http://181.188.216.5:18000/play/a0b8/index.m3u8",
+      "name": "Canal A0B8",
+      "type": "stream"
+    },
+    {
+      "id": "a0b9",
+      "number": 185,
+      "url": "http://181.188.216.5:18000/play/a0b9/index.m3u8",
+      "name": "Canal A0B9",
+      "type": "stream"
+    },
+    {
+      "id": "a0ba",
+      "number": 186,
+      "url": "http://181.188.216.5:18000/play/a0ba/index.m3u8",
+      "name": "Canal A0BA",
+      "type": "stream"
+    },
+    {
+      "id": "a0bb",
+      "number": 187,
+      "url": "http://181.188.216.5:18000/play/a0bb/index.m3u8",
+      "name": "Canal A0BB",
+      "type": "stream"
+    },
+    {
+      "id": "a0bc",
+      "number": 188,
+      "url": "http://181.188.216.5:18000/play/a0bc/index.m3u8",
+      "name": "Canal A0BC",
+      "type": "stream"
+    },
+    {
+      "id": "a0bd",
+      "number": 189,
+      "url": "http://181.188.216.5:18000/play/a0bd/index.m3u8",
+      "name": "Canal A0BD",
+      "type": "stream"
+    },
+    {
+      "id": "a0be",
+      "number": 190,
+      "url": "http://181.188.216.5:18000/play/a0be/index.m3u8",
+      "name": "Canal A0BE",
+      "type": "stream"
+    },
+    {
+      "id": "a0bf",
+      "number": 191,
+      "url": "http://181.188.216.5:18000/play/a0bf/index.m3u8",
+      "name": "Canal A0BF",
+      "type": "stream"
+    },
+    {
+      "id": "a0c0",
+      "number": 192,
+      "url": "http://181.188.216.5:18000/play/a0c0/index.m3u8",
+      "name": "Canal A0C0",
+      "type": "stream"
+    },
+    {
+      "id": "a0c1",
+      "number": 193,
+      "url": "http://181.188.216.5:18000/play/a0c1/index.m3u8",
+      "name": "Canal A0C1",
+      "type": "stream"
+    },
+    {
+      "id": "a0c2",
+      "number": 194,
+      "url": "http://181.188.216.5:18000/play/a0c2/index.m3u8",
+      "name": "Canal A0C2",
+      "type": "stream"
+    },
+    {
+      "id": "a0c3",
+      "number": 195,
+      "url": "http://181.188.216.5:18000/play/a0c3/index.m3u8",
+      "name": "Canal A0C3",
+      "type": "stream"
+    },
+    {
+      "id": "a0c4",
+      "number": 196,
+      "url": "http://181.188.216.5:18000/play/a0c4/index.m3u8",
+      "name": "Canal A0C4",
+      "type": "stream"
+    },
+    {
+      "id": "a0c5",
+      "number": 197,
+      "url": "http://181.188.216.5:18000/play/a0c5/index.m3u8",
+      "name": "Canal A0C5",
+      "type": "stream"
+    },
+    {
+      "id": "a0c6",
+      "number": 198,
+      "url": "http://181.188.216.5:18000/play/a0c6/index.m3u8",
+      "name": "Canal A0C6",
+      "type": "stream"
+    },
+    {
+      "id": "a0c7",
+      "number": 199,
+      "url": "http://181.188.216.5:18000/play/a0c7/index.m3u8",
+      "name": "Canal A0C7",
+      "type": "stream"
+    },
+    {
+      "id": "a0c8",
+      "number": 200,
+      "url": "http://181.188.216.5:18000/play/a0c8/index.m3u8",
+      "name": "Canal A0C8",
+      "type": "stream"
+    },
+    {
+      "id": "a0c9",
+      "number": 201,
+      "url": "http://181.188.216.5:18000/play/a0c9/index.m3u8",
+      "name": "Canal A0C9",
+      "type": "stream"
+    },
+    {
+      "id": "a0ca",
+      "number": 202,
+      "url": "http://181.188.216.5:18000/play/a0ca/index.m3u8",
+      "name": "Canal A0CA",
+      "type": "stream"
+    },
+    {
+      "id": "a0cb",
+      "number": 203,
+      "url": "http://181.188.216.5:18000/play/a0cb/index.m3u8",
+      "name": "Canal A0CB",
+      "type": "stream"
+    },
+    {
+      "id": "a0cc",
+      "number": 204,
+      "url": "http://181.188.216.5:18000/play/a0cc/index.m3u8",
+      "name": "Canal A0CC",
+      "type": "stream"
+    },
+    {
+      "id": "a0cd",
+      "number": 205,
+      "url": "http://181.188.216.5:18000/play/a0cd/index.m3u8",
+      "name": "Canal A0CD",
+      "type": "stream"
+    },
+    {
+      "id": "a0ce",
+      "number": 206,
+      "url": "http://181.188.216.5:18000/play/a0ce/index.m3u8",
+      "name": "Canal A0CE",
+      "type": "stream"
+    },
+    {
+      "id": "a0cf",
+      "number": 207,
+      "url": "http://181.188.216.5:18000/play/a0cf/index.m3u8",
+      "name": "Canal A0CF",
+      "type": "stream"
+    },
+    {
+      "id": "a0d0",
+      "number": 208,
+      "url": "http://181.188.216.5:18000/play/a0d0/index.m3u8",
+      "name": "Canal A0D0",
+      "type": "stream"
+    },
+    {
+      "id": "a0d1",
+      "number": 209,
+      "url": "http://181.188.216.5:18000/play/a0d1/index.m3u8",
+      "name": "Canal A0D1",
+      "type": "stream"
+    },
+    {
+      "id": "a0d2",
+      "number": 210,
+      "url": "http://181.188.216.5:18000/play/a0d2/index.m3u8",
+      "name": "Canal A0D2",
+      "type": "stream"
+    },
+    {
+      "id": "a0d3",
+      "number": 211,
+      "url": "http://181.188.216.5:18000/play/a0d3/index.m3u8",
+      "name": "Canal A0D3",
+      "type": "stream"
+    },
+    {
+      "id": "a0d4",
+      "number": 212,
+      "url": "http://181.188.216.5:18000/play/a0d4/index.m3u8",
+      "name": "Canal A0D4",
+      "type": "stream"
+    },
+    {
+      "id": "a0d5",
+      "number": 213,
+      "url": "http://181.188.216.5:18000/play/a0d5/index.m3u8",
+      "name": "Canal A0D5",
+      "type": "stream"
+    },
+    {
+      "id": "a0d6",
+      "number": 214,
+      "url": "http://181.188.216.5:18000/play/a0d6/index.m3u8",
+      "name": "Canal A0D6",
+      "type": "stream"
+    },
+    {
+      "id": "a0d7",
+      "number": 215,
+      "url": "http://181.188.216.5:18000/play/a0d7/index.m3u8",
+      "name": "Canal A0D7",
+      "type": "stream"
+    },
+    {
+      "id": "a0d8",
+      "number": 216,
+      "url": "http://181.188.216.5:18000/play/a0d8/index.m3u8",
+      "name": "Canal A0D8",
+      "type": "stream"
+    },
+    {
+      "id": "a0d9",
+      "number": 217,
+      "url": "http://181.188.216.5:18000/play/a0d9/index.m3u8",
+      "name": "Canal A0D9",
+      "type": "stream"
+    },
+    {
+      "id": "a0da",
+      "number": 218,
+      "url": "http://181.188.216.5:18000/play/a0da/index.m3u8",
+      "name": "Canal A0DA",
+      "type": "stream"
+    },
+    {
+      "id": "a0db",
+      "number": 219,
+      "url": "http://181.188.216.5:18000/play/a0db/index.m3u8",
+      "name": "Canal A0DB",
+      "type": "stream"
+    },
+    {
+      "id": "a0dc",
+      "number": 220,
+      "url": "http://181.188.216.5:18000/play/a0dc/index.m3u8",
+      "name": "Canal A0DC",
+      "type": "stream"
+    },
+    {
+      "id": "a0dd",
+      "number": 221,
+      "url": "http://181.188.216.5:18000/play/a0dd/index.m3u8",
+      "name": "Canal A0DD",
+      "type": "stream"
+    },
+    {
+      "id": "a0de",
+      "number": 222,
+      "url": "http://181.188.216.5:18000/play/a0de/index.m3u8",
+      "name": "Canal A0DE",
+      "type": "stream"
+    },
+    {
+      "id": "a0df",
+      "number": 223,
+      "url": "http://181.188.216.5:18000/play/a0df/index.m3u8",
+      "name": "Canal A0DF",
+      "type": "stream"
+    },
+    {
+      "id": "a0e0",
+      "number": 224,
+      "url": "http://181.188.216.5:18000/play/a0e0/index.m3u8",
+      "name": "Canal A0E0",
+      "type": "stream"
+    },
+    {
+      "id": "a0e1",
+      "number": 225,
+      "url": "http://181.188.216.5:18000/play/a0e1/index.m3u8",
+      "name": "Canal A0E1",
+      "type": "stream"
+    },
+    {
+      "id": "a0e2",
+      "number": 226,
+      "url": "http://181.188.216.5:18000/play/a0e2/index.m3u8",
+      "name": "Canal A0E2",
+      "type": "stream"
+    },
+    {
+      "id": "a0e3",
+      "number": 227,
+      "url": "http://181.188.216.5:18000/play/a0e3/index.m3u8",
+      "name": "Canal A0E3",
+      "type": "stream"
+    },
+    {
+      "id": "a0e4",
+      "number": 228,
+      "url": "http://181.188.216.5:18000/play/a0e4/index.m3u8",
+      "name": "Canal A0E4",
+      "type": "stream"
+    },
+    {
+      "id": "a0e5",
+      "number": 229,
+      "url": "http://181.188.216.5:18000/play/a0e5/index.m3u8",
+      "name": "Canal A0E5",
+      "type": "stream"
+    },
+    {
+      "id": "a0e6",
+      "number": 230,
+      "url": "http://181.188.216.5:18000/play/a0e6/index.m3u8",
+      "name": "Canal A0E6",
+      "type": "stream"
+    },
+    {
+      "id": "a0e7",
+      "number": 231,
+      "url": "http://181.188.216.5:18000/play/a0e7/index.m3u8",
+      "name": "Canal A0E7",
+      "type": "stream"
+    },
+    {
+      "id": "a0e8",
+      "number": 232,
+      "url": "http://181.188.216.5:18000/play/a0e8/index.m3u8",
+      "name": "Canal A0E8",
+      "type": "stream"
+    },
+    {
+      "id": "a0e9",
+      "number": 233,
+      "url": "http://181.188.216.5:18000/play/a0e9/index.m3u8",
+      "name": "Canal A0E9",
+      "type": "stream"
+    },
+    {
+      "id": "a0ea",
+      "number": 234,
+      "url": "http://181.188.216.5:18000/play/a0ea/index.m3u8",
+      "name": "Canal A0EA",
+      "type": "stream"
+    },
+    {
+      "id": "a0eb",
+      "number": 235,
+      "url": "http://181.188.216.5:18000/play/a0eb/index.m3u8",
+      "name": "Canal A0EB",
+      "type": "stream"
+    },
+    {
+      "id": "a0ec",
+      "number": 236,
+      "url": "http://181.188.216.5:18000/play/a0ec/index.m3u8",
+      "name": "Canal A0EC",
+      "type": "stream"
+    },
+    {
+      "id": "a0ed",
+      "number": 237,
+      "url": "http://181.188.216.5:18000/play/a0ed/index.m3u8",
+      "name": "Canal A0ED",
+      "type": "stream"
+    },
+    {
+      "id": "a0ee",
+      "number": 238,
+      "url": "http://181.188.216.5:18000/play/a0ee/index.m3u8",
+      "name": "Canal A0EE",
+      "type": "stream"
+    },
+    {
+      "id": "a0ef",
+      "number": 239,
+      "url": "http://181.188.216.5:18000/play/a0ef/index.m3u8",
+      "name": "Canal A0EF",
+      "type": "stream"
+    },
+    {
+      "id": "a0f0",
+      "number": 240,
+      "url": "http://181.188.216.5:18000/play/a0f0/index.m3u8",
+      "name": "Canal A0F0",
+      "type": "stream"
+    },
+    {
+      "id": "a0f1",
+      "number": 241,
+      "url": "http://181.188.216.5:18000/play/a0f1/index.m3u8",
+      "name": "Canal A0F1",
+      "type": "stream"
+    },
+    {
+      "id": "a0f2",
+      "number": 242,
+      "url": "http://181.188.216.5:18000/play/a0f2/index.m3u8",
+      "name": "Canal A0F2",
+      "type": "stream"
+    },
+    {
+      "id": "a0f3",
+      "number": 243,
+      "url": "http://181.188.216.5:18000/play/a0f3/index.m3u8",
+      "name": "Canal A0F3",
+      "type": "stream"
+    },
+    {
+      "id": "a0f4",
+      "number": 244,
+      "url": "http://181.188.216.5:18000/play/a0f4/index.m3u8",
+      "name": "Canal A0F4",
+      "type": "stream"
+    },
+    {
+      "id": "a0f5",
+      "number": 245,
+      "url": "http://181.188.216.5:18000/play/a0f5/index.m3u8",
+      "name": "Canal A0F5",
+      "type": "stream"
+    },
+    {
+      "id": "a0f6",
+      "number": 246,
+      "url": "http://181.188.216.5:18000/play/a0f6/index.m3u8",
+      "name": "Canal A0F6",
+      "type": "stream"
+    },
+    {
+      "id": "a0f7",
+      "number": 247,
+      "url": "http://181.188.216.5:18000/play/a0f7/index.m3u8",
+      "name": "Canal A0F7",
+      "type": "stream"
+    },
+    {
+      "id": "a0f8",
+      "number": 248,
+      "url": "http://181.188.216.5:18000/play/a0f8/index.m3u8",
+      "name": "Canal A0F8",
+      "type": "stream"
+    },
+    {
+      "id": "a0f9",
+      "number": 249,
+      "url": "http://181.188.216.5:18000/play/a0f9/index.m3u8",
+      "name": "Canal A0F9",
+      "type": "stream"
+    },
+    {
+      "id": "a0fa",
+      "number": 250,
+      "url": "http://181.188.216.5:18000/play/a0fa/index.m3u8",
+      "name": "Canal A0FA",
+      "type": "stream"
+    },
+    {
+      "id": "a0fb",
+      "number": 251,
+      "url": "http://181.188.216.5:18000/play/a0fb/index.m3u8",
+      "name": "Canal A0FB",
+      "type": "stream"
+    },
+    {
+      "id": "a0fc",
+      "number": 252,
+      "url": "http://181.188.216.5:18000/play/a0fc/index.m3u8",
+      "name": "Canal A0FC",
+      "type": "stream"
+    },
+    {
+      "id": "a0fd",
+      "number": 253,
+      "url": "http://181.188.216.5:18000/play/a0fd/index.m3u8",
+      "name": "Canal A0FD",
+      "type": "stream"
+    },
+    {
+      "id": "a0fe",
+      "number": 254,
+      "url": "http://181.188.216.5:18000/play/a0fe/index.m3u8",
+      "name": "Canal A0FE",
+      "type": "stream"
+    },
+    {
+      "id": "a0ff",
+      "number": 255,
+      "url": "http://181.188.216.5:18000/play/a0ff/index.m3u8",
+      "name": "Canal A0FF",
+      "type": "stream"
+    },
+    {
+      "id": "a100",
+      "number": 256,
+      "url": "http://181.188.216.5:18000/play/a100/index.m3u8",
+      "name": "Canal A100",
+      "type": "stream"
+    },
+    {
+      "id": "a101",
+      "number": 257,
+      "url": "http://181.188.216.5:18000/play/a101/index.m3u8",
+      "name": "Canal A101",
+      "type": "stream"
+    },
+    {
+      "id": "a102",
+      "number": 258,
+      "url": "http://181.188.216.5:18000/play/a102/index.m3u8",
+      "name": "Canal A102",
+      "type": "stream"
+    },
+    {
+      "id": "a103",
+      "number": 259,
+      "url": "http://181.188.216.5:18000/play/a103/index.m3u8",
+      "name": "Canal A103",
+      "type": "stream"
+    },
+    {
+      "id": "a104",
+      "number": 260,
+      "url": "http://181.188.216.5:18000/play/a104/index.m3u8",
+      "name": "Canal A104",
+      "type": "stream"
+    },
+    {
+      "id": "a105",
+      "number": 261,
+      "url": "http://181.188.216.5:18000/play/a105/index.m3u8",
+      "name": "Canal A105",
+      "type": "stream"
+    },
+    {
+      "id": "a106",
+      "number": 262,
+      "url": "http://181.188.216.5:18000/play/a106/index.m3u8",
+      "name": "Canal A106",
+      "type": "stream"
+    },
+    {
+      "id": "a107",
+      "number": 263,
+      "url": "http://181.188.216.5:18000/play/a107/index.m3u8",
+      "name": "Canal A107",
+      "type": "stream"
+    },
+    {
+      "id": "a108",
+      "number": 264,
+      "url": "http://181.188.216.5:18000/play/a108/index.m3u8",
+      "name": "Canal A108",
+      "type": "stream"
+    },
+    {
+      "id": "a109",
+      "number": 265,
+      "url": "http://181.188.216.5:18000/play/a109/index.m3u8",
+      "name": "Canal A109",
+      "type": "stream"
+    },
+    {
+      "id": "a10a",
+      "number": 266,
+      "url": "http://181.188.216.5:18000/play/a10a/index.m3u8",
+      "name": "Canal A10A",
+      "type": "stream"
+    },
+    {
+      "id": "a10b",
+      "number": 267,
+      "url": "http://181.188.216.5:18000/play/a10b/index.m3u8",
+      "name": "Canal A10B",
+      "type": "stream"
+    },
+    {
+      "id": "a10c",
+      "number": 268,
+      "url": "http://181.188.216.5:18000/play/a10c/index.m3u8",
+      "name": "Canal A10C",
+      "type": "stream"
+    },
+    {
+      "id": "a10d",
+      "number": 269,
+      "url": "http://181.188.216.5:18000/play/a10d/index.m3u8",
+      "name": "Canal A10D",
+      "type": "stream"
+    },
+    {
+      "id": "a10e",
+      "number": 270,
+      "url": "http://181.188.216.5:18000/play/a10e/index.m3u8",
+      "name": "Canal A10E",
+      "type": "stream"
+    },
+    {
+      "id": "a10f",
+      "number": 271,
+      "url": "http://181.188.216.5:18000/play/a10f/index.m3u8",
+      "name": "Canal A10F",
+      "type": "stream"
+    },
+    {
+      "id": "a110",
+      "number": 272,
+      "url": "http://181.188.216.5:18000/play/a110/index.m3u8",
+      "name": "Canal A110",
+      "type": "stream"
+    },
+    {
+      "id": "a111",
+      "number": 273,
+      "url": "http://181.188.216.5:18000/play/a111/index.m3u8",
+      "name": "Canal A111",
+      "type": "stream"
+    },
+    {
+      "id": "a112",
+      "number": 274,
+      "url": "http://181.188.216.5:18000/play/a112/index.m3u8",
+      "name": "Canal A112",
+      "type": "stream"
+    },
+    {
+      "id": "a113",
+      "number": 275,
+      "url": "http://181.188.216.5:18000/play/a113/index.m3u8",
+      "name": "Canal A113",
+      "type": "stream"
+    },
+    {
+      "id": "a114",
+      "number": 276,
+      "url": "http://181.188.216.5:18000/play/a114/index.m3u8",
+      "name": "Canal A114",
+      "type": "stream"
+    },
+    {
+      "id": "a115",
+      "number": 277,
+      "url": "http://181.188.216.5:18000/play/a115/index.m3u8",
+      "name": "Canal A115",
+      "type": "stream"
+    },
+    {
+      "id": "a116",
+      "number": 278,
+      "url": "http://181.188.216.5:18000/play/a116/index.m3u8",
+      "name": "Canal A116",
+      "type": "stream"
+    },
+    {
+      "id": "a117",
+      "number": 279,
+      "url": "http://181.188.216.5:18000/play/a117/index.m3u8",
+      "name": "Canal A117",
+      "type": "stream"
+    },
+    {
+      "id": "a118",
+      "number": 280,
+      "url": "http://181.188.216.5:18000/play/a118/index.m3u8",
+      "name": "Canal A118",
+      "type": "stream"
+    },
+    {
+      "id": "a119",
+      "number": 281,
+      "url": "http://181.188.216.5:18000/play/a119/index.m3u8",
+      "name": "Canal A119",
+      "type": "stream"
+    },
+    {
+      "id": "a11a",
+      "number": 282,
+      "url": "http://181.188.216.5:18000/play/a11a/index.m3u8",
+      "name": "Canal A11A",
+      "type": "stream"
+    },
+    {
+      "id": "a11b",
+      "number": 283,
+      "url": "http://181.188.216.5:18000/play/a11b/index.m3u8",
+      "name": "Canal A11B",
+      "type": "stream"
+    },
+    {
+      "id": "a11c",
+      "number": 284,
+      "url": "http://181.188.216.5:18000/play/a11c/index.m3u8",
+      "name": "Canal A11C",
+      "type": "stream"
+    },
+    {
+      "id": "a11d",
+      "number": 285,
+      "url": "http://181.188.216.5:18000/play/a11d/index.m3u8",
+      "name": "Canal A11D",
+      "type": "stream"
+    },
+    {
+      "id": "a11e",
+      "number": 286,
+      "url": "http://181.188.216.5:18000/play/a11e/index.m3u8",
+      "name": "Canal A11E",
+      "type": "stream"
+    },
+    {
+      "id": "a11f",
+      "number": 287,
+      "url": "http://181.188.216.5:18000/play/a11f/index.m3u8",
+      "name": "Canal A11F",
+      "type": "stream"
+    },
+    {
+      "id": "a120",
+      "number": 288,
+      "url": "http://181.188.216.5:18000/play/a120/index.m3u8",
+      "name": "Canal A120",
+      "type": "stream"
+    },
+    {
+      "id": "a121",
+      "number": 289,
+      "url": "http://181.188.216.5:18000/play/a121/index.m3u8",
+      "name": "Canal A121",
+      "type": "stream"
+    },
+    {
+      "id": "a122",
+      "number": 290,
+      "url": "http://181.188.216.5:18000/play/a122/index.m3u8",
+      "name": "Canal A122",
+      "type": "stream"
+    },
+    {
+      "id": "a123",
+      "number": 291,
+      "url": "http://181.188.216.5:18000/play/a123/index.m3u8",
+      "name": "Canal A123",
+      "type": "stream"
+    },
+    {
+      "id": "a124",
+      "number": 292,
+      "url": "http://181.188.216.5:18000/play/a124/index.m3u8",
+      "name": "Canal A124",
+      "type": "stream"
+    },
+    {
+      "id": "a125",
+      "number": 293,
+      "url": "http://181.188.216.5:18000/play/a125/index.m3u8",
+      "name": "Canal A125",
+      "type": "stream"
+    },
+    {
+      "id": "a126",
+      "number": 294,
+      "url": "http://181.188.216.5:18000/play/a126/index.m3u8",
+      "name": "Canal A126",
+      "type": "stream"
+    },
+    {
+      "id": "a127",
+      "number": 295,
+      "url": "http://181.188.216.5:18000/play/a127/index.m3u8",
+      "name": "Canal A127",
+      "type": "stream"
+    },
+    {
+      "id": "a128",
+      "number": 296,
+      "url": "http://181.188.216.5:18000/play/a128/index.m3u8",
+      "name": "Canal A128",
+      "type": "stream"
+    },
+    {
+      "id": "a129",
+      "number": 297,
+      "url": "http://181.188.216.5:18000/play/a129/index.m3u8",
+      "name": "Canal A129",
+      "type": "stream"
+    },
+    {
+      "id": "a12a",
+      "number": 298,
+      "url": "http://181.188.216.5:18000/play/a12a/index.m3u8",
+      "name": "Canal A12A",
+      "type": "stream"
+    },
+    {
+      "id": "a12b",
+      "number": 299,
+      "url": "http://181.188.216.5:18000/play/a12b/index.m3u8",
+      "name": "Canal A12B",
+      "type": "stream"
+    },
+    {
+      "id": "a12c",
+      "number": 300,
+      "url": "http://181.188.216.5:18000/play/a12c/index.m3u8",
+      "name": "Canal A12C",
+      "type": "stream"
+    }
+  ]
+}
