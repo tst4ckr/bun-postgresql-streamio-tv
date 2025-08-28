@@ -70,6 +70,12 @@ export class ChannelRepositoryFactory {
           dataSources.localM3uIndex
         ].filter(Boolean);
         
+        // Incluir archivo CSV adicional como fuente M3U local si está configurado
+        if (dataSources.localChannelsCsv) {
+          localM3uFiles.push(dataSources.localChannelsCsv);
+          logger.info(`Archivo CSV adicional incluido: ${dataSources.localChannelsCsv}`);
+        }
+        
         const allM3uSources = [...remoteM3uUrls, ...localM3uFiles];
         
         if (allM3uSources.length === 0) {

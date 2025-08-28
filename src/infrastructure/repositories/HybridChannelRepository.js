@@ -28,6 +28,7 @@ import { StreamValidationService } from '../services/StreamValidationService.js'
  */
 export class HybridChannelRepository extends ChannelRepository {
   #csvRepository;
+  #additionalCsvRepositories = [];
   #m3uRepositories = [];
   #config;
   #logger;
@@ -64,10 +65,19 @@ export class HybridChannelRepository extends ChannelRepository {
     // Inicializar servicio de validación temprana de streams
     this.#streamValidationService = new StreamValidationService(config, logger);
     
-    // Crear repositorio CSV
+    // Crear repositorio CSV principal
     this.#csvRepository = new CSVChannelRepository(csvPath, config, logger);
     
-    // Separar URLs remotas de archivos locales y crear repositorios apropiados
+    // Crear repositorios CSV adicionales si están configurados
+    this.#additionalCsvRepositories = [];
+    if (config.dataSources.localChannelsCsv) {
+      this.#additionalCsvRepositories.push(
+        new CSVChannelRepository(config.dataSources.localChannelsCsv, config, logger)
+      );
+      this.#logger.info(`Repositorio CSV adicional creado: ${config.dataSources.localChannelsCsv}`);
+    }
+    
+    // Separar URLs remotas de archivos M3U locales y crear repositorios apropiados
     const m3uParser = new M3UParserService(config.filters);
     this.#m3uRepositories = [];
     
@@ -75,6 +85,12 @@ export class HybridChannelRepository extends ChannelRepository {
     let localCount = 0;
     
     m3uSources.filter(source => source).forEach(source => {
+      // Verificar si es archivo CSV (no debe procesarse como M3U)
+      if (source.toLowerCase().endsWith('.csv')) {
+        this.#logger.warn(`Archivo CSV detectado en fuentes M3U, omitiendo: ${source}`);
+        return;
+      }
+      
       if (this.#isRemoteUrl(source)) {
         // URL remota - usar RemoteM3UChannelRepository
         this.#m3uRepositories.push(
@@ -82,7 +98,7 @@ export class HybridChannelRepository extends ChannelRepository {
         );
         remoteCount++;
       } else {
-        // Archivo local - usar LocalM3UChannelRepository
+        // Archivo local M3U - usar LocalM3UChannelRepository
         this.#m3uRepositories.push(
           new LocalM3UChannelRepository(source, m3uParser, config, logger)
         );
@@ -90,7 +106,7 @@ export class HybridChannelRepository extends ChannelRepository {
       }
     });
     
-    this.#logger.info(`HybridChannelRepository creado: CSV + ${remoteCount} URLs remotas + ${localCount} archivos locales`);
+    this.#logger.info(`HybridChannelRepository creado: CSV principal + ${this.#additionalCsvRepositories.length} CSV adicionales + ${remoteCount} URLs remotas + ${localCount} archivos M3U locales`);
   }
 
   /**
@@ -116,17 +132,36 @@ export class HybridChannelRepository extends ChannelRepository {
     try {
       this.#logger.info('Inicializando repositorio híbrido...');
       
-      // 1. Cargar canales del CSV local primero
+      // 1. Cargar canales del CSV principal primero
       await this.#csvRepository.initialize();
       const csvChannels = await this.#csvRepository.getAllChannelsUnfiltered();
-      this.#logger.info(`Cargados ${csvChannels.length} canales desde CSV local`);
+      this.#logger.info(`Cargados ${csvChannels.length} canales desde CSV principal`);
       
-      // 2. Inicializar mapa con canales CSV (prioridad)
-      this.#channels = [...csvChannels];
+      // 2. Cargar canales de CSVs adicionales
+      const additionalCsvChannels = [];
+      for (let i = 0; i < this.#additionalCsvRepositories.length; i++) {
+        const additionalCsvRepo = this.#additionalCsvRepositories[i];
+        try {
+          await additionalCsvRepo.initialize();
+          const channels = await additionalCsvRepo.getAllChannelsUnfiltered();
+          additionalCsvChannels.push(...channels);
+          this.#logger.info(`CSV adicional ${i + 1}: ${channels.length} canales cargados`);
+        } catch (error) {
+          this.#logger.error(`Error cargando CSV adicional ${i + 1}:`, error);
+          // Continuar con los siguientes archivos aunque uno falle
+        }
+      }
+      
+      // 3. Combinar todos los canales CSV (principal + adicionales)
+      const allCsvChannels = [...csvChannels, ...additionalCsvChannels];
+      this.#logger.info(`🔄 Procesando ${csvChannels.length} canales CSV principales + ${additionalCsvChannels.length} canales CSV adicionales = ${allCsvChannels.length} canales CSV totales`);
+      
+      // 4. Inicializar mapa con canales CSV (prioridad absoluta)
+      this.#channels = [...allCsvChannels];
       this.#channelMap.clear();
-      csvChannels.forEach(channel => this.#channelMap.set(channel.id, channel));
+      allCsvChannels.forEach(channel => this.#channelMap.set(channel.id, channel));
       
-      // 3. Cargar canales de URLs M3U remotas (sin deduplicación aún)
+      // 5. Cargar canales de URLs M3U remotas (sin deduplicación aún)
       const allM3uChannels = [];
       for (let i = 0; i < this.#m3uRepositories.length; i++) {
         const m3uRepo = this.#m3uRepositories[i];
@@ -201,7 +236,7 @@ export class HybridChannelRepository extends ChannelRepository {
           `✅ Validación M3U completada: ${validM3uChannels.length} válidos, ${invalidM3uChannels.length} inválidos de ${processedM3uChannels.length} totales`
         );
         this.#logger.info(
-          `📋 Canales CSV preservados: ${csvChannels.length} (prioridad absoluta, sin validación)`
+          `📋 Canales CSV preservados: ${allCsvChannels.length} (prioridad absoluta, sin validación)`
         );
         
         // Usar solo canales M3U válidos para deduplicación
@@ -221,7 +256,7 @@ export class HybridChannelRepository extends ChannelRepository {
       this.#channelMap.clear();
       
       // Agregar TODOS los canales CSV primero (prioridad absoluta, sin validación)
-      csvChannels.forEach(channel => {
+      allCsvChannels.forEach(channel => {
         this.#channels.push(channel);
         this.#channelMap.set(channel.id, channel);
       });
@@ -241,7 +276,7 @@ export class HybridChannelRepository extends ChannelRepository {
       });
       
       this.#logger.info(
-        `📊 Deduplicación completada: ${csvChannels.length} CSV (preservados) + ${m3uAdded} M3U (validados) = ${this.#channels.length} canales finales (${m3uDuplicates} duplicados M3U omitidos)`
+        `📊 Deduplicación completada: ${allCsvChannels.length} CSV (preservados) + ${m3uAdded} M3U (validados) = ${this.#channels.length} canales finales (${m3uDuplicates} duplicados M3U omitidos)`
       );
       
       this.#lastLoadTime = new Date();

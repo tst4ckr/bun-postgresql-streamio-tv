@@ -22,7 +22,8 @@ export class Channel {
     GENERAL: 'General',
     ANIMATION: 'Animation',
     EDUCATIONAL: 'Educational',
-    RELIGIOUS: 'Religious'
+    RELIGIOUS: 'Religious',
+    COMEDY: 'Comedy'
   };
 
   /**
@@ -143,6 +144,17 @@ export class Channel {
    * @returns {boolean}
    */
   #isValidChannelId(id) {
+    return Channel.#isValidChannelIdStatic(id);
+  }
+
+  /**
+   * Valida formato del ID del canal (método estático)
+   * @static
+   * @private
+   * @param {string} id 
+   * @returns {boolean}
+   */
+  static #isValidChannelIdStatic(id) {
     const channelIdPattern = /^(tv_|ch_)[a-zA-Z0-9_-]+$/;
     return channelIdPattern.test(id);
   }
@@ -438,8 +450,14 @@ export class Channel {
    * @returns {Channel}
    */
   static fromCSV(csvRow) {
+    // Validar y generar ID apropiado
+    let channelId = csvRow.id;
+    if (!channelId || !Channel.#isValidChannelIdStatic(channelId)) {
+      channelId = Channel.generateId(csvRow.name, csvRow.type);
+    }
+    
     return new Channel({
-      id: csvRow.id || Channel.generateId(csvRow.name, csvRow.type),
+      id: channelId,
       name: csvRow.name,
       logo: csvRow.logo,
       streamUrl: csvRow.stream_url,
