@@ -1,41 +1,164 @@
 id,name,stream_url,logo,genre,country,language,quality,type,is_active
+atv,"ATV",http://181.188.216.5:18000/play/a0m3/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/ATV_logo_2020.png/512px-ATV_logo_2020.png,General,Peru,es,HD,tv,true
+atv,"ATV",http://181.188.216.5:18000/play/a01q/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/ATV_logo_2020.png/512px-ATV_logo_2020.png,General,Peru,es,HD,tv,true
+america_tv_hd,"America TV HD",http://181.188.216.5:18000/play/a0j8/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/Am%C3%A9rica_Televisi%C3%B3n_%28Logo_2020%29.png/512px-Am%C3%A9rica_Televisi%C3%B3n_%28Logo_2020%29.png,General,Peru,es,HD,tv,true
+america_tv_hd,"America TV HD",http://181.188.216.5:18000/play/a014/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/Am%C3%A9rica_Televisi%C3%B3n_%28Logo_2020%29.png/512px-Am%C3%A9rica_Televisi%C3%B3n_%28Logo_2020%29.png,General,Peru,es,HD,tv,true
+golperu,"GOLPERU",http://181.188.216.5:18000/play/a07s/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,Peru,es,HD,tv,true
+latina,"Latina",http://181.188.216.5:18000/play/a0lz/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/Latina_Televisi%C3%B3n_logo.svg/512px-Latina_Televisi%C3%B3n_logo.svg.png,General,Peru,es,HD,tv,true
+latina,"Latina",http://181.188.216.5:18000/play/a01k/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/Latina_Televisi%C3%B3n_logo.svg/512px-Latina_Televisi%C3%B3n_logo.svg.png,General,Peru,es,HD,tv,true
+latina_hd,"Latina HD",http://181.188.216.5:18000/play/a0jc/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/Latina_Televisi%C3%B3n_logo.svg/512px-Latina_Televisi%C3%B3n_logo.svg.png,General,Peru,es,HD,tv,true
+latina_hd,"Latina HD",http://181.188.216.5:18000/play/a015/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/Latina_Televisi%C3%B3n_logo.svg/512px-Latina_Televisi%C3%B3n_logo.svg.png,General,Peru,es,HD,tv,true
+panamericana,"Panamericana",http://181.188.216.5:18000/play/a01m/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/Panamericana_Televisi%C3%B3n_logo.svg/512px-Panamericana_Televisi%C3%B3n_logo.svg.png,General,Peru,es,HD,tv,true
+panamericana,"Panamericana",http://181.188.216.5:18000/play/a0m1/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/Panamericana_Televisi%C3%B3n_logo.svg/512px-Panamericana_Televisi%C3%B3n_logo.svg.png,General,Peru,es,HD,tv,true
+tv_peru,"TV PERU",http://181.188.216.5:18000/play/a01o/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/TV_Per%C3%BA_logo.svg/512px-TV_Per%C3%BA_logo.svg.png,General,Peru,es,HD,tv,true
+tv_peru,"TV PERU",http://181.188.216.5:18000/play/a0qn/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/TV_Per%C3%BA_logo.svg/512px-TV_Per%C3%BA_logo.svg.png,General,Peru,es,HD,tv,true
+hbo_hd,"HBO HD",http://181.188.216.5:18000/play/a0hm/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/d/de/HBO_logo.svg/512px-HBO_logo.svg.png,Movies,International,es,HD,tv,true
+hbo_hd,"HBO HD",http://181.188.216.5:18000/play/a00a/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/d/de/HBO_logo.svg/512px-HBO_logo.svg.png,Movies,International,es,HD,tv,true
+hbo_family_hd,"HBO Family HD",http://181.188.216.5:18000/play/a0lr/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/d/de/HBO_logo.svg/512px-HBO_logo.svg.png,Movies,International,es,HD,tv,true
+cinemax,"Cinemax",http://181.188.216.5:18000/play/a0ed/index.m3u8,https://cdn-icons-png.flaticon.com/512/777/777242.png,Movies,International,es,HD,tv,true
+cinemax,"Cinemax",http://181.188.216.5:18000/play/a0l7/index.m3u8,https://cdn-icons-png.flaticon.com/512/777/777242.png,Movies,International,es,HD,tv,true
+cinemax_hd,"Cinemax HD",http://181.188.216.5:18000/play/a0lf/index.m3u8,https://cdn-icons-png.flaticon.com/512/777/777242.png,Movies,International,es,HD,tv,true
+sony,"SONY",http://181.188.216.5:18000/play/a0c8/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Sony_Channel_Logo.png/512px-Sony_Channel_Logo.png,General,International,es,HD,tv,true
+sony_hd,"SONY HD",http://181.188.216.5:18000/play/a0cn/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Sony_Channel_Logo.png/512px-Sony_Channel_Logo.png,General,International,es,HD,tv,true
+sony,"Sony",http://181.188.216.5:18000/play/a0pk/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Sony_Channel_Logo.png/512px-Sony_Channel_Logo.png,General,International,es,HD,tv,true
+sony_hd,"Sony HD",http://181.188.216.5:18000/play/a0oo/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Sony_Channel_Logo.png/512px-Sony_Channel_Logo.png,General,International,es,HD,tv,true
+warner_hd,"WARNER HD",http://181.188.216.5:18000/play/a0cm/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Warner2018.svg/512px-Warner2018.svg.png,General,International,es,HD,tv,true
+warner,"Warner",http://181.188.216.5:18000/play/a0c9/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Warner2018.svg/512px-Warner2018.svg.png,General,International,es,HD,tv,true
+studio_universal_hd,"Studio Universal HD",http://181.188.216.5:18000/play/a0cr/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/4/42/Universal_TV_logo.svg/512px-Universal_TV_logo.svg.png,General,International,es,HD,tv,true
+studio_universal_hd,"Studio Universal HD",http://181.188.216.5:18000/play/a0o5/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/4/42/Universal_TV_logo.svg/512px-Universal_TV_logo.svg.png,General,International,es,HD,tv,true
+studio_universal_hd,"Studio Universal HD",http://181.188.216.5:18000/play/a0j5/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/4/42/Universal_TV_logo.svg/512px-Universal_TV_logo.svg.png,General,International,es,HD,tv,true
+universal,"Universal",http://181.188.216.5:18000/play/a0o6/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/4/42/Universal_TV_logo.svg/512px-Universal_TV_logo.svg.png,General,International,es,HD,tv,true
+universal_hd,"Universal HD",http://181.188.216.5:18000/play/a0n9/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/4/42/Universal_TV_logo.svg/512px-Universal_TV_logo.svg.png,General,International,es,HD,tv,true
+universal_channel_hd,"UNIVERSAL CHANNEL HD",http://181.188.216.5:18000/play/a0o9/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/4/42/Universal_TV_logo.svg/512px-Universal_TV_logo.svg.png,General,International,es,HD,tv,true
+universal_channel_hd,"UNIVERSAL CHANNEL HD",http://181.188.216.5:18000/play/a08d/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/4/42/Universal_TV_logo.svg/512px-Universal_TV_logo.svg.png,General,International,es,HD,tv,true
+paramount_hd,"Paramount HD",http://181.188.216.5:18000/play/a0h5/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
+paramount_hd,"Paramount HD",http://181.188.216.5:18000/play/a0dp/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
+paramount_hd,"Paramount HD",http://181.188.216.5:18000/play/a013/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
+espn,"ESPN",http://181.188.216.5:18000/play/a0ch/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/512px-ESPN_wordmark.svg.png,Sports,International,es,HD,tv,true
+espn,"ESPN",http://181.188.216.5:18000/play/a0ek/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/512px-ESPN_wordmark.svg.png,Sports,International,es,HD,tv,true
+espn,"ESPN",http://181.188.216.5:18000/play/a0pe/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/512px-ESPN_wordmark.svg.png,Sports,International,es,HD,tv,true
+espn,"ESPN",http://181.188.216.5:18000/play/a026/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/512px-ESPN_wordmark.svg.png,Sports,International,es,HD,tv,true
+espn_hd,"ESPN HD",http://181.188.216.5:18000/play/a0ou/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/512px-ESPN_wordmark.svg.png,Sports,International,es,HD,tv,true
+espn_hd,"ESPN HD",http://181.188.216.5:18000/play/a0lo/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/512px-ESPN_wordmark.svg.png,Sports,International,es,HD,tv,true
+espn_hd,"ESPN HD",http://181.188.216.5:18000/play/a0gn/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/512px-ESPN_wordmark.svg.png,Sports,International,es,HD,tv,true
+espn_hd,"ESPN HD",http://181.188.216.5:18000/play/a0fb/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/512px-ESPN_wordmark.svg.png,Sports,International,es,HD,tv,true
+espn_hd,"ESPN HD",http://181.188.216.5:18000/play/a0dk/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/512px-ESPN_wordmark.svg.png,Sports,International,es,HD,tv,true
+espn_2,"ESPN 2",http://181.188.216.5:18000/play/a0ci/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/512px-ESPN_wordmark.svg.png,Sports,International,es,HD,tv,true
+espn_2,"ESPN 2",http://181.188.216.5:18000/play/a0jz/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/512px-ESPN_wordmark.svg.png,Sports,International,es,HD,tv,true
+espn_2_hd,"ESPN 2 HD",http://181.188.216.5:18000/play/a0oz/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/512px-ESPN_wordmark.svg.png,Sports,International,es,HD,tv,true
+espn_2_hd,"ESPN 2 HD",http://181.188.216.5:18000/play/a0il/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/512px-ESPN_wordmark.svg.png,Sports,International,es,HD,tv,true
+espn_2_hd,"ESPN 2 HD",http://181.188.216.5:18000/play/a0dl/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/512px-ESPN_wordmark.svg.png,Sports,International,es,HD,tv,true
+espn_2_hd,"ESPN 2 HD",http://181.188.216.5:18000/play/a00b/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/512px-ESPN_wordmark.svg.png,Sports,International,es,HD,tv,true
+espn_2_hd,"ESPN 2 HD",http://181.188.216.5:18000/play/a012/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/512px-ESPN_wordmark.svg.png,Sports,International,es,HD,tv,true
+espn_3,"ESPN 3",http://181.188.216.5:18000/play/a0bg/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/512px-ESPN_wordmark.svg.png,Sports,International,es,HD,tv,true
+espn_3_hd,"ESPN 3 HD",http://181.188.216.5:18000/play/a0dm/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/512px-ESPN_wordmark.svg.png,Sports,International,es,HD,tv,true
+espn_3_hd,"ESPN 3 HD",http://181.188.216.5:18000/play/a00z/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/512px-ESPN_wordmark.svg.png,Sports,International,es,HD,tv,true
+espn_3_hd,"ESPN 3 HD",http://181.188.216.5:18000/play/a0of/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/512px-ESPN_wordmark.svg.png,Sports,International,es,HD,tv,true
+fox_sports_hd,"Fox Sports HD",http://181.188.216.5:18000/play/a0nc/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/c/c0/Fox_Broadcasting_Company_Logo.svg/512px-Fox_Broadcasting_Company_Logo.svg.png,Sports,USA,es,HD,tv,true
+rts,"RTS",http://181.188.216.5:18000/play/a0km/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
+fox_sports_2,"Fox Sports 2",http://181.188.216.5:18000/play/a0nh/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/c/c0/Fox_Broadcasting_Company_Logo.svg/512px-Fox_Broadcasting_Company_Logo.svg.png,Sports,USA,es,HD,tv,true
+fox_sports_2_hd,"Fox Sports 2 HD",http://181.188.216.5:18000/play/a0n8/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/c/c0/Fox_Broadcasting_Company_Logo.svg/512px-Fox_Broadcasting_Company_Logo.svg.png,Sports,USA,es,HD,tv,true
+fox_sports_3,"Fox Sports 3",http://181.188.216.5:18000/play/a0ne/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/c/c0/Fox_Broadcasting_Company_Logo.svg/512px-Fox_Broadcasting_Company_Logo.svg.png,Sports,USA,es,HD,tv,true
+fox_sports_3_hd,"Fox Sports 3 HD",http://181.188.216.5:18000/play/a0ng/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/c/c0/Fox_Broadcasting_Company_Logo.svg/512px-Fox_Broadcasting_Company_Logo.svg.png,Sports,USA,es,HD,tv,true
+golf_channel,"Golf Channel",http://181.188.216.5:18000/play/a09a/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
+golf_channel,"Golf Channel",http://181.188.216.5:18000/play/a0k0/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
+golf_channel_hd,"Golf Channel HD",http://181.188.216.5:18000/play/a0d4/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
+tnt,"TNT",http://181.188.216.5:18000/play/a0ad/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/TNT_Logo_2016.svg/512px-TNT_Logo_2016.svg.png,General,International,es,HD,tv,true
+tnt,"TNT",http://181.188.216.5:18000/play/a0pn/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/TNT_Logo_2016.svg/512px-TNT_Logo_2016.svg.png,General,International,es,HD,tv,true
+tnt_hd,"TNT HD",http://181.188.216.5:18000/play/a0ol/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/TNT_Logo_2016.svg/512px-TNT_Logo_2016.svg.png,General,International,es,HD,tv,true
+tnt_hd,"TNT HD",http://181.188.216.5:18000/play/a00x/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/TNT_Logo_2016.svg/512px-TNT_Logo_2016.svg.png,General,International,es,HD,tv,true
+tnt_hd,"TNT HD",http://181.188.216.5:18000/play/a0d7/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/TNT_Logo_2016.svg/512px-TNT_Logo_2016.svg.png,General,International,es,HD,tv,true
+tnt_series,"TNT Series",http://181.188.216.5:18000/play/a0a5/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/TNT_Logo_2016.svg/512px-TNT_Logo_2016.svg.png,General,International,es,HD,tv,true
+tnt_series_hd,"TNT Series HD",http://181.188.216.5:18000/play/a0ob/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/TNT_Logo_2016.svg/512px-TNT_Logo_2016.svg.png,General,International,es,HD,tv,true
+tnt_series_hd,"TNT Series HD",http://181.188.216.5:18000/play/a0fa/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/TNT_Logo_2016.svg/512px-TNT_Logo_2016.svg.png,General,International,es,HD,tv,true
+tnt_series_hd,"TNT Series HD",http://181.188.216.5:18000/play/a0dq/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/TNT_Logo_2016.svg/512px-TNT_Logo_2016.svg.png,General,International,es,HD,tv,true
+fx,"FX",http://181.188.216.5:18000/play/a0ba/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/FX_International_logo.svg/512px-FX_International_logo.svg.png,Movies,International,es,HD,tv,true
+fx,"FX",http://181.188.216.5:18000/play/a0ph/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/FX_International_logo.svg/512px-FX_International_logo.svg.png,Movies,International,es,HD,tv,true
+fx_hd,"FX HD",http://181.188.216.5:18000/play/a0gm/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/FX_International_logo.svg/512px-FX_International_logo.svg.png,Movies,International,es,HD,tv,true
+fx_hd,"FX HD",http://181.188.216.5:18000/play/a0i9/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/FX_International_logo.svg/512px-FX_International_logo.svg.png,Movies,International,es,HD,tv,true
+fx_hd,"FX HD",http://181.188.216.5:18000/play/a0cy/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/FX_International_logo.svg/512px-FX_International_logo.svg.png,Movies,International,es,HD,tv,true
+axn,"AXN",http://181.188.216.5:18000/play/a0pa/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/AXN_logo_%282015%29.svg/512px-AXN_logo_%282015%29.svg.png,General,International,es,HD,tv,true
+axn,"AXN",http://181.188.216.5:18000/play/a0ac/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/AXN_logo_%282015%29.svg/512px-AXN_logo_%282015%29.svg.png,General,International,es,HD,tv,true
+axn_hd,"AXN HD",http://181.188.216.5:18000/play/a0oq/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/AXN_logo_%282015%29.svg/512px-AXN_logo_%282015%29.svg.png,General,International,es,HD,tv,true
+amc,"AMC",http://181.188.216.5:18000/play/a0h2/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/3/34/AMC_logo_2019.svg/512px-AMC_logo_2019.svg.png,General,International,es,HD,tv,true
+amc,"AMC",http://181.188.216.5:18000/play/a0ae/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/3/34/AMC_logo_2019.svg/512px-AMC_logo_2019.svg.png,General,International,es,HD,tv,true
+amc_hd,"AMC HD",http://181.188.216.5:18000/play/a0cw/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/3/34/AMC_logo_2019.svg/512px-AMC_logo_2019.svg.png,General,International,es,HD,tv,true
+amc_hd,"AMC HD",http://181.188.216.5:18000/play/a0hl/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/3/34/AMC_logo_2019.svg/512px-AMC_logo_2019.svg.png,General,International,es,HD,tv,true
+ae,"A&E",http://181.188.216.5:18000/play/a0cb/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
+ae,"A&E",http://181.188.216.5:18000/play/a0h1/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
+ae_hd,"A&E HD",http://181.188.216.5:18000/play/a0cv/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
+ae_hd,"A&E HD",http://181.188.216.5:18000/play/a0h9/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
+discovery_channel,"Discovery Channel",http://181.188.216.5:18000/play/a0pc/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/Discovery_Channel_logo.svg/512px-Discovery_Channel_logo.svg.png,Documentary,International,es,HD,tv,true
+discovery_channel,"Discovery Channel",http://181.188.216.5:18000/play/a0g9/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/Discovery_Channel_logo.svg/512px-Discovery_Channel_logo.svg.png,Documentary,International,es,HD,tv,true
+discovery_channel,"Discovery Channel",http://181.188.216.5:18000/play/a0cd/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/Discovery_Channel_logo.svg/512px-Discovery_Channel_logo.svg.png,Documentary,International,es,HD,tv,true
+discovery_channel_hd,"Discovery Channel HD",http://181.188.216.5:18000/play/a0dr/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/Discovery_Channel_logo.svg/512px-Discovery_Channel_logo.svg.png,Documentary,International,es,HD,tv,true
+discovery_hd,"Discovery HD",http://181.188.216.5:18000/play/a00f/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/Discovery_Channel_logo.svg/512px-Discovery_Channel_logo.svg.png,Documentary,International,es,HD,tv,true
+discovery_theater_hd,"Discovery Theater HD",http://181.188.216.5:18000/play/a0ig/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/Discovery_Channel_logo.svg/512px-Discovery_Channel_logo.svg.png,Documentary,International,es,HD,tv,true
+discovery_theater_hd,"Discovery Theater HD",http://181.188.216.5:18000/play/a0f9/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/Discovery_Channel_logo.svg/512px-Discovery_Channel_logo.svg.png,Documentary,International,es,HD,tv,true
+discovery_id_hd,"Discovery ID HD",http://181.188.216.5:18000/play/a0dv/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/Discovery_Channel_logo.svg/512px-Discovery_Channel_logo.svg.png,Documentary,International,es,HD,tv,true
+id_hd,"ID HD",http://181.188.216.5:18000/play/a0or/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
+animal_planet,"Animal Planet",http://181.188.216.5:18000/play/a0p9/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/2018_Animal_Planet_logo.svg/512px-2018_Animal_Planet_logo.svg.png,Documentary,International,es,HD,tv,true
+animal_planet,"Animal Planet",http://181.188.216.5:18000/play/a0ce/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/2018_Animal_Planet_logo.svg/512px-2018_Animal_Planet_logo.svg.png,Documentary,International,es,HD,tv,true
+animal_planet_hd,"Animal Planet HD",http://181.188.216.5:18000/play/a0oh/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/2018_Animal_Planet_logo.svg/512px-2018_Animal_Planet_logo.svg.png,Documentary,International,es,HD,tv,true
+animal_planet_hd,"Animal Planet HD",http://181.188.216.5:18000/play/a0cs/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/2018_Animal_Planet_logo.svg/512px-2018_Animal_Planet_logo.svg.png,Documentary,International,es,HD,tv,true
+history_channel,"History Channel",http://181.188.216.5:18000/play/a0cf/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/0/01/History_%282021%29.svg/512px-History_%282021%29.svg.png,Documentary,International,es,HD,tv,true
+history_channel,"History Channel",http://181.188.216.5:18000/play/a0pi/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/0/01/History_%282021%29.svg/512px-History_%282021%29.svg.png,Documentary,International,es,HD,tv,true
+history_channel_hd,"History Channel HD",http://181.188.216.5:18000/play/a0oj/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/0/01/History_%282021%29.svg/512px-History_%282021%29.svg.png,Documentary,International,es,HD,tv,true
+history_hd,"History HD",http://181.188.216.5:18000/play/a0ak/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/0/01/History_%282021%29.svg/512px-History_%282021%29.svg.png,Documentary,International,es,HD,tv,true
+disney_hd,"Disney HD",http://181.188.216.5:18000/play/a0ot/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/d/d2/2019_Disney_Channel_logo.svg/512px-2019_Disney_Channel_logo.svg.png,Kids,International,es,HD,tv,true
+disney_hd,"Disney HD",http://181.188.216.5:18000/play/a004/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/d/d2/2019_Disney_Channel_logo.svg/512px-2019_Disney_Channel_logo.svg.png,Kids,International,es,HD,tv,true
+discovery_kids,"Discovery Kids",http://181.188.216.5:18000/play/a0qs/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/Discovery_Channel_logo.svg/512px-Discovery_Channel_logo.svg.png,Kids,International,es,HD,tv,true
+discovery_kids_hd,"Discovery Kids HD",http://181.188.216.5:18000/play/a0pr/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/Discovery_Channel_logo.svg/512px-Discovery_Channel_logo.svg.png,Kids,International,es,HD,tv,true
+discovery_kids_hd,"Discovery Kids HD",http://181.188.216.5:18000/play/a09h/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/Discovery_Channel_logo.svg/512px-Discovery_Channel_logo.svg.png,Kids,International,es,HD,tv,true
+discovery_kids_hd,"Discovery Kids HD",http://181.188.216.5:18000/play/a0gj/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/Discovery_Channel_logo.svg/512px-Discovery_Channel_logo.svg.png,Kids,International,es,HD,tv,true
+cartoon_network,"Cartoon Network",http://181.188.216.5:18000/play/a0pp/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/Cartoon_Network_2010_logo.svg/512px-Cartoon_Network_2010_logo.svg.png,Kids,International,es,HD,tv,true
+cartoon_network,"Cartoon Network",http://181.188.216.5:18000/play/a0ps/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/Cartoon_Network_2010_logo.svg/512px-Cartoon_Network_2010_logo.svg.png,Kids,International,es,HD,tv,true
+cartoon_network,"Cartoon Network",http://181.188.216.5:18000/play/a0kp/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/Cartoon_Network_2010_logo.svg/512px-Cartoon_Network_2010_logo.svg.png,Kids,International,es,HD,tv,true
+cartoon_network,"Cartoon Network",http://181.188.216.5:18000/play/a09v/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/Cartoon_Network_2010_logo.svg/512px-Cartoon_Network_2010_logo.svg.png,Kids,International,es,HD,tv,true
+mtv_hd,"MTV HD",http://181.188.216.5:18000/play/a0hn/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/0/0d/MTV-2021.svg/512px-MTV-2021.svg.png,Music,International,es,HD,tv,true
+mtv_hd,"MTV HD",http://181.188.216.5:18000/play/a0al/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/0/0d/MTV-2021.svg/512px-MTV-2021.svg.png,Music,International,es,HD,tv,true
+mtv_live,"MTV LIVE",http://181.188.216.5:18000/play/a0dc/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/0/0d/MTV-2021.svg/512px-MTV-2021.svg.png,Music,International,es,HD,tv,true
+mtv_live_hd,"MTV LIVE HD",http://181.188.216.5:18000/play/a08e/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/0/0d/MTV-2021.svg/512px-MTV-2021.svg.png,Music,International,es,HD,tv,true
+mtv_live_hd,"MTV LIVE HD",http://181.188.216.5:18000/play/a0od/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/0/0d/MTV-2021.svg/512px-MTV-2021.svg.png,Music,International,es,HD,tv,true
+comedy_central_hd,"Comedy Central HD",http://181.188.216.5:18000/play/a0ha/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/Comedy_Central_2018.svg/512px-Comedy_Central_2018.svg.png,Comedy,International,es,HD,tv,true
+comedy_central_hd,"Comedy Central HD",http://181.188.216.5:18000/play/a0db/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/Comedy_Central_2018.svg/512px-Comedy_Central_2018.svg.png,Comedy,International,es,HD,tv,true
+cnn_internacional,"CNN Internacional",http://181.188.216.5:18000/play/a09b/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/CNN.svg/512px-CNN.svg.png,News,USA,es,HD,tv,true
+cnn_international,"CNN International",http://181.188.216.5:18000/play/a0ko/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/CNN.svg/512px-CNN.svg.png,News,USA,es,HD,tv,true
+cnn_international,"CNN International",http://181.188.216.5:18000/play/a0f4/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/CNN.svg/512px-CNN.svg.png,News,USA,es,HD,tv,true
+bbc_news,"BBC News",http://181.188.216.5:18000/play/a0ag/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/BBC_Logo_2021.svg/512px-BBC_Logo_2021.svg.png,News,International,es,HD,tv,true
+bbc_world,"BBC World",http://181.188.216.5:18000/play/a0m6/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/BBC_Logo_2021.svg/512px-BBC_Logo_2021.svg.png,General,International,es,HD,tv,true
+food_network_hd,"Food Network HD",http://181.188.216.5:18000/play/a0qp/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/Food_Network_logo.svg/512px-Food_Network_logo.svg.png,General,International,es,HD,tv,true
+golden,"Golden",http://181.188.216.5:18000/play/a0bn/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
+golden,"Golden",http://181.188.216.5:18000/play/a0k5/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
+golden_hd,"Golden HD",http://181.188.216.5:18000/play/a0jg/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
+space,"SPACE",http://181.188.216.5:18000/play/a0a4/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/SpaceLogo.svg/512px-SpaceLogo.svg.png,General,International,es,HD,tv,true
+space,"Space",http://181.188.216.5:18000/play/a0pl/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/SpaceLogo.svg/512px-SpaceLogo.svg.png,General,International,es,HD,tv,true
+space_hd,"Space HD",http://181.188.216.5:18000/play/a0os/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/SpaceLogo.svg/512px-SpaceLogo.svg.png,General,International,es,HD,tv,true
+space_hd,"Space HD",http://181.188.216.5:18000/play/a007/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/SpaceLogo.svg/512px-SpaceLogo.svg.png,General,International,es,HD,tv,true
+telemundo,"Telemundo",http://181.188.216.5:18000/play/a0f3/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
+telemundo,"Telemundo",http://181.188.216.5:18000/play/a0a2/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
+telemundo,"Telemundo",http://181.188.216.5:18000/play/a0qe/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
+telemundo_hd,"Telemundo HD",http://181.188.216.5:18000/play/a0cx/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
+las_estrellas_hd,"Las Estrellas HD",http://181.188.216.5:18000/play/a0ox/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
+las_estrellas_hd,"Las Estrellas HD",http://181.188.216.5:18000/play/a0lp/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
+hola_tv_hd,"HOLA! TV HD",http://181.188.216.5:18000/play/a0da/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
+futv_hd_cr,"FUTV HD CR",http://181.188.216.5:18000/play/a0dj/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 11_repretel,"11 - Repretel",http://181.188.216.5:18000/play/a0b6/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 13_c,"13 C",http://181.188.216.5:18000/play/a0qj/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 24_horas_tvn,"24 Horas TVN",http://181.188.216.5:18000/play/a0pu/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 4_repretel,"4 Repretel",http://181.188.216.5:18000/play/a0c5/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 6_repretel,"6 - Repretel",http://181.188.216.5:18000/play/a0b5/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
-ae,"A&E",http://181.188.216.5:18000/play/a0cb/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
-ae,"A&E",http://181.188.216.5:18000/play/a0h1/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
-ae_hd,"A&E HD",http://181.188.216.5:18000/play/a0cv/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
-ae_hd,"A&E HD",http://181.188.216.5:18000/play/a0h9/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
-amc,"AMC",http://181.188.216.5:18000/play/a0h2/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/3/34/AMC_logo_2019.svg/512px-AMC_logo_2019.svg.png,General,International,es,HD,tv,true
-amc,"AMC",http://181.188.216.5:18000/play/a0ae/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/3/34/AMC_logo_2019.svg/512px-AMC_logo_2019.svg.png,General,International,es,HD,tv,true
-amc_hd,"AMC HD",http://181.188.216.5:18000/play/a0cw/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/3/34/AMC_logo_2019.svg/512px-AMC_logo_2019.svg.png,General,International,es,HD,tv,true
-amc_hd,"AMC HD",http://181.188.216.5:18000/play/a0hl/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/3/34/AMC_logo_2019.svg/512px-AMC_logo_2019.svg.png,General,International,es,HD,tv,true
 atres_series,"ATRES SERIES",http://181.188.216.5:18000/play/a0pv/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
-atv,"ATV",http://181.188.216.5:18000/play/a0m3/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/ATV_logo_2020.png/512px-ATV_logo_2020.png,General,Peru,es,HD,tv,true
-atv,"ATV",http://181.188.216.5:18000/play/a01q/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/ATV_logo_2020.png/512px-ATV_logo_2020.png,General,Peru,es,HD,tv,true
-axn,"AXN",http://181.188.216.5:18000/play/a0pa/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/AXN_logo_%282015%29.svg/512px-AXN_logo_%282015%29.svg.png,General,International,es,HD,tv,true
-axn,"AXN",http://181.188.216.5:18000/play/a0ac/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/AXN_logo_%282015%29.svg/512px-AXN_logo_%282015%29.svg.png,General,International,es,HD,tv,true
-axn_hd,"AXN HD",http://181.188.216.5:18000/play/a0oq/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/AXN_logo_%282015%29.svg/512px-AXN_logo_%282015%29.svg.png,General,International,es,HD,tv,true
 az_click_hd,"AZ click HD",http://181.188.216.5:18000/play/a0d2/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 adult_swim,"Adult Swim",http://181.188.216.5:18000/play/a0a1/index.m3u8,https://cdn-icons-png.flaticon.com/512/742/742751.png,Comedy,International,es,HD,tv,true
 adult_swim,"Adult Swim",http://181.188.216.5:18000/play/a0q8/index.m3u8,https://cdn-icons-png.flaticon.com/512/742/742751.png,Comedy,International,es,HD,tv,true
 adult_swim,"Adult Swim",http://181.188.216.5:18000/play/a0f6/index.m3u8,https://cdn-icons-png.flaticon.com/512/742/742751.png,Comedy,International,es,HD,tv,true
-america_tv_hd,"America TV HD",http://181.188.216.5:18000/play/a0j8/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/Am%C3%A9rica_Televisi%C3%B3n_%28Logo_2020%29.png/512px-Am%C3%A9rica_Televisi%C3%B3n_%28Logo_2020%29.png,General,Peru,es,HD,tv,true
-america_tv_hd,"America TV HD",http://181.188.216.5:18000/play/a014/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/Am%C3%A9rica_Televisi%C3%B3n_%28Logo_2020%29.png/512px-Am%C3%A9rica_Televisi%C3%B3n_%28Logo_2020%29.png,General,Peru,es,HD,tv,true
 amrica_televisin,"AmØrica Televisiðn",http://181.188.216.5:18000/play/a0m0/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 amrica_televisin,"AmØrica Televisiðn",http://181.188.216.5:18000/play/a01l/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
-animal_planet,"Animal Planet",http://181.188.216.5:18000/play/a0p9/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/2018_Animal_Planet_logo.svg/512px-2018_Animal_Planet_logo.svg.png,Documentary,International,es,HD,tv,true
-animal_planet,"Animal Planet",http://181.188.216.5:18000/play/a0ce/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/2018_Animal_Planet_logo.svg/512px-2018_Animal_Planet_logo.svg.png,Documentary,International,es,HD,tv,true
-animal_planet_hd,"Animal Planet HD",http://181.188.216.5:18000/play/a0oh/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/2018_Animal_Planet_logo.svg/512px-2018_Animal_Planet_logo.svg.png,Documentary,International,es,HD,tv,true
-animal_planet_hd,"Animal Planet HD",http://181.188.216.5:18000/play/a0cs/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/2018_Animal_Planet_logo.svg/512px-2018_Animal_Planet_logo.svg.png,Documentary,International,es,HD,tv,true
 antena_3,"Antena 3",http://181.188.216.5:18000/play/a0m8/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,Spain,es,HD,tv,true
 atres_series,"Atres Series",http://181.188.216.5:18000/play/a099/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 azcorazon,"Azcorazon",http://181.188.216.5:18000/play/a0a3/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 azmundo,"Azmundo",http://181.188.216.5:18000/play/a0c7/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
-bbc_news,"BBC News",http://181.188.216.5:18000/play/a0ag/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/BBC_Logo_2021.svg/512px-BBC_Logo_2021.svg.png,News,International,es,HD,tv,true
-bbc_world,"BBC World",http://181.188.216.5:18000/play/a0m6/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/BBC_Logo_2021.svg/512px-BBC_Logo_2021.svg.png,General,International,es,HD,tv,true
 bethel_tv,"BETHEL TV",http://181.188.216.5:18000/play/a0hp/index.m3u8,https://cdn-icons-png.flaticon.com/512/3159/3159310.png,Religious,International,es,HD,tv,true
 baby_first,"Baby First",http://181.188.216.5:18000/play/a0b9/index.m3u8,https://cdn-icons-png.flaticon.com/512/2945/2945637.png,Kids,International,es,HD,tv,true
 baby_tv,"Baby TV",http://181.188.216.5:18000/play/a081/index.m3u8,https://cdn-icons-png.flaticon.com/512/2945/2945637.png,Kids,International,es,HD,tv,true
@@ -52,9 +175,6 @@ cinecanal_hd,"CINECANAL HD",http://181.188.216.5:18000/play/a0co/index.m3u8,http
 cnbc,"CNBC",http://181.188.216.5:18000/play/a0qv/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,USA,es,HD,tv,true
 cnn_espaol,"CNN Espaæol",http://181.188.216.5:18000/play/a0kz/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/CNN.svg/512px-CNN.svg.png,News,USA,es,HD,tv,true
 cnn_espaol,"CNN Espaæol",http://181.188.216.5:18000/play/a084/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/CNN.svg/512px-CNN.svg.png,News,USA,es,HD,tv,true
-cnn_internacional,"CNN Internacional",http://181.188.216.5:18000/play/a09b/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/CNN.svg/512px-CNN.svg.png,News,USA,es,HD,tv,true
-cnn_international,"CNN International",http://181.188.216.5:18000/play/a0ko/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/CNN.svg/512px-CNN.svg.png,News,USA,es,HD,tv,true
-cnn_international,"CNN International",http://181.188.216.5:18000/play/a0f4/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/CNN.svg/512px-CNN.svg.png,News,USA,es,HD,tv,true
 cnne,"CNNE",http://181.188.216.5:18000/play/a0af/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/CNN.svg/512px-CNN.svg.png,News,USA,es,HD,tv,true
 cablenoticias,"CableNoticias",http://181.188.216.5:18000/play/a0g5/index.m3u8,https://cdn-icons-png.flaticon.com/512/2965/2965879.png,News,International,es,HD,tv,true
 canal_10_esa,"Canal 10 - ESA",http://181.188.216.5:18000/play/a098/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
@@ -90,24 +210,15 @@ canal_uno,"Canal Uno",http://181.188.216.5:18000/play/a0nk/index.m3u8,https://cd
 canal_del_congreso,"Canal del Congreso",http://181.188.216.5:18000/play/a0nr/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 capital,"Capital",http://181.188.216.5:18000/play/a0o2/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 caracol_hd,"Caracol HD",http://181.188.216.5:18000/play/a0fd/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,Colombia,es,HD,tv,true
-cartoon_network,"Cartoon Network",http://181.188.216.5:18000/play/a0pp/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/Cartoon_Network_2010_logo.svg/512px-Cartoon_Network_2010_logo.svg.png,Kids,International,es,HD,tv,true
-cartoon_network,"Cartoon Network",http://181.188.216.5:18000/play/a0ps/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/Cartoon_Network_2010_logo.svg/512px-Cartoon_Network_2010_logo.svg.png,Kids,International,es,HD,tv,true
-cartoon_network,"Cartoon Network",http://181.188.216.5:18000/play/a0kp/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/Cartoon_Network_2010_logo.svg/512px-Cartoon_Network_2010_logo.svg.png,Kids,International,es,HD,tv,true
-cartoon_network,"Cartoon Network",http://181.188.216.5:18000/play/a09v/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/Cartoon_Network_2010_logo.svg/512px-Cartoon_Network_2010_logo.svg.png,Kids,International,es,HD,tv,true
 cartoonito,"Cartoonito",http://181.188.216.5:18000/play/a09x/index.m3u8,https://cdn-icons-png.flaticon.com/512/2945/2945637.png,Kids,International,es,HD,tv,true
 cartoonito,"Cartoonito",http://181.188.216.5:18000/play/a0ez/index.m3u8,https://cdn-icons-png.flaticon.com/512/2945/2945637.png,Kids,International,es,HD,tv,true
 cartoonito,"Cartoonito",http://181.188.216.5:18000/play/a0py/index.m3u8,https://cdn-icons-png.flaticon.com/512/2945/2945637.png,Kids,International,es,HD,tv,true
 cinecanal,"Cinecanal",http://181.188.216.5:18000/play/a0pb/index.m3u8,https://cdn-icons-png.flaticon.com/512/777/777242.png,Movies,International,es,HD,tv,true
 cinecanal_hd,"Cinecanal HD",http://181.188.216.5:18000/play/a0om/index.m3u8,https://cdn-icons-png.flaticon.com/512/777/777242.png,Movies,International,es,HD,tv,true
 cinecanal_hd,"Cinecanal HD",http://181.188.216.5:18000/play/a008/index.m3u8,https://cdn-icons-png.flaticon.com/512/777/777242.png,Movies,International,es,HD,tv,true
-cinemax,"Cinemax",http://181.188.216.5:18000/play/a0ed/index.m3u8,https://cdn-icons-png.flaticon.com/512/777/777242.png,Movies,International,es,HD,tv,true
-cinemax,"Cinemax",http://181.188.216.5:18000/play/a0l7/index.m3u8,https://cdn-icons-png.flaticon.com/512/777/777242.png,Movies,International,es,HD,tv,true
-cinemax_hd,"Cinemax HD",http://181.188.216.5:18000/play/a0lf/index.m3u8,https://cdn-icons-png.flaticon.com/512/777/777242.png,Movies,International,es,HD,tv,true
 city_tv,"City TV",http://181.188.216.5:18000/play/a0o1/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 clover,"Clover",http://181.188.216.5:18000/play/a0eu/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 color_vision_9_rd,"Color Vision 9 - RD",http://181.188.216.5:18000/play/a0c3/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
-comedy_central_hd,"Comedy Central HD",http://181.188.216.5:18000/play/a0ha/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/Comedy_Central_2018.svg/512px-Comedy_Central_2018.svg.png,Comedy,International,es,HD,tv,true
-comedy_central_hd,"Comedy Central HD",http://181.188.216.5:18000/play/a0db/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/Comedy_Central_2018.svg/512px-Comedy_Central_2018.svg.png,Comedy,International,es,HD,tv,true
 cristovisin,"Cristovisiðn",http://181.188.216.5:18000/play/a025/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 dhe_hd,"DHE HD",http://181.188.216.5:18000/play/a0p0/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 dhe_hd,"DHE HD",http://181.188.216.5:18000/play/a08o/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
@@ -117,31 +228,17 @@ dw_espaol,"DW Espaæol",http://181.188.216.5:18000/play/a0e5/index.m3u8,https://
 dw_espaol,"DW Espaæol",http://181.188.216.5:18000/play/a0mq/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 de_pelcula,"De PelŦcula",http://181.188.216.5:18000/play/a0k8/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 digital_15_rd,"Digital 15 - RD",http://181.188.216.5:18000/play/a0aw/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
-discovery_channel,"Discovery Channel",http://181.188.216.5:18000/play/a0pc/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/Discovery_Channel_logo.svg/512px-Discovery_Channel_logo.svg.png,Documentary,International,es,HD,tv,true
-discovery_channel,"Discovery Channel",http://181.188.216.5:18000/play/a0g9/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/Discovery_Channel_logo.svg/512px-Discovery_Channel_logo.svg.png,Documentary,International,es,HD,tv,true
-discovery_channel,"Discovery Channel",http://181.188.216.5:18000/play/a0cd/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/Discovery_Channel_logo.svg/512px-Discovery_Channel_logo.svg.png,Documentary,International,es,HD,tv,true
 discovery_channel_hd,"Discovery Channel  HD",http://181.188.216.5:18000/play/a0oi/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/Discovery_Channel_logo.svg/512px-Discovery_Channel_logo.svg.png,Documentary,International,es,HD,tv,true
-discovery_channel_hd,"Discovery Channel HD",http://181.188.216.5:18000/play/a0dr/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/Discovery_Channel_logo.svg/512px-Discovery_Channel_logo.svg.png,Documentary,International,es,HD,tv,true
 discovery_hh_hd,"Discovery H&H HD",http://181.188.216.5:18000/play/a0kx/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/Discovery_Channel_logo.svg/512px-Discovery_Channel_logo.svg.png,Documentary,International,es,HD,tv,true
 discovery_hh_hd,"Discovery H&H HD",http://181.188.216.5:18000/play/a00w/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/Discovery_Channel_logo.svg/512px-Discovery_Channel_logo.svg.png,Documentary,International,es,HD,tv,true
-discovery_hd,"Discovery HD",http://181.188.216.5:18000/play/a00f/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/Discovery_Channel_logo.svg/512px-Discovery_Channel_logo.svg.png,Documentary,International,es,HD,tv,true
-discovery_id_hd,"Discovery ID HD",http://181.188.216.5:18000/play/a0dv/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/Discovery_Channel_logo.svg/512px-Discovery_Channel_logo.svg.png,Documentary,International,es,HD,tv,true
-discovery_kids,"Discovery Kids",http://181.188.216.5:18000/play/a0qs/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/Discovery_Channel_logo.svg/512px-Discovery_Channel_logo.svg.png,Kids,International,es,HD,tv,true
-discovery_kids_hd,"Discovery Kids HD",http://181.188.216.5:18000/play/a0pr/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/Discovery_Channel_logo.svg/512px-Discovery_Channel_logo.svg.png,Kids,International,es,HD,tv,true
-discovery_kids_hd,"Discovery Kids HD",http://181.188.216.5:18000/play/a09h/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/Discovery_Channel_logo.svg/512px-Discovery_Channel_logo.svg.png,Kids,International,es,HD,tv,true
-discovery_kids_hd,"Discovery Kids HD",http://181.188.216.5:18000/play/a0gj/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/Discovery_Channel_logo.svg/512px-Discovery_Channel_logo.svg.png,Kids,International,es,HD,tv,true
 discovery_science,"Discovery Science",http://181.188.216.5:18000/play/a0qc/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/Discovery_Channel_logo.svg/512px-Discovery_Channel_logo.svg.png,Documentary,International,es,HD,tv,true
 discovery_science,"Discovery Science",http://181.188.216.5:18000/play/a096/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/Discovery_Channel_logo.svg/512px-Discovery_Channel_logo.svg.png,Documentary,International,es,HD,tv,true
-discovery_theater_hd,"Discovery Theater HD",http://181.188.216.5:18000/play/a0ig/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/Discovery_Channel_logo.svg/512px-Discovery_Channel_logo.svg.png,Documentary,International,es,HD,tv,true
-discovery_theater_hd,"Discovery Theater HD",http://181.188.216.5:18000/play/a0f9/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/Discovery_Channel_logo.svg/512px-Discovery_Channel_logo.svg.png,Documentary,International,es,HD,tv,true
 discovery_turbo,"Discovery Turbo",http://181.188.216.5:18000/play/a0le/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/Discovery_Channel_logo.svg/512px-Discovery_Channel_logo.svg.png,Documentary,International,es,HD,tv,true
 discovery_turbo,"Discovery Turbo",http://181.188.216.5:18000/play/a0g3/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/Discovery_Channel_logo.svg/512px-Discovery_Channel_logo.svg.png,Documentary,International,es,HD,tv,true
 discovery_world_hd,"Discovery World HD",http://181.188.216.5:18000/play/a005/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/Discovery_Channel_logo.svg/512px-Discovery_Channel_logo.svg.png,Documentary,International,es,HD,tv,true
 discovery_world_hd,"Discovery World HD",http://181.188.216.5:18000/play/a0oc/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/Discovery_Channel_logo.svg/512px-Discovery_Channel_logo.svg.png,Documentary,International,es,HD,tv,true
 discovery_world_hd,"Discovery World HD",http://181.188.216.5:18000/play/a0ds/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/Discovery_Channel_logo.svg/512px-Discovery_Channel_logo.svg.png,Documentary,International,es,HD,tv,true
 disney_channel,"Disney Channel",http://181.188.216.5:18000/play/a0pd/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/d/d2/2019_Disney_Channel_logo.svg/512px-2019_Disney_Channel_logo.svg.png,Kids,International,es,HD,tv,true
-disney_hd,"Disney HD",http://181.188.216.5:18000/play/a0ot/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/d/d2/2019_Disney_Channel_logo.svg/512px-2019_Disney_Channel_logo.svg.png,Kids,International,es,HD,tv,true
-disney_hd,"Disney HD",http://181.188.216.5:18000/play/a004/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/d/d2/2019_Disney_Channel_logo.svg/512px-2019_Disney_Channel_logo.svg.png,Kids,International,es,HD,tv,true
 disney_jr,"Disney JR",http://181.188.216.5:18000/play/a09y/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/d/d2/2019_Disney_Channel_logo.svg/512px-2019_Disney_Channel_logo.svg.png,Kids,International,es,HD,tv,true
 disney_junior,"Disney Junior",http://181.188.216.5:18000/play/a0lc/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/d/d2/2019_Disney_Channel_logo.svg/512px-2019_Disney_Channel_logo.svg.png,Kids,International,es,HD,tv,true
 distrito_comedia,"Distrito Comedia",http://181.188.216.5:18000/play/a0kc/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
@@ -154,22 +251,7 @@ ecuador_tv_hd,"ECUADOR TV HD",http://181.188.216.5:18000/play/a0lt/index.m3u8,ht
 ecuavisa_gye_fhd,"ECUAVISA GYE FHD",http://181.188.216.5:18000/play/a0n0/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 ecuavisa_hd,"ECUAVISA HD",http://181.188.216.5:18000/play/a0ls/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 elim_tv_esa,"ELIM TV - ESA",http://181.188.216.5:18000/play/a0ao/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
-espn,"ESPN",http://181.188.216.5:18000/play/a0ch/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/512px-ESPN_wordmark.svg.png,Sports,International,es,HD,tv,true
-espn,"ESPN",http://181.188.216.5:18000/play/a0ek/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/512px-ESPN_wordmark.svg.png,Sports,International,es,HD,tv,true
-espn,"ESPN",http://181.188.216.5:18000/play/a0pe/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/512px-ESPN_wordmark.svg.png,Sports,International,es,HD,tv,true
-espn,"ESPN",http://181.188.216.5:18000/play/a026/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/512px-ESPN_wordmark.svg.png,Sports,International,es,HD,tv,true
 espn_4_hd,"ESPN  4 HD",http://181.188.216.5:18000/play/a0am/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/512px-ESPN_wordmark.svg.png,Sports,International,es,HD,tv,true
-espn_2,"ESPN 2",http://181.188.216.5:18000/play/a0ci/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/512px-ESPN_wordmark.svg.png,Sports,International,es,HD,tv,true
-espn_2,"ESPN 2",http://181.188.216.5:18000/play/a0jz/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/512px-ESPN_wordmark.svg.png,Sports,International,es,HD,tv,true
-espn_2_hd,"ESPN 2 HD",http://181.188.216.5:18000/play/a0oz/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/512px-ESPN_wordmark.svg.png,Sports,International,es,HD,tv,true
-espn_2_hd,"ESPN 2 HD",http://181.188.216.5:18000/play/a0il/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/512px-ESPN_wordmark.svg.png,Sports,International,es,HD,tv,true
-espn_2_hd,"ESPN 2 HD",http://181.188.216.5:18000/play/a0dl/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/512px-ESPN_wordmark.svg.png,Sports,International,es,HD,tv,true
-espn_2_hd,"ESPN 2 HD",http://181.188.216.5:18000/play/a00b/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/512px-ESPN_wordmark.svg.png,Sports,International,es,HD,tv,true
-espn_2_hd,"ESPN 2 HD",http://181.188.216.5:18000/play/a012/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/512px-ESPN_wordmark.svg.png,Sports,International,es,HD,tv,true
-espn_3,"ESPN 3",http://181.188.216.5:18000/play/a0bg/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/512px-ESPN_wordmark.svg.png,Sports,International,es,HD,tv,true
-espn_3_hd,"ESPN 3 HD",http://181.188.216.5:18000/play/a0dm/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/512px-ESPN_wordmark.svg.png,Sports,International,es,HD,tv,true
-espn_3_hd,"ESPN 3 HD",http://181.188.216.5:18000/play/a00z/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/512px-ESPN_wordmark.svg.png,Sports,International,es,HD,tv,true
-espn_3_hd,"ESPN 3 HD",http://181.188.216.5:18000/play/a0of/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/512px-ESPN_wordmark.svg.png,Sports,International,es,HD,tv,true
 espn_4,"ESPN 4",http://181.188.216.5:18000/play/a0bh/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/512px-ESPN_wordmark.svg.png,Sports,International,es,HD,tv,true
 espn_4,"ESPN 4",http://181.188.216.5:18000/play/a0pf/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/512px-ESPN_wordmark.svg.png,Sports,International,es,HD,tv,true
 espn_4hd,"ESPN 4HD",http://181.188.216.5:18000/play/a0ov/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/512px-ESPN_wordmark.svg.png,Sports,International,es,HD,tv,true
@@ -186,11 +268,6 @@ espn_7,"ESPN 7",http://181.188.216.5:18000/play/a0pg/index.m3u8,https://upload.w
 espn_7hd,"ESPN 7HD",http://181.188.216.5:18000/play/a0on/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/512px-ESPN_wordmark.svg.png,Sports,International,es,HD,tv,true
 espn_7hd,"ESPN 7HD",http://181.188.216.5:18000/play/a0i6/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/512px-ESPN_wordmark.svg.png,Sports,International,es,HD,tv,true
 espn_co,"ESPN CO",http://181.188.216.5:18000/play/a0nv/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/512px-ESPN_wordmark.svg.png,Sports,International,es,HD,tv,true
-espn_hd,"ESPN HD",http://181.188.216.5:18000/play/a0ou/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/512px-ESPN_wordmark.svg.png,Sports,International,es,HD,tv,true
-espn_hd,"ESPN HD",http://181.188.216.5:18000/play/a0lo/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/512px-ESPN_wordmark.svg.png,Sports,International,es,HD,tv,true
-espn_hd,"ESPN HD",http://181.188.216.5:18000/play/a0gn/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/512px-ESPN_wordmark.svg.png,Sports,International,es,HD,tv,true
-espn_hd,"ESPN HD",http://181.188.216.5:18000/play/a0fb/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/512px-ESPN_wordmark.svg.png,Sports,International,es,HD,tv,true
-espn_hd,"ESPN HD",http://181.188.216.5:18000/play/a0dk/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/512px-ESPN_wordmark.svg.png,Sports,International,es,HD,tv,true
 espn_premium_hd,"ESPN Premium HD",http://181.188.216.5:18000/play/a0fe/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/512px-ESPN_wordmark.svg.png,Sports,International,es,HD,tv,true
 espn_premium_hd,"ESPN Premium HD",http://181.188.216.5:18000/play/a0lq/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/512px-ESPN_wordmark.svg.png,Sports,International,es,HD,tv,true
 et_canal_el_tiempo,"ET Canal El Tiempo",http://181.188.216.5:18000/play/a01b/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
@@ -213,45 +290,23 @@ europa_europa,"Europa Europa",http://181.188.216.5:18000/play/a0k7/index.m3u8,ht
 europa_europa,"Europa Europa",http://181.188.216.5:18000/play/a0r0/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 europa_hd,"Europa HD",http://181.188.216.5:18000/play/a0cz/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 exa_tv,"Exa TV",http://181.188.216.5:18000/play/a0cj/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
-futv_hd_cr,"FUTV HD CR",http://181.188.216.5:18000/play/a0dj/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
-fx,"FX",http://181.188.216.5:18000/play/a0ba/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/FX_International_logo.svg/512px-FX_International_logo.svg.png,Movies,International,es,HD,tv,true
-fx,"FX",http://181.188.216.5:18000/play/a0ph/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/FX_International_logo.svg/512px-FX_International_logo.svg.png,Movies,International,es,HD,tv,true
-fx_hd,"FX HD",http://181.188.216.5:18000/play/a0gm/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/FX_International_logo.svg/512px-FX_International_logo.svg.png,Movies,International,es,HD,tv,true
-fx_hd,"FX HD",http://181.188.216.5:18000/play/a0i9/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/FX_International_logo.svg/512px-FX_International_logo.svg.png,Movies,International,es,HD,tv,true
-fx_hd,"FX HD",http://181.188.216.5:18000/play/a0cy/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/FX_International_logo.svg/512px-FX_International_logo.svg.png,Movies,International,es,HD,tv,true
 film_arts_hd,"Film & arts HD",http://181.188.216.5:18000/play/a0cu/index.m3u8,https://cdn-icons-png.flaticon.com/512/777/777242.png,Movies,International,es,HD,tv,true
 filmarts,"Film&Arts",http://181.188.216.5:18000/play/a0js/index.m3u8,https://cdn-icons-png.flaticon.com/512/777/777242.png,Movies,International,es,HD,tv,true
 filmarts,"Film&Arts",http://181.188.216.5:18000/play/a018/index.m3u8,https://cdn-icons-png.flaticon.com/512/777/777242.png,Movies,International,es,HD,tv,true
-food_network_hd,"Food Network HD",http://181.188.216.5:18000/play/a0qp/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/Food_Network_logo.svg/512px-Food_Network_logo.svg.png,General,International,es,HD,tv,true
-fox_sports_2,"Fox Sports 2",http://181.188.216.5:18000/play/a0nh/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/c/c0/Fox_Broadcasting_Company_Logo.svg/512px-Fox_Broadcasting_Company_Logo.svg.png,Sports,USA,es,HD,tv,true
-fox_sports_2_hd,"Fox Sports 2 HD",http://181.188.216.5:18000/play/a0n8/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/c/c0/Fox_Broadcasting_Company_Logo.svg/512px-Fox_Broadcasting_Company_Logo.svg.png,Sports,USA,es,HD,tv,true
-fox_sports_3,"Fox Sports 3",http://181.188.216.5:18000/play/a0ne/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/c/c0/Fox_Broadcasting_Company_Logo.svg/512px-Fox_Broadcasting_Company_Logo.svg.png,Sports,USA,es,HD,tv,true
-fox_sports_3_hd,"Fox Sports 3 HD",http://181.188.216.5:18000/play/a0ng/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/c/c0/Fox_Broadcasting_Company_Logo.svg/512px-Fox_Broadcasting_Company_Logo.svg.png,Sports,USA,es,HD,tv,true
-fox_sports_hd,"Fox Sports HD",http://181.188.216.5:18000/play/a0nc/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/c/c0/Fox_Broadcasting_Company_Logo.svg/512px-Fox_Broadcasting_Company_Logo.svg.png,Sports,USA,es,HD,tv,true
 france_24,"France 24",http://181.188.216.5:18000/play/a0mf/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 france24,"France24",http://181.188.216.5:18000/play/a0ah/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 gama_tv,"GAMA TV",http://181.188.216.5:18000/play/a0lu/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 global,"GLOBAL",http://181.188.216.5:18000/play/a01s/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 global,"GLOBAL",http://181.188.216.5:18000/play/a0m5/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
-golperu,"GOLPERU",http://181.188.216.5:18000/play/a07s/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,Peru,es,HD,tv,true
 gamavisin,"Gamavisiðn",http://181.188.216.5:18000/play/a0kj/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 gol_tv,"Gol TV",http://181.188.216.5:18000/play/a0mj/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 gol_tv,"Gol TV",http://181.188.216.5:18000/play/a01d/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
-golden,"Golden",http://181.188.216.5:18000/play/a0bn/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
-golden,"Golden",http://181.188.216.5:18000/play/a0k5/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 golden_edge,"Golden Edge",http://181.188.216.5:18000/play/a0k4/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
-golden_hd,"Golden HD",http://181.188.216.5:18000/play/a0jg/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 golden_premiere_2_hd,"Golden Premiere 2 HD",http://181.188.216.5:18000/play/a09k/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 golden_premiere_hd,"Golden Premiere HD",http://181.188.216.5:18000/play/a09j/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
-golf_channel,"Golf Channel",http://181.188.216.5:18000/play/a09a/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
-golf_channel,"Golf Channel",http://181.188.216.5:18000/play/a0k0/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
-golf_channel_hd,"Golf Channel HD",http://181.188.216.5:18000/play/a0d4/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 guatevision_gua,"Guatevision - GUA",http://181.188.216.5:18000/play/a09m/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 h2,"H2",http://181.188.216.5:18000/play/a0bd/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 hbo_2,"HBO 2",http://181.188.216.5:18000/play/a0ka/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/d/de/HBO_logo.svg/512px-HBO_logo.svg.png,Movies,International,es,HD,tv,true
-hbo_family_hd,"HBO Family HD",http://181.188.216.5:18000/play/a0lr/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/d/de/HBO_logo.svg/512px-HBO_logo.svg.png,Movies,International,es,HD,tv,true
-hbo_hd,"HBO HD",http://181.188.216.5:18000/play/a0hm/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/d/de/HBO_logo.svg/512px-HBO_logo.svg.png,Movies,International,es,HD,tv,true
-hbo_hd,"HBO HD",http://181.188.216.5:18000/play/a00a/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/d/de/HBO_logo.svg/512px-HBO_logo.svg.png,Movies,International,es,HD,tv,true
 hbo_mundi,"HBO MUNDI",http://181.188.216.5:18000/play/a0md/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/d/de/HBO_logo.svg/512px-HBO_logo.svg.png,Movies,International,es,HD,tv,true
 hbo_pop_hd,"HBO POP HD",http://181.188.216.5:18000/play/a0im/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/d/de/HBO_logo.svg/512px-HBO_logo.svg.png,Movies,International,es,HD,tv,true
 hbo_pop_hd,"HBO POP HD",http://181.188.216.5:18000/play/a00c/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/d/de/HBO_logo.svg/512px-HBO_logo.svg.png,Movies,International,es,HD,tv,true
@@ -264,31 +319,19 @@ hch_hon,"HCH- HON",http://181.188.216.5:18000/play/a09u/index.m3u8,https://cdn-i
 hei_hd,"HEI HD",http://181.188.216.5:18000/play/a0p3/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 hgtv,"HGTV",http://181.188.216.5:18000/play/a0qf/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 hgtv,"HGTV",http://181.188.216.5:18000/play/a0g2/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
-hola_tv_hd,"HOLA! TV HD",http://181.188.216.5:18000/play/a0da/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 htv,"HTV",http://181.188.216.5:18000/play/a0bm/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 htv,"HTV",http://181.188.216.5:18000/play/a0g4/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 history_2,"History 2",http://181.188.216.5:18000/play/a0jj/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/0/01/History_%282021%29.svg/512px-History_%282021%29.svg.png,Documentary,International,es,HD,tv,true
 history_2,"History 2",http://181.188.216.5:18000/play/a0e1/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/0/01/History_%282021%29.svg/512px-History_%282021%29.svg.png,Documentary,International,es,HD,tv,true
-history_channel,"History Channel",http://181.188.216.5:18000/play/a0cf/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/0/01/History_%282021%29.svg/512px-History_%282021%29.svg.png,Documentary,International,es,HD,tv,true
-history_channel,"History Channel",http://181.188.216.5:18000/play/a0pi/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/0/01/History_%282021%29.svg/512px-History_%282021%29.svg.png,Documentary,International,es,HD,tv,true
-history_channel_hd,"History Channel HD",http://181.188.216.5:18000/play/a0oj/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/0/01/History_%282021%29.svg/512px-History_%282021%29.svg.png,Documentary,International,es,HD,tv,true
-history_hd,"History HD",http://181.188.216.5:18000/play/a0ak/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/0/01/History_%282021%29.svg/512px-History_%282021%29.svg.png,Documentary,International,es,HD,tv,true
 hola_tv,"Hola TV",http://181.188.216.5:18000/play/a0pt/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 holatv,"Hola!TV",http://181.188.216.5:18000/play/a097/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 home_health_hd,"Home & Health HD",http://181.188.216.5:18000/play/a0d9/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 home_garden_latino,"Home Garden Latino",http://181.188.216.5:18000/play/a095/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 id_investigation_discovery,"ID - Investigation Discovery",http://181.188.216.5:18000/play/a0pj/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/Discovery_Channel_logo.svg/512px-Discovery_Channel_logo.svg.png,Documentary,International,es,HD,tv,true
-id_hd,"ID HD",http://181.188.216.5:18000/play/a0or/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 kanal_d_drama,"Kanal D Drama",http://181.188.216.5:18000/play/a0e0/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 life_time,"LIFE TIME",http://181.188.216.5:18000/play/a0a8/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 la_red,"La Red",http://181.188.216.5:18000/play/a0qx/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
-las_estrellas_hd,"Las Estrellas HD",http://181.188.216.5:18000/play/a0ox/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
-las_estrellas_hd,"Las Estrellas HD",http://181.188.216.5:18000/play/a0lp/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 latin_america_sport,"Latin America Sport",http://181.188.216.5:18000/play/a0bj/index.m3u8,https://cdn-icons-png.flaticon.com/512/857/857438.png,Sports,International,es,HD,tv,true
-latina,"Latina",http://181.188.216.5:18000/play/a0lz/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/Latina_Televisi%C3%B3n_logo.svg/512px-Latina_Televisi%C3%B3n_logo.svg.png,General,Peru,es,HD,tv,true
-latina,"Latina",http://181.188.216.5:18000/play/a01k/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/Latina_Televisi%C3%B3n_logo.svg/512px-Latina_Televisi%C3%B3n_logo.svg.png,General,Peru,es,HD,tv,true
-latina_hd,"Latina HD",http://181.188.216.5:18000/play/a0jc/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/Latina_Televisi%C3%B3n_logo.svg/512px-Latina_Televisi%C3%B3n_logo.svg.png,General,Peru,es,HD,tv,true
-latina_hd,"Latina HD",http://181.188.216.5:18000/play/a015/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/Latina_Televisi%C3%B3n_logo.svg/512px-Latina_Televisi%C3%B3n_logo.svg.png,General,Peru,es,HD,tv,true
 lifetime,"Lifetime",http://181.188.216.5:18000/play/a0qh/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/Logo_Lifetime_2020.svg/512px-Logo_Lifetime_2020.svg.png,General,International,es,HD,tv,true
 lolly_kids,"Lolly Kids",http://181.188.216.5:18000/play/a0ex/index.m3u8,https://cdn-icons-png.flaticon.com/512/2945/2945637.png,Kids,International,es,HD,tv,true
 love_nature,"Love Nature",http://181.188.216.5:18000/play/a01u/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
@@ -299,12 +342,7 @@ mtv_00s,"MTV 00s",http://181.188.216.5:18000/play/a0qm/index.m3u8,https://upload
 mtv_00s,"MTV 00s",http://181.188.216.5:18000/play/a0bl/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/0/0d/MTV-2021.svg/512px-MTV-2021.svg.png,Music,International,es,HD,tv,true
 mtv_00s_hd,"MTV 00s HD",http://181.188.216.5:18000/play/a0dd/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/0/0d/MTV-2021.svg/512px-MTV-2021.svg.png,Music,International,es,HD,tv,true
 mtv_80s,"MTV 80s",http://181.188.216.5:18000/play/a0ab/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/0/0d/MTV-2021.svg/512px-MTV-2021.svg.png,Music,International,es,HD,tv,true
-mtv_hd,"MTV HD",http://181.188.216.5:18000/play/a0hn/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/0/0d/MTV-2021.svg/512px-MTV-2021.svg.png,Music,International,es,HD,tv,true
-mtv_hd,"MTV HD",http://181.188.216.5:18000/play/a0al/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/0/0d/MTV-2021.svg/512px-MTV-2021.svg.png,Music,International,es,HD,tv,true
 mtv_hits,"MTV Hits",http://181.188.216.5:18000/play/a0aa/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/0/0d/MTV-2021.svg/512px-MTV-2021.svg.png,Music,International,es,HD,tv,true
-mtv_live,"MTV LIVE",http://181.188.216.5:18000/play/a0dc/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/0/0d/MTV-2021.svg/512px-MTV-2021.svg.png,Music,International,es,HD,tv,true
-mtv_live_hd,"MTV LIVE HD",http://181.188.216.5:18000/play/a08e/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/0/0d/MTV-2021.svg/512px-MTV-2021.svg.png,Music,International,es,HD,tv,true
-mtv_live_hd,"MTV LIVE HD",http://181.188.216.5:18000/play/a0od/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/0/0d/MTV-2021.svg/512px-MTV-2021.svg.png,Music,International,es,HD,tv,true
 mas_chic,"Mas Chic",http://181.188.216.5:18000/play/a092/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 multicinema,"Multicinema",http://181.188.216.5:18000/play/a0bp/index.m3u8,https://cdn-icons-png.flaticon.com/512/777/777242.png,Movies,International,es,HD,tv,true
 multipremier,"Multipremier",http://181.188.216.5:18000/play/a0qu/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
@@ -328,11 +366,6 @@ oromar_tv,"OROMAR TV",http://181.188.216.5:18000/play/a0qq/index.m3u8,https://cd
 paravision,"PARAVISION",http://181.188.216.5:18000/play/a0nt/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 plus_tv_life,"PLUS TV LIFE",http://181.188.216.5:18000/play/a01n/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 pxtv,"PXTV",http://181.188.216.5:18000/play/a0bi/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
-panamericana,"Panamericana",http://181.188.216.5:18000/play/a01m/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/Panamericana_Televisi%C3%B3n_logo.svg/512px-Panamericana_Televisi%C3%B3n_logo.svg.png,General,Peru,es,HD,tv,true
-panamericana,"Panamericana",http://181.188.216.5:18000/play/a0m1/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/Panamericana_Televisi%C3%B3n_logo.svg/512px-Panamericana_Televisi%C3%B3n_logo.svg.png,General,Peru,es,HD,tv,true
-paramount_hd,"Paramount HD",http://181.188.216.5:18000/play/a0h5/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
-paramount_hd,"Paramount HD",http://181.188.216.5:18000/play/a0dp/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
-paramount_hd,"Paramount HD",http://181.188.216.5:18000/play/a013/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 pasiones_hd,"Pasiones HD",http://181.188.216.5:18000/play/a0dt/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 pasiones_hd,"Pasiones HD",http://181.188.216.5:18000/play/a0oy/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 per_mgico,"Perœ MÆgico",http://181.188.216.5:18000/play/a0e2/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
@@ -344,12 +377,8 @@ rec_tv,"REC TV",http://181.188.216.5:18000/play/a0er/index.m3u8,https://cdn-icon
 rpp,"RPP",http://181.188.216.5:18000/play/a0m4/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 rpp,"RPP",http://181.188.216.5:18000/play/a01r/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 rt_en_espaol,"RT en Espaæol",http://181.188.216.5:18000/play/a0na/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
-rts,"RTS",http://181.188.216.5:18000/play/a0km/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 rtu,"RTU",http://181.188.216.5:18000/play/a0p8/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 semillitas,"SEMILLITAS",http://181.188.216.5:18000/play/a0a0/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
-sony,"SONY",http://181.188.216.5:18000/play/a0c8/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Sony_Channel_Logo.png/512px-Sony_Channel_Logo.png,General,International,es,HD,tv,true
-sony_hd,"SONY HD",http://181.188.216.5:18000/play/a0cn/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Sony_Channel_Logo.png/512px-Sony_Channel_Logo.png,General,International,es,HD,tv,true
-space,"SPACE",http://181.188.216.5:18000/play/a0a4/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/SpaceLogo.svg/512px-SpaceLogo.svg.png,General,International,es,HD,tv,true
 star_channel,"STAR CHANNEL",http://181.188.216.5:18000/play/a0pm/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 star_channel,"STAR CHANNEL",http://181.188.216.5:18000/play/a0gb/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 star_channel_hd,"STAR CHANNEL HD",http://181.188.216.5:18000/play/a0ow/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
@@ -362,18 +391,10 @@ sembrador,"Sembrador",http://181.188.216.5:18000/play/a0bq/index.m3u8,https://cd
 senal_colombia,"Senal Colombia",http://181.188.216.5:18000/play/a0ns/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,Colombia,es,HD,tv,true
 sextreme,"Sextreme",http://181.188.216.5:18000/play/a0me/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 sextreme,"Sextreme",http://181.188.216.5:18000/play/a01i/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
-sony,"Sony",http://181.188.216.5:18000/play/a0pk/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Sony_Channel_Logo.png/512px-Sony_Channel_Logo.png,General,International,es,HD,tv,true
-sony_hd,"Sony HD",http://181.188.216.5:18000/play/a0oo/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Sony_Channel_Logo.png/512px-Sony_Channel_Logo.png,General,International,es,HD,tv,true
 sony_movies,"Sony Movies",http://181.188.216.5:18000/play/a0l9/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Sony_Channel_Logo.png/512px-Sony_Channel_Logo.png,Movies,International,es,HD,tv,true
 sony_movies_hd,"Sony Movies HD",http://181.188.216.5:18000/play/a0d0/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Sony_Channel_Logo.png/512px-Sony_Channel_Logo.png,Movies,International,es,HD,tv,true
-space,"Space",http://181.188.216.5:18000/play/a0pl/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/SpaceLogo.svg/512px-SpaceLogo.svg.png,General,International,es,HD,tv,true
-space_hd,"Space HD",http://181.188.216.5:18000/play/a0os/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/SpaceLogo.svg/512px-SpaceLogo.svg.png,General,International,es,HD,tv,true
-space_hd,"Space HD",http://181.188.216.5:18000/play/a007/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/SpaceLogo.svg/512px-SpaceLogo.svg.png,General,International,es,HD,tv,true
 star_tve_hd,"Star TVE HD",http://181.188.216.5:18000/play/a0d3/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 stingray_concerts_hd,"Stingray Concerts HD",http://181.188.216.5:18000/play/a0j4/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
-studio_universal_hd,"Studio Universal HD",http://181.188.216.5:18000/play/a0cr/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/4/42/Universal_TV_logo.svg/512px-Universal_TV_logo.svg.png,General,International,es,HD,tv,true
-studio_universal_hd,"Studio Universal HD",http://181.188.216.5:18000/play/a0o5/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/4/42/Universal_TV_logo.svg/512px-Universal_TV_logo.svg.png,General,International,es,HD,tv,true
-studio_universal_hd,"Studio Universal HD",http://181.188.216.5:18000/play/a0j5/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/4/42/Universal_TV_logo.svg/512px-Universal_TV_logo.svg.png,General,International,es,HD,tv,true
 sun_channel,"Sun Channel",http://181.188.216.5:18000/play/a0bf/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 sun_channel_hd,"Sun Channel HD",http://181.188.216.5:18000/play/a0p2/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 tbn_enlace,"TBN Enlace",http://181.188.216.5:18000/play/a0ai/index.m3u8,https://cdn-icons-png.flaticon.com/512/3159/3159310.png,Religious,International,es,HD,tv,true
@@ -388,23 +409,12 @@ teleamazonas_hd,"TELEAMAZONAS HD",http://181.188.216.5:18000/play/a0lw/index.m3u
 telesucesos_hd,"TELESUCESOS HD",http://181.188.216.5:18000/play/a0lx/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 tlc,"TLC",http://181.188.216.5:18000/play/a0qb/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/7/74/TLC_Logo.svg/512px-TLC_Logo.svg.png,General,International,es,HD,tv,true
 tlc,"TLC",http://181.188.216.5:18000/play/a0cg/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/7/74/TLC_Logo.svg/512px-TLC_Logo.svg.png,General,International,es,HD,tv,true
-tnt,"TNT",http://181.188.216.5:18000/play/a0ad/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/TNT_Logo_2016.svg/512px-TNT_Logo_2016.svg.png,General,International,es,HD,tv,true
-tnt,"TNT",http://181.188.216.5:18000/play/a0pn/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/TNT_Logo_2016.svg/512px-TNT_Logo_2016.svg.png,General,International,es,HD,tv,true
-tnt_hd,"TNT HD",http://181.188.216.5:18000/play/a0ol/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/TNT_Logo_2016.svg/512px-TNT_Logo_2016.svg.png,General,International,es,HD,tv,true
-tnt_hd,"TNT HD",http://181.188.216.5:18000/play/a00x/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/TNT_Logo_2016.svg/512px-TNT_Logo_2016.svg.png,General,International,es,HD,tv,true
-tnt_hd,"TNT HD",http://181.188.216.5:18000/play/a0d7/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/TNT_Logo_2016.svg/512px-TNT_Logo_2016.svg.png,General,International,es,HD,tv,true
 tnt_novelas,"TNT Novelas",http://181.188.216.5:18000/play/a0a6/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/TNT_Logo_2016.svg/512px-TNT_Logo_2016.svg.png,General,International,es,HD,tv,true
 tnt_novelas_hd,"TNT Novelas HD",http://181.188.216.5:18000/play/a0oe/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/TNT_Logo_2016.svg/512px-TNT_Logo_2016.svg.png,General,International,es,HD,tv,true
 tnt_sports,"TNT SPORTS",http://181.188.216.5:18000/play/a0qy/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/TNT_Logo_2016.svg/512px-TNT_Logo_2016.svg.png,Sports,International,es,HD,tv,true
-tnt_series,"TNT Series",http://181.188.216.5:18000/play/a0a5/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/TNT_Logo_2016.svg/512px-TNT_Logo_2016.svg.png,General,International,es,HD,tv,true
-tnt_series_hd,"TNT Series HD",http://181.188.216.5:18000/play/a0ob/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/TNT_Logo_2016.svg/512px-TNT_Logo_2016.svg.png,General,International,es,HD,tv,true
-tnt_series_hd,"TNT Series HD",http://181.188.216.5:18000/play/a0fa/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/TNT_Logo_2016.svg/512px-TNT_Logo_2016.svg.png,General,International,es,HD,tv,true
-tnt_series_hd,"TNT Series HD",http://181.188.216.5:18000/play/a0dq/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/TNT_Logo_2016.svg/512px-TNT_Logo_2016.svg.png,General,International,es,HD,tv,true
 tnt_sports_premiun_hd,"TNT Sports Premiun HD",http://181.188.216.5:18000/play/a0ik/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/TNT_Logo_2016.svg/512px-TNT_Logo_2016.svg.png,Sports,International,es,HD,tv,true
 tnt_sports_premiun_hd,"TNT Sports Premiun HD",http://181.188.216.5:18000/play/a009/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/TNT_Logo_2016.svg/512px-TNT_Logo_2016.svg.png,Sports,International,es,HD,tv,true
 tro,"TRO",http://181.188.216.5:18000/play/a0nz/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
-tv_peru,"TV PERU",http://181.188.216.5:18000/play/a01o/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/TV_Per%C3%BA_logo.svg/512px-TV_Per%C3%BA_logo.svg.png,General,Peru,es,HD,tv,true
-tv_peru,"TV PERU",http://181.188.216.5:18000/play/a0qn/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/TV_Per%C3%BA_logo.svg/512px-TV_Per%C3%BA_logo.svg.png,General,Peru,es,HD,tv,true
 tv,"TV+",http://181.188.216.5:18000/play/a0ep/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 tvc_hd,"TVC HD",http://181.188.216.5:18000/play/a0ly/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 tvchile,"TVChile",http://181.188.216.5:18000/play/a094/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,Chile,es,HD,tv,true
@@ -424,10 +434,6 @@ telecentro_rd,"Telecentro - RD",http://181.188.216.5:18000/play/a0b1/index.m3u8,
 telef,"TelefØ",http://181.188.216.5:18000/play/a0q3/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 telef,"TelefØ",http://181.188.216.5:18000/play/a07n/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 teleislas,"Teleislas",http://181.188.216.5:18000/play/a0o0/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
-telemundo,"Telemundo",http://181.188.216.5:18000/play/a0f3/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
-telemundo,"Telemundo",http://181.188.216.5:18000/play/a0a2/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
-telemundo,"Telemundo",http://181.188.216.5:18000/play/a0qe/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
-telemundo_hd,"Telemundo HD",http://181.188.216.5:18000/play/a0cx/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 telenovelas,"Telenovelas",http://181.188.216.5:18000/play/a019/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 telenovelas,"Telenovelas",http://181.188.216.5:18000/play/a0ju/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 telesistema_rd,"Telesistema RD",http://181.188.216.5:18000/play/a09q/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
@@ -441,8 +447,6 @@ tooncast,"Tooncast",http://181.188.216.5:18000/play/a0f1/index.m3u8,https://cdn-
 tooncast,"Tooncast",http://181.188.216.5:18000/play/a0pz/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 tooncast,"Tooncast",http://181.188.216.5:18000/play/a0c6/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 tyc_sports,"TyC Sports",http://181.188.216.5:18000/play/a01e/index.m3u8,https://cdn-icons-png.flaticon.com/512/857/857438.png,Sports,International,es,HD,tv,true
-universal_channel_hd,"UNIVERSAL CHANNEL HD",http://181.188.216.5:18000/play/a0o9/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/4/42/Universal_TV_logo.svg/512px-Universal_TV_logo.svg.png,General,International,es,HD,tv,true
-universal_channel_hd,"UNIVERSAL CHANNEL HD",http://181.188.216.5:18000/play/a08d/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/4/42/Universal_TV_logo.svg/512px-Universal_TV_logo.svg.png,General,International,es,HD,tv,true
 universal_cinema_este_hd,"UNIVERSAL CINEMA ESTE HD",http://181.188.216.5:18000/play/a0dw/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/4/42/Universal_TV_logo.svg/512px-Universal_TV_logo.svg.png,Movies,International,es,HD,tv,true
 universal_comedy_hd,"UNIVERSAL COMEDY HD",http://181.188.216.5:18000/play/a0di/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/4/42/Universal_TV_logo.svg/512px-Universal_TV_logo.svg.png,Comedy,International,es,HD,tv,true
 universal_crime_hd,"UNIVERSAL CRIME HD",http://181.188.216.5:18000/play/a0dh/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/4/42/Universal_TV_logo.svg/512px-Universal_TV_logo.svg.png,General,International,es,HD,tv,true
@@ -451,8 +455,6 @@ universal_premiere_o_hd,"UNIVERSAL PREMIERE O HD",http://181.188.216.5:18000/pla
 universal_reality_hd,"UNIVERSAL REALITY HD",http://181.188.216.5:18000/play/a0dg/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/4/42/Universal_TV_logo.svg/512px-Universal_TV_logo.svg.png,General,International,es,HD,tv,true
 usa,"USA",http://181.188.216.5:18000/play/a0k3/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,USA,es,HD,tv,true
 usa,"USA",http://181.188.216.5:18000/play/a0qz/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,USA,es,HD,tv,true
-universal,"Universal",http://181.188.216.5:18000/play/a0o6/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/4/42/Universal_TV_logo.svg/512px-Universal_TV_logo.svg.png,General,International,es,HD,tv,true
-universal_hd,"Universal HD",http://181.188.216.5:18000/play/a0n9/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/4/42/Universal_TV_logo.svg/512px-Universal_TV_logo.svg.png,General,International,es,HD,tv,true
 universo,"Universo",http://181.188.216.5:18000/play/a0p4/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 univision_hd,"Univision HD",http://181.188.216.5:18000/play/a0du/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 unknown,"Unknown",http://181.188.216.5:18000/play/a0hq/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
@@ -463,10 +465,8 @@ venus,"Venus",http://181.188.216.5:18000/play/a0kb/index.m3u8,https://cdn-icons-
 via_x,"Via X",http://181.188.216.5:18000/play/a0fh/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 via_x_esports,"Via X Esports",http://181.188.216.5:18000/play/a0k1/index.m3u8,https://cdn-icons-png.flaticon.com/512/857/857438.png,Sports,International,es,HD,tv,true
 via_x_esports,"Via X Esports",http://181.188.216.5:18000/play/a01f/index.m3u8,https://cdn-icons-png.flaticon.com/512/857/857438.png,Sports,International,es,HD,tv,true
-warner_hd,"WARNER HD",http://181.188.216.5:18000/play/a0cm/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Warner2018.svg/512px-Warner2018.svg.png,General,International,es,HD,tv,true
 wobi,"WOBI",http://181.188.216.5:18000/play/a01c/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
 wuan,"WUAN+",http://181.188.216.5:18000/play/a0ke/index.m3u8,https://cdn-icons-png.flaticon.com/512/1040/1040241.png,General,International,es,HD,tv,true
-warner,"Warner",http://181.188.216.5:18000/play/a0c9/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Warner2018.svg/512px-Warner2018.svg.png,General,International,es,HD,tv,true
 warner_channel,"Warner Channel",http://181.188.216.5:18000/play/a0po/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Warner2018.svg/512px-Warner2018.svg.png,General,International,es,HD,tv,true
 warner_channel_hd,"Warner Channel HD",http://181.188.216.5:18000/play/a0op/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Warner2018.svg/512px-Warner2018.svg.png,General,International,es,HD,tv,true
 warner_channel_hd,"Warner Channel HD",http://181.188.216.5:18000/play/a006/index.m3u8,https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Warner2018.svg/512px-Warner2018.svg.png,General,International,es,HD,tv,true
