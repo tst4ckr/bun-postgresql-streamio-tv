@@ -1,0 +1,71 @@
+#EXTM3U
+#EXTINF:-1,ALRAHMAN
+http://149.100.11.244:8001/play/a06j/index.m3u8
+#EXTINF:-1,ALSHABAB
+http://149.100.11.244:8001/play/a07n/index.m3u8
+#EXTINF:-1,EGY: Kunuz Al-Jannah
+http://149.100.11.244:8001/play/a06h/index.m3u8
+#EXTINF:-1,Ennahar rokia
+http://149.100.11.244:8001/play/a06k/index.m3u8
+#EXTINF:-1,IQ: Al-Etejah TV
+http://149.100.11.244:8001/play/a06o/index.m3u8
+#EXTINF:-1,IQ: Altaghier HD
+http://149.100.11.244:8001/play/a06d/index.m3u8
+#EXTINF:-1,IQ: Dijlah TV HD
+http://149.100.11.244:8001/play/a07c/index.m3u8
+#EXTINF:-1,IQ: INEWS TV HD
+http://149.100.11.244:8001/play/a07i/index.m3u8
+#EXTINF:-1,IQ: KARBALA TV HD
+http://149.100.11.244:8001/play/a07h/index.m3u8
+#EXTINF:-1,IQ: Karbala Documentary HD
+http://149.100.11.244:8001/play/a07k/index.m3u8
+#EXTINF:-1,JOR: AL HAQEQA AL DAWLIAH
+http://149.100.11.244:8001/play/a06m/index.m3u8
+#EXTINF:-1,JOR: ALHAQIQA
+http://149.100.11.244:8001/play/a06n/index.m3u8
+#EXTINF:-1,JOR: JORDAN SAMA
+http://149.100.11.244:8001/play/a06i/index.m3u8
+#EXTINF:-1,JOR: Jordan Amen
+http://149.100.11.244:8001/play/a06l/index.m3u8
+#EXTINF:-1,JOR: Karameesh TV
+http://149.100.11.244:8001/play/a07q/index.m3u8
+#EXTINF:-1,JOR: Toyor Aljanah
+http://149.100.11.244:8001/play/a07g/index.m3u8
+#EXTINF:-1,JOR: Wanasat Baby
+http://149.100.11.244:8001/play/a07t/index.m3u8
+#EXTINF:-1,KSA: Al Quran
+http://149.100.11.244:8001/play/a07l/index.m3u8
+#EXTINF:-1,KSA: Makkah TV
+http://149.100.11.244:8001/play/a06e/index.m3u8
+#EXTINF:-1,KSA: Oyoun AlWatan
+http://149.100.11.244:8001/play/a06p/index.m3u8
+#EXTINF:-1,MAR: M24 MAROC
+http://149.100.11.244:8001/play/a07u/index.m3u8
+#EXTINF:-1,MBCam alshifaa
+http://149.100.11.244:8001/play/a06r/index.m3u8
+#EXTINF:-1,NEWS: Alhurra HD
+http://149.100.11.244:8001/play/a07j/index.m3u8
+#EXTINF:-1,QAT: Al Araby 2 HD
+http://149.100.11.244:8001/play/a07d/index.m3u8
+#EXTINF:-1,Revival TV
+http://149.100.11.244:8001/play/a07w/index.m3u8
+#EXTINF:-1,SABA World Promo
+http://149.100.11.244:8001/play/a07m/index.m3u8
+#EXTINF:-1,SOAL 24
+http://149.100.11.244:8001/play/a06f/index.m3u8
+#EXTINF:-1,SYR: SYRIA TV HD
+http://149.100.11.244:8001/play/a07e/index.m3u8
+#EXTINF:-1,TUN: AL-MUSTAKILA
+http://149.100.11.244:8001/play/a07s/index.m3u8
+#EXTINF:-1,TUN: TUNISIA SHOP
+http://149.100.11.244:8001/play/a06g/index.m3u8
+#EXTINF:-1,TUN: ZAYTOONA
+http://149.100.11.244:8001/play/a07r/index.m3u8
+#EXTINF:-1,UAE: AJMAN HD
+http://149.100.11.244:8001/play/a07b/index.m3u8
+#EXTINF:-1,YEM: Aden Almustakilla
+http://149.100.11.244:8001/play/a07v/index.m3u8
+#EXTINF:-1,YEM: Hadramout TV
+http://149.100.11.244:8001/play/a06q/index.m3u8
+#EXTINF:-1,YEM: YEMEN SHABAB HD
+http://149.100.11.244:8001/play/a07f/index.m3u8
