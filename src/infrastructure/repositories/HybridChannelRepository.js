@@ -13,7 +13,7 @@ import { HttpsToHttpConversionService } from '../services/HttpsToHttpConversionS
 import { StreamHealthService } from '../services/StreamHealthService.js';
 import { StreamValidationService } from '../services/StreamValidationService.js';
 import { ChannelDeduplicationService, DeduplicationConfig } from '../../domain/services/ChannelDeduplicationService.js';
-import { filterBannedChannels } from '../../config/banned-channels.js';
+import { filterAllowedChannels } from '../../config/allowed-channels.js';
 
 /**
  * Repositorio híbrido que combina múltiples fuentes de canales
@@ -267,11 +267,11 @@ export class HybridChannelRepository extends ChannelRepository {
       // Aplicar deduplicación centralizada
       const deduplicationResult = await this.#deduplicationService.deduplicateChannels(allChannels);
       
-      // Aplicar filtro de canales prohibidos
-      const beforeBannedCount = deduplicationResult.channels.length;
-      const filteredChannels = filterBannedChannels(deduplicationResult.channels);
-      const afterBannedCount = filteredChannels.length;
-      const bannedRemovedCount = beforeBannedCount - afterBannedCount;
+      // Aplicar filtro inteligente de canales permitidos
+      const beforeAllowedCount = deduplicationResult.channels.length;
+      const filteredChannels = filterAllowedChannels(deduplicationResult.channels);
+      const afterAllowedCount = filteredChannels.length;
+      const allowedRemovedCount = beforeAllowedCount - afterAllowedCount;
       
       // Actualizar canales y mapa con resultados filtrados
       this.#channels = filteredChannels;
@@ -287,7 +287,7 @@ export class HybridChannelRepository extends ChannelRepository {
       const hdUpgrades = metrics.hdUpgrades;
       
       this.#logger.info(
-        `📊 Deduplicación completada: ${allCsvChannels.length} CSV (preservados) + ${m3uAdded} M3U (validados) = ${this.#channels.length} canales finales (${m3uDuplicates} duplicados omitidos, ${hdUpgrades} actualizados a HD${bannedRemovedCount > 0 ? `, ${bannedRemovedCount} canales prohibidos removidos` : ''})`
+        `📊 Deduplicación completada: ${allCsvChannels.length} CSV (preservados) + ${m3uAdded} M3U (validados) = ${this.#channels.length} canales finales (${m3uDuplicates} duplicados omitidos, ${hdUpgrades} actualizados a HD${allowedRemovedCount > 0 ? `, ${allowedRemovedCount} canales no permitidos removidos` : ''})`
       );
       
       this.#lastLoadTime = new Date();

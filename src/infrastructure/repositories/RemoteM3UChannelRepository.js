@@ -8,7 +8,7 @@ import { ChannelRepository, RepositoryError, ChannelNotFoundError } from '../../
 import { Channel } from '../../domain/entities/Channel.js';
 import { M3UParserService } from '../parsers/M3UParserService.js';
 import ContentFilterService from '../../domain/services/ContentFilterService.js';
-import { filterBannedChannels } from '../../config/banned-channels.js';
+import { filterAllowedChannels } from '../../config/allowed-channels.js';
 import fetch from 'node-fetch';
 
 /**
@@ -71,17 +71,17 @@ export class RemoteM3UChannelRepository extends ChannelRepository {
       const parsedChannels = await this.#parser.parseM3U(response.data);
       const configFilteredChannels = parsedChannels.filter(channel => this.#passesConfigFilters(channel));
       
-      // Aplicar filtro de canales prohibidos
-      const beforeBannedCount = configFilteredChannels.length;
-      this.#channels = filterBannedChannels(configFilteredChannels);
-      const afterBannedCount = this.#channels.length;
-      const bannedRemovedCount = beforeBannedCount - afterBannedCount;
+      // Aplicar filtro inteligente de canales permitidos
+      const beforeFilterCount = configFilteredChannels.length;
+      this.#channels = filterAllowedChannels(configFilteredChannels);
+      const afterFilterCount = this.#channels.length;
+      const removedCount = beforeFilterCount - afterFilterCount;
       
       this.#channelMap.clear();
       this.#channels.forEach(channel => this.#channelMap.set(channel.id, channel));
       
       this.#lastLoadTime = new Date();
-      this.#logger.info(`M3U remoto cargado: ${this.#channels.length} canales válidos${bannedRemovedCount > 0 ? ` (${bannedRemovedCount} canales prohibidos removidos)` : ''}`);
+      this.#logger.info(`M3U remoto cargado: ${this.#channels.length} canales válidos${removedCount > 0 ? ` (${removedCount} canales no permitidos removidos)` : ''}`);
 
     } catch (error) {
       this.#logger.error(`Error al obtener o parsear M3U de ${this.#m3uUrl}`, error);
