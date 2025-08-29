@@ -889,7 +889,7 @@ function filterBannedChannels(channels) {
   });
 }
 
-module.exports = {
+export {
   BANNED_CHANNELS,
   isChannelBanned,
   filterBannedChannels,
