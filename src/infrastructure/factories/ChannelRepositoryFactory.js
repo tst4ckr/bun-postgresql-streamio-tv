@@ -8,6 +8,7 @@ import { M3UParserService } from '../parsers/M3UParserService.js';
 import { CSVChannelRepository } from '../repositories/CSVChannelRepository.js';
 import { RemoteM3UChannelRepository } from '../repositories/RemoteM3UChannelRepository.js';
 import { HybridChannelRepository } from '../repositories/HybridChannelRepository.js';
+import { AutomaticChannelRepository } from '../repositories/AutomaticChannelRepository.js';
 
 /**
  * Factory para crear la implementación correcta de ChannelRepository
@@ -90,6 +91,10 @@ export class ChannelRepositoryFactory {
           config,
           logger
         );
+        break;
+
+      case 'automatic':
+        repository = new AutomaticChannelRepository(config, logger);
         break;
 
       default:

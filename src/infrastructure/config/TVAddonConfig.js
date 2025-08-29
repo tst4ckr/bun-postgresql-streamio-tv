@@ -98,6 +98,8 @@ export class TVAddonConfig {
         localM3uIndex: process.env.LOCAL_M3U_INDEX || '',
         // Archivo CSV local adicional
         localChannelsCsv: process.env.LOCAL_CHANNELS_CSV || '',
+        // Configuración del modo automático
+        autoM3uUrl: process.env.AUTO_M3U_URL || null,
         enableAutoUpdate: process.env.ENABLE_AUTO_UPDATE === 'true',
         updateIntervalHours: parseInt(process.env.UPDATE_INTERVAL_HOURS) || 4
       },
@@ -255,7 +257,7 @@ export class TVAddonConfig {
     }
 
     // Validar fuente de datos
-    const validSources = (process.env.VALID_SOURCES || 'csv,m3u,remote_m3u,hybrid').split(',');
+    const validSources = (process.env.VALID_SOURCES || 'csv,m3u,remote_m3u,hybrid,automatic').split(',');
     if (!validSources.includes(dataSources.channelsSource)) {
       throw new Error(`Fuente de canales inválida. Valores válidos: ${validSources.join(', ')}`);
     }
@@ -263,6 +265,11 @@ export class TVAddonConfig {
     // Validar URLs si son necesarias
     if (dataSources.channelsSource.includes('m3u') && !dataSources.m3uUrl) {
       throw new Error('URL de M3U es requerida para fuentes remotas');
+    }
+
+    // Validar configuración del modo automático
+    if (dataSources.channelsSource === 'automatic' && !dataSources.autoM3uUrl) {
+      throw new Error('AUTO_M3U_URL es requerida para el modo automático');
     }
   }
 
@@ -279,6 +286,7 @@ export class TVAddonConfig {
     if (s === 'm3u' || s === 'local_m3u' || s === 'local-m3u') return 'm3u';
     if (s === 'csv') return 'csv';
     if (s === 'hybrid' || s === 'mixed') return 'hybrid';
+    if (s === 'automatic' || s === 'auto') return 'automatic';
     return s;
   }
 
