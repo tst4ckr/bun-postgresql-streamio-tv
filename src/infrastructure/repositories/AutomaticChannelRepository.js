@@ -8,6 +8,7 @@ import { Channel } from '../../domain/entities/Channel.js';
 import { M3UParserService } from '../parsers/M3UParserService.js';
 import { HttpsToHttpConversionService } from '../services/HttpsToHttpConversionService.js';
 import { StreamHealthService } from '../services/StreamHealthService.js';
+import { StreamValidationService } from '../services/StreamValidationService.js';
 import { filterAllowedChannels } from '../../config/allowed-channels.js';
 import fetch from 'node-fetch';
 import { URL } from 'url';
@@ -25,6 +26,7 @@ export class AutomaticChannelRepository extends ChannelRepository {
   #lastLoadTime = null;
   #m3uParser;
   #httpsToHttpService;
+  #streamValidationService;
 
   /**
    * @param {TVAddonConfig} config - Configuración del addon
@@ -39,6 +41,7 @@ export class AutomaticChannelRepository extends ChannelRepository {
     this.#m3uParser = new M3UParserService(config.filters);
     const streamHealthService = new StreamHealthService(config, logger);
     this.#httpsToHttpService = new HttpsToHttpConversionService(config, streamHealthService, logger);
+    this.#streamValidationService = new StreamValidationService(config, logger);
   }
 
   /**
@@ -118,11 +121,33 @@ export class AutomaticChannelRepository extends ChannelRepository {
       const uniqueChannels = this.#removeDuplicates(allChannels);
       this.#logger.info(`Canales únicos finales: ${uniqueChannels.length}`);
 
-      // 7. Aplicar filtro inteligente de canales permitidos al final del proceso
-      const allowedFilteredChannels = filterAllowedChannels(uniqueChannels);
-      this.#logger.info(`Filtro inteligente de canales aplicado: ${uniqueChannels.length - allowedFilteredChannels.length} canales removidos`);
+      // 7. Validar conectividad antes del filtro inteligente (si está habilitado)
+      let channelsToFilter = uniqueChannels;
+      if (this.#shouldValidateBeforeFiltering()) {
+        const validationResult = await this.#validateChannelsBeforeFiltering(uniqueChannels);
+        channelsToFilter = validationResult.validChannels;
+        this.#logger.info(`Validación previa al filtrado: ${validationResult.validChannels.length}/${uniqueChannels.length} canales válidos`);
+      }
 
-      this.#channels = allowedFilteredChannels;
+      // 8. Aplicar filtro inteligente de canales permitidos
+      const allowedFilteredChannels = filterAllowedChannels(channelsToFilter);
+      const removedByFilter = channelsToFilter.length - allowedFilteredChannels.length;
+      this.#logger.info(`Filtro inteligente de canales aplicado: ${removedByFilter} canales removidos`);
+      
+      // 9. Validar conectividad de canales removidos por filtro (si está habilitado)
+      if (this.#shouldValidateFilteredChannels() && removedByFilter > 0) {
+        await this.#validateRemovedChannels(channelsToFilter, allowedFilteredChannels);
+      }
+
+      // 10. Validar conectividad de canales finales después del filtrado (si está habilitado)
+      let finalChannels = allowedFilteredChannels;
+      if (this.#shouldValidateAfterFiltering()) {
+        const postFilterValidation = await this.#validateChannelsAfterFiltering(allowedFilteredChannels);
+        finalChannels = postFilterValidation.validChannels;
+        this.#logger.info(`Validación post-filtrado: ${postFilterValidation.validChannels.length}/${allowedFilteredChannels.length} canales válidos`);
+      }
+
+      this.#channels = finalChannels;
       this.#buildChannelMap();
 
     } catch (error) {
@@ -330,6 +355,110 @@ export class AutomaticChannelRepository extends ChannelRepository {
     
     return Array.from(uniqueChannels.values());
   }
+
+  /**
+   * Determina si se debe validar conectividad antes del filtrado
+   * @returns {boolean}
+   */
+  #shouldValidateBeforeFiltering() {
+    return this.#config.get('validation.validateBeforeFiltering', false);
+  }
+
+  /**
+   * Determina si se debe validar canales removidos por filtro
+   * @returns {boolean}
+   */
+  #shouldValidateFilteredChannels() {
+    return this.#config.get('validation.validateFilteredChannels', false);
+  }
+
+  /**
+   * Determina si se debe validar canales después del filtrado
+   * @returns {boolean}
+   */
+  #shouldValidateAfterFiltering() {
+    return this.#config.get('validation.validateAfterFiltering', false);
+  }
+
+  /**
+   * Valida conectividad de canales antes del filtrado
+   * @param {Channel[]} channels - Canales a validar
+   * @returns {Promise<{validChannels: Channel[], invalidChannels: Channel[], stats: Object}>}
+   */
+  async #validateChannelsBeforeFiltering(channels) {
+    this.#logger.info(`🔍 Iniciando validación previa al filtrado de ${channels.length} canales...`);
+    
+    const startTime = Date.now();
+    const result = await this.#streamValidationService.validateChannelsBatch(channels);
+    const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+    
+    this.#logger.info(`Validación previa completada: ${result.validChannels.length}/${channels.length} OK (${(result.validChannels.length/channels.length*100).toFixed(1)}%) en ${duration}s`);
+    
+    return result;
+  }
+
+  /**
+   * Valida conectividad de canales removidos por el filtro inteligente
+   * @param {Channel[]} originalChannels - Canales antes del filtro
+   * @param {Channel[]} filteredChannels - Canales después del filtro
+   */
+  async #validateRemovedChannels(originalChannels, filteredChannels) {
+    // Obtener canales removidos por el filtro
+    const filteredUrls = new Set(filteredChannels.map(ch => ch.streamUrl));
+    const removedChannels = originalChannels.filter(ch => !filteredUrls.has(ch.streamUrl));
+    
+    if (removedChannels.length === 0) {
+      return;
+    }
+    
+    this.#logger.info(`🔍 Validando conectividad de ${removedChannels.length} canales removidos por filtro...`);
+    
+    const startTime = Date.now();
+    const result = await this.#streamValidationService.validateChannelsBatch(removedChannels);
+    const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+    
+    const validRemovedCount = result.validChannels.length;
+    const invalidRemovedCount = result.invalidChannels.length;
+    
+    this.#logger.info(`📊 Canales removidos por filtro - Válidos: ${validRemovedCount} (${(validRemovedCount/removedChannels.length*100).toFixed(1)}%) - Inválidos: ${invalidRemovedCount} (${(invalidRemovedCount/removedChannels.length*100).toFixed(1)}%) en ${duration}s`);
+    
+    if (validRemovedCount > 0) {
+       this.#logger.warn(`⚠️  Se removieron ${validRemovedCount} canales válidos por el filtro inteligente`);
+       
+       // Log de algunos ejemplos de canales válidos removidos
+       const examples = result.validChannels.slice(0, 5).map(ch => ch.name || ch.title || 'Sin nombre');
+       this.#logger.warn(`Ejemplos de canales válidos removidos: ${examples.join(', ')}${result.validChannels.length > 5 ? '...' : ''}`);
+     }
+   }
+
+   /**
+    * Valida conectividad de canales después del filtrado
+    * @param {Channel[]} channels - Canales finales a validar
+    * @returns {Promise<{validChannels: Channel[], invalidChannels: Channel[], stats: Object}>}
+    */
+   async #validateChannelsAfterFiltering(channels) {
+     this.#logger.info(`🔍 Validando conectividad de ${channels.length} canales finales después del filtrado...`);
+     
+     const startTime = Date.now();
+     const result = await this.#streamValidationService.validateChannelsBatch(channels);
+     const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+     
+     const validCount = result.validChannels.length;
+     const invalidCount = result.invalidChannels.length;
+     const successRate = ((validCount / channels.length) * 100).toFixed(1);
+     
+     this.#logger.info(`📊 Validación post-filtrado completada: ${validCount}/${channels.length} válidos (${successRate}%) en ${duration}s`);
+     
+     if (invalidCount > 0) {
+       this.#logger.warn(`⚠️  Se encontraron ${invalidCount} canales inválidos en el resultado final`);
+       
+       // Log de algunos ejemplos de canales inválidos
+       const examples = result.invalidChannels.slice(0, 3).map(ch => ch.name || ch.title || 'Sin nombre');
+       this.#logger.warn(`Ejemplos de canales inválidos: ${examples.join(', ')}${result.invalidChannels.length > 3 ? '...' : ''}`);
+     }
+     
+     return result;
+   }
 
   /**
    * Construye el mapa de canales para búsqueda rápida

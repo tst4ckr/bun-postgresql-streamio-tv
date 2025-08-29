@@ -176,7 +176,12 @@ export class TVAddonConfig {
         earlyValidationCacheTtl: parseInt(process.env.EARLY_VALIDATION_CACHE_TTL) || 3600,
         // Configuración de deduplicación inteligente
         enableIntelligentDeduplication: process.env.ENABLE_INTELLIGENT_DEDUPLICATION === 'true',
-        deduplicationStrategy: process.env.DEDUPLICATION_STRATEGY || 'prioritize_working'
+      deduplicationStrategy: process.env.DEDUPLICATION_STRATEGY || 'prioritize_working',
+      
+      // Validación antes del filtrado
+      validateBeforeFiltering: process.env.VALIDATE_BEFORE_FILTERING === 'true',
+      validateFilteredChannels: process.env.VALIDATE_FILTERED_CHANNELS === 'true',
+      validateAfterFiltering: process.env.VALIDATE_AFTER_FILTERING === 'true'
       },
 
 
