@@ -67,12 +67,20 @@ async function testStreamValidationService() {
   
   try {
     console.log(`Validando ${testChannels.length} canales...`);
-    const results = await validationService.validateChannelsBatch(testChannels);
+    const validationResult = await validationService.validateChannelsBatch(testChannels);
     
-    if (results && Array.isArray(results)) {
-      console.log(`Resultados: ${results.length} canales procesados`);
-      results.forEach((result, index) => {
-        console.log(`  Canal ${index + 1}: ${result.isValid ? 'VÁLIDO' : 'INVÁLIDO'} - ${result.channel.id}`);
+    if (validationResult && validationResult.validChannels && validationResult.invalidChannels) {
+      const totalProcessed = validationResult.validChannels.length + validationResult.invalidChannels.length;
+      console.log(`Resultados: ${totalProcessed} canales procesados`);
+      console.log(`  Válidos: ${validationResult.validChannels.length}`);
+      console.log(`  Inválidos: ${validationResult.invalidChannels.length}`);
+      
+      // Mostrar algunos ejemplos
+      validationResult.validChannels.slice(0, 3).forEach((channel, index) => {
+        console.log(`  Canal válido ${index + 1}: ${channel.id}`);
+      });
+      validationResult.invalidChannels.slice(0, 3).forEach((channel, index) => {
+        console.log(`  Canal inválido ${index + 1}: ${channel.id}`);
       });
     } else {
       console.log('No se obtuvieron resultados de validación (posiblemente deshabilitada)');

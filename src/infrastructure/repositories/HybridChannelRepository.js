@@ -230,13 +230,8 @@ export class HybridChannelRepository extends ChannelRepository {
         );
         
         // Filtrar solo canales M3U válidos
-        const validM3uChannels = validationResult.validated
-          .filter(result => result.isValid)
-          .map(result => result.channel);
-        
-        const invalidM3uChannels = validationResult.validated
-          .filter(result => !result.isValid)
-          .map(result => result.channel);
+        const validM3uChannels = validationResult.validChannels;
+        const invalidM3uChannels = validationResult.invalidChannels;
         
         this.#logger.info(
           `✅ Validación M3U completada: ${validM3uChannels.length} válidos, ${invalidM3uChannels.length} inválidos de ${processedM3uChannels.length} totales`
@@ -370,13 +365,8 @@ export class HybridChannelRepository extends ChannelRepository {
           }
         );
         
-        const validM3uChannels = validationResult.validated
-          .filter(result => result.isValid)
-          .map(result => result.channel);
-        
-        const invalidM3uChannels = validationResult.validated
-          .filter(result => !result.isValid)
-          .map(result => result.channel);
+        const validM3uChannels = validationResult.validChannels;
+        const invalidM3uChannels = validationResult.invalidChannels;
         
         this.#logger.info(
           `✅ Refresco M3U validado: ${validM3uChannels.length} válidos, ${invalidM3uChannels.length} inválidos`

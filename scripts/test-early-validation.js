@@ -186,11 +186,12 @@ async function testStreamValidationService() {
     console.log(`🧪 Validando ${testChannels.length} canales de prueba...`);
     
     const startTime = performance.now();
-    const validatedChannels = await validationService.validateChannelsBatch(testChannels);
+    const validationResult = await validationService.validateChannelsBatch(testChannels);
     const endTime = performance.now();
     
     console.log(`⏱️  Validación completada en ${(endTime - startTime).toFixed(2)}ms`);
-    console.log(`📊 Canales validados: ${validatedChannels.length}/${testChannels.length}`);
+    console.log(`📊 Canales válidos: ${validationResult.validChannels.length}/${testChannels.length}`);
+    console.log(`📊 Canales inválidos: ${validationResult.invalidChannels.length}/${testChannels.length}`);
     
     // Mostrar estadísticas del servicio
     const stats = validationService.getValidationStats();

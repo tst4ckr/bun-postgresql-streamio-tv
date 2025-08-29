@@ -237,18 +237,14 @@ export class StreamValidationService {
    * Valida un lote de canales con concurrencia controlada
    * @param {Array<import('../entities/Channel.js').Channel>} channels - Canales a validar
    * @param {Object} options - Opciones de validación
-   * @returns {Promise<{validated: Array, stats: Object}>}
+   * @returns {Promise<{validChannels: Array, invalidChannels: Array, stats: Object}>}
    */
   async validateChannelsBatch(channels, options = {}) {
     if (!this.isEnabled()) {
       this.#logger.info('🔄 Validación temprana deshabilitada, retornando canales sin validar');
       return {
-        validated: channels.map(ch => ({
-          channel: ch,
-          isValid: true, // Asumir válidos si no se valida
-          source: ch.source || 'unknown',
-          meta: { validationSkipped: true }
-        })),
+        validChannels: channels,
+        invalidChannels: [],
         stats: this.#getEmptyStats(channels.length)
       };
     }
@@ -315,8 +311,13 @@ export class StreamValidationService {
       }
     }
 
+    // Separar canales válidos e inválidos
+    const validChannels = results.filter(result => result.isValid).map(result => result.channel);
+    const invalidChannels = results.filter(result => !result.isValid).map(result => result.channel);
+
     return {
-      validated: results,
+      validChannels,
+      invalidChannels,
       stats: { ...this.#stats }
     };
   }
