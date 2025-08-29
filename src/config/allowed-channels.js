@@ -4,19 +4,77 @@
  * Si incluyes "HBO", permitirá todo lo que contenga HBO con 90% de similitud
  */
 
-const ALLOWED_CHANNELS = [
-  // Lista base de canales permitidos - modificar según necesidad
-  'HBO',
-  'ESPN',
-  'CNN',
-  'FOX',
-  'Discovery',
-  'National Geographic',
-  'History',
-  'TLC',
-  'MTV',
-  'Comedy Central'
-];
+// Función para cargar canales permitidos desde variables de entorno
+function loadAllowedChannelsFromEnv() {
+  const envChannels = process.env.ALLOWED_CHANNELS;
+  
+  if (envChannels) {
+    try {
+      // Parsear la lista de canales desde la variable de entorno
+      // Formato esperado: "HBO,HBO Plus,ESPN,Discovery Channel"
+      return envChannels
+        .split(',')
+        .map(channel => channel.trim())
+        .filter(channel => channel.length > 0);
+    } catch (error) {
+      console.warn('[ALLOWED_CHANNELS] Error parseando ALLOWED_CHANNELS desde .env:', error.message);
+      return getDefaultAllowedChannels();
+    }
+  }
+  
+  return getDefaultAllowedChannels();
+}
+
+// Lista por defecto de canales permitidos (fallback)
+function getDefaultAllowedChannels() {
+  return [
+    'HBO',
+    'HBO Plus',
+    'HBO Family',
+    'HBO Signature',
+    'ESPN',
+    'ESPN 2',
+    'ESPN 3',
+    'ESPN 4',
+    'FOX Sports',
+    'FOX Sports 2',
+    'FOX Sports 3',
+    'CNN',
+    'CNN en Español',
+    'Discovery Channel',
+    'Discovery H&H',
+    'Discovery Science',
+    'Discovery Theater',
+    'Discovery World',
+    'National Geographic',
+    'Nat Geo Wild',
+    'History Channel',
+    'History 2',
+    'TLC',
+    'MTV',
+    'MTV Hits',
+    'MTV Live',
+    'Comedy Central',
+    'Warner Channel',
+    'Sony Channel',
+    'AXN',
+    'Space',
+    'TNT',
+    'TNT Series',
+    'Universal Channel',
+    'Studio Universal',
+    'Cinemax',
+    'FX',
+    'AMC',
+    'A&E',
+    'Film & Arts',
+    'HD',
+    'Disney',
+  ];
+}
+
+// Cargar canales permitidos desde variables de entorno o usar valores por defecto
+const ALLOWED_CHANNELS = loadAllowedChannelsFromEnv();
 
 /**
  * Normaliza el nombre de un canal para comparación
@@ -235,10 +293,7 @@ function removeAllowedChannel(channelName) {
   }
 }
 
-// Mantener compatibilidad hacia atrás
-function isChannelAllowed(channelName) {
-  return isChannelAllowedWithThreshold(channelName, 0.9);
-}
+// Mantener compatibilidad hacia atrás - función ya declarada arriba
 
 export {
   ALLOWED_CHANNELS,
