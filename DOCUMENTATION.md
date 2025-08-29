@@ -24,44 +24,47 @@ El **TV IPTV Addon** es una extensión para Stremio que proporciona acceso a can
 - ✅ Procesamiento por lotes concurrente
 - ✅ Sistema de filtros de contenido avanzado
 - ✅ Manejo robusto de errores y reintentos
+- ✅ Deduplicación inteligente de canales
+- ✅ Generación dinámica de UIDs para BITEL
+- ✅ Sistema híbrido de fuentes (CSV + M3U)
 
 ## 🏗️ Arquitectura del Sistema
 
 ### Diagrama de Arquitectura Completa
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    STREMIO CLIENT                            │
-└─────────────────────────┬───────────────────────────────────┘
-                          │ HTTP/HTTPS
-┌─────────────────────────┴───────────────────────────────────┐
-│                    API LAYER                                │
-│  ┌─────────────────┐  ┌─────────────────┐                 │
-│  │ Catalog Handler │  │ Stream Handler  │                 │
-│  └────────┬────────┘  └────────┬────────┘                 │
-└───────────┼───────────────────┼───────────────────────────┘
-            │                   │
-┌───────────┴───────────────────┴───────────────────────────┐
-│                 APPLICATION LAYER                          │
-│  ┌─────────────────┐  ┌─────────────────┐                 │
-│  │ ChannelService  │  │ ValidationSvc   │                 │
-│  └────────┬────────┘  └────────┬────────┘                 │
-└───────────┼───────────────────┼───────────────────────────┘
-            │                   │
-┌───────────┴───────────────────┴───────────────────────────┐
-│                  DOMAIN LAYER                              │
-│  ┌─────────────────┐  ┌─────────────────┐                 │
-│  │ Channel Entity  │  │ StreamQuality   │                 │
-│  └─────────────────┘  └─────────────────┘                 │
-└─────────────────────────────────────────────────────────────┘
-┌─────────────────────────────────────────────────────────────┐
-│                INFRASTRUCTURE LAYER                        │
-│  ┌─────────────────┐  ┌─────────────────┐  ┌───────────┐│
-│  │ HybridRepo      │  │ StreamValidation  │  │ HealthSvc ││
-│  │ CSVRepo         │  │ HTTPS→HTTP Conv   │  │ BitelUID  ││
-│  │ RemoteM3URepo   │  │ Cache Manager     │  │ Parser    ││
-│  └─────────────────┘  └─────────────────┘  └───────────┘│
-└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                   STREMIO ADDON LAYER                                        │
+├─────────────────────────────────────────────────────────────────────────────────────────────┤
+│  ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐  │
+│  │   Stremio API   │────│  StreamHandler  │────│  ChannelService │────│InvalidChannel   │  │
+│  └─────────────────┘    └─────────────────┘    └─────────────────┘    │ManagementService│  │
+│                                                                      └─────────────────┘  │
+├─────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                   DOMAIN LAYER                                              │
+├─────────────────────────────────────────────────────────────────────────────────────────────┤
+│  ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐  │
+│  │     Channel     │    │ ContentFilter   │    │ChannelPersistence│    │ChannelDedupli-  │  │
+│  │     Entity      │    │    Service      │    │    Service       │    │cationService    │  │
+│  └─────────────────┘    └─────────────────┘    └─────────────────┘    └─────────────────┘  │
+├─────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                 INFRASTRUCTURE LAYER                                        │
+├─────────────────────────────────────────────────────────────────────────────────────────────┤
+│  ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐  │
+│  │StreamValidation  │    │StreamHealth     │    │HttpsToHttp      │    │   BitelUid      │  │
+│  │    Service      │    │   Service       │    │Conversion       │    │   Service       │  │
+│  └─────────────────┘    └─────────────────┘    │    Service      │    └─────────────────┘  │
+│                                                └─────────────────┘                         │
+│  ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐  │
+│  │HybridChannel    │    │RemoteM3U        │    │LocalM3U         │    │   CSVChannel    │  │
+│  │ Repository      │    │ Repository      │    │ Repository      │    │  Repository     │  │
+│  └─────────────────┘    └─────────────────┘    └─────────────────┘    └─────────────────┘  │
+│                                                                                             │
+│  ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐  │
+│  │   M3UParser     │    │SecurityMiddleware│   │ ErrorHandler    │    │ChannelRepository│  │
+│  │    Service      │    │                 │   │                  │    │    Factory      │  │
+│  └─────────────────┘    └─────────────────┘    └─────────────────┘    └─────────────────┘  │
+└─────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ### Principios SOLID
@@ -99,6 +102,217 @@ Cache Check → Quick HEAD → HTTPS/HTTP Test → Final Validation → Result C
 ```
 Batch Input → Concurrent Workers → Individual Validation → Statistics → Cache Update
 ```
+
+## 🔍 Funcionamiento Interno Detallado
+
+### Flujo de Datos Completo
+
+```mermaid
+flowchart TD
+    subgraph "Capa Stremio"
+        A[Stremio Request] --> B[StreamHandler]
+        B --> C[ChannelService]
+    end
+    
+    subgraph "Capa Dominio"
+        C --> D[ChannelDeduplicationService]
+        D --> E[ContentFilterService]
+        E --> F[ChannelPersistenceService]
+    end
+    
+    subgraph "Capa Infraestructura"
+        F --> G[HybridChannelRepository]
+        G --> H{Factory Pattern}
+        H --> I[RemoteM3URepository]
+        H --> J[LocalM3URepository]
+        H --> K[CSVChannelRepository]
+        H --> L[AutomaticM3URepository]
+        
+        I --> M[M3UParserService]
+        J --> M
+        K --> N[CSV Parser]
+        
+        C --> O[StreamValidationService]
+        O --> P[HttpsToHttpConversionService]
+        O --> Q[StreamHealthService]
+        O --> R[BitelUidService]
+        
+        P --> S[HTTP/HTTPS Validation]
+        Q --> T[HEAD + GET Fallback]
+        R --> U[UID Generation]
+        
+        O --> V[Cache TTL]
+        V --> W[Validation Results]
+    end
+    
+    W --> X[Stremio Response]
+```
+
+### Componentes Internos Detallados
+
+#### 1. StreamValidationService - Validador Principal
+
+**Responsabilidad**: Validación temprana de streams con cache y métricas.
+
+**Flujo Interno**:
+```javascript
+// Flujo de validación
+1. Recibe canal → 2. Verifica cache → 3. HEAD request → 4. Fallback HTTPS → 5. HTTP conversion → 6. Actualiza cache → 7. Retorna resultado
+```
+
+**Métodos Clave**:
+- `#quickValidation(url)`: HEAD request con timeout progresivo
+- `#validateChannelsBatch(channels)`: Procesamiento concurrente por lotes
+- `#getCachedResult(url)`: Recuperación TTL de resultados previos
+- `#setCachedResult(url, result)`: Almacenamiento con cleanup automático
+
+**Configuración**:
+```javascript
+{
+  timeout: 5000ms,
+  maxRedirects: 3,
+  retries: 2,
+  cacheTtl: 3600000ms,
+  maxCacheSize: 10000
+}
+```
+
+#### 2. StreamHealthService - Monitor de Salud
+
+**Responsabilidad**: Verificación profunda de disponibilidad de streams.
+
+**Mecanismo de Validación**:
+```javascript
+// Estrategia de reintentos
+Intento 1: HEAD request (timeout 5s)
+Intento 2: HEAD request (timeout 10s) 
+Intento 3: Partial GET request (primeros 1024 bytes)
+```
+
+**Manejo de Errores**:
+- **ECONNREFUSED**: Marca como no disponible
+- **ETIMEDOUT**: Reintento con backoff exponencial
+- **ENOTFOUND**: DNS inválido
+- **HTTP 4xx/5xx**: Análisis específico por código
+
+#### 3. HttpsToHttpConversionService - Conversión Inteligente
+
+**Responsabilidad**: Detecta y convierte HTTPS→HTTP cuando es beneficioso.
+
+**Lógica de Conversión**:
+```javascript
+// Proceso de conversión
+1. Valida HTTPS original → 2. Genera URL HTTP → 3. Valida versión HTTP → 4. Compara resultados → 5. Retorna mejor opción
+```
+
+**Estadísticas de Conversión**:
+- Total de canales procesados
+- Conversión exitosa/fallida
+- Streams funcionando mejor en HTTP
+- Streams que requieren HTTPS
+
+#### 4. BitelUidService - Generador de Identificadores
+
+**Responsabilidad**: Genera UIDs únicos para integración con BITEL.
+
+**Algoritmo de Generación**:
+```javascript
+// Estructura del UID
+[PREFIX]-[HASH_BASE64]-[TIMESTAMP]
+- Prefix: 'BITEL' fijo
+- Hash: SHA256 de URL + nombre + país
+- Timestamp: Unix timestamp
+```
+
+**Ejemplo**:
+```
+BITEL-a1b2c3d4-1699564800
+```
+
+#### 5. HybridChannelRepository - Repositorio Unificado
+
+**Responsabilidad**: Gestiona múltiples fuentes de canales transparentemente.
+
+**Fuentes Soportadas**:
+- **RemoteM3URepository**: URLs remotas M3U/M3U8
+- **LocalM3URepository**: Archivos locales M3U/M3U8
+- **CSVChannelRepository**: Archivos CSV con metadata
+- **AutomaticM3URepository**: Descarga automática y cache
+
+**Proceso de Carga**:
+```javascript
+1. Factory selecciona repositorio según URL
+2. ParserService extrae canales
+3. DeduplicationService elimina duplicados
+4. ContentFilterService aplica filtros
+5. PersistenceService almacena temporalmente
+```
+
+#### 6. M3UParserService - Parser de M3U
+
+**Responsabilidad**: Parsea archivos M3U/M3U8 con soporte para extinf metadata.
+
+**Formatos Soportados**:
+```m3u
+#EXTM3U
+#EXTINF:-1 tvg-logo="logo.png" group-title="Categoria",Nombre Canal
+http://ejemplo.com/stream.m3u8
+```
+
+**Campos Extraídos**:
+- Nombre del canal
+- URL del stream
+- Logo (tvg-logo)
+- Categoría (group-title)
+- ID de canal (tvg-id)
+
+#### 7. SecurityMiddleware - Seguridad de Peticiones
+
+**Responsabilidad**: Valida y sanitiza todas las peticiones entrantes.
+
+**Capas de Seguridad**:
+1. **Rate Limiting**: Límite de peticiones por IP
+2. **Input Validation**: Sanitización de parámetros
+3. **CORS**: Control de orígenes permitidos
+4. **Headers Security**: Headers de seguridad HTTP
+
+#### 8. ChannelDeduplicationService - Eliminación de Duplicados
+
+**Responsabilidad**: Identifica y elimina canales duplicados manteniendo el mejor.
+
+**Criterios de Deduplicación**:
+- URLs idénticas
+- Nombres similares (95% coincidencia)
+- Misma categoría y país
+- Prioriza streams validados
+
+#### 9. ContentFilterService - Filtros de Contenido
+
+**Responsabilidad**: Filtra canales según criterios configurables.
+
+**Filtros Disponibles**:
+- Por país
+- Por categoría
+- Por calidad (SD/HD/FHD)
+- Por idioma
+- Por exclusión de palabras clave
+
+#### 10. ErrorHandler - Manejo Centralizado
+
+**Responsabilidad**: Gestiona y logea todos los errores del sistema.
+
+**Tipos de Errores**:
+- **ValidationError**: Streams inválidos
+- **NetworkError**: Problemas de red
+- **ParseError**: Errores en archivos M3U/CSV
+- **TimeoutError**: Tiempo de espera excedido
+
+**Logging**:
+- Timestamp
+- Tipo de error
+- Contexto (servicio, método)
+- Stack trace (en desarrollo)
+- Contador de ocurrencias
 
 ## 🧩 Componentes Principales
 
@@ -430,6 +644,150 @@ curl http://localhost:7000/metrics
     npm run validate-streams
     npm run test-validation-flow
 ```
+
+## 📄 Ejemplos Prácticos de Uso
+
+### 1. Validación Manual de Stream
+```bash
+# Validar un stream específico
+curl -X POST http://localhost:7000/validate \
+  -H "Content-Type: application/json" \
+  -d '{"url": "http://example.com/stream.m3u8"}'
+
+# Respuesta esperada
+{
+  "valid": true,
+  "status": 200,
+  "responseTime": 1200,
+  "convertedUrl": "http://example.com/stream.m3u8",
+  "originalUrl": "https://example.com/stream.m3u8"
+}
+```
+
+### 2. Configuración de Fuentes Múltiples
+```javascript
+// Configuración en .env
+M3U_URLS="https://iptv-org.github.io/iptv/index.m3u,https://raw.githubusercontent.com/iptv-org/iptv/master/streams/us.m3u"
+CSV_FILE_PATH="/data/custom_channels.csv"
+LOCAL_M3U_PATH="/data/local_backup.m3u"
+
+// Prioridad de fuentes:
+// 1. CSV (más específico)
+// 2. M3U local (backup)
+// 3. M3U remoto (principal)
+```
+
+### 3. Filtrado Avanzado de Canales
+```javascript
+// Ejemplo de configuración de filtros
+{
+  "countries": ["US", "UK", "CA"],
+  "categories": ["Sports", "News"],
+  "quality": ["HD", "FHD"],
+  "excludeKeywords": ["XXX", "ADULT"],
+  "includeKeywords": ["ESPN", "CNN", "BBC"]
+}
+```
+
+### 4. Flujo de Validación Completo
+```mermaid
+sequenceDiagram
+    participant Stremio
+    participant StreamHandler
+    participant ChannelService
+    participant ValidationService
+    participant HealthService
+    participant ConversionService
+    participant Cache
+    
+    Stremio->>StreamHandler: Request channels
+    StreamHandler->>ChannelService: Get channels
+    ChannelService->>ValidationService: Validate batch
+    ValidationService->>Cache: Check cache
+    Cache-->>ValidationService: Cached results
+    ValidationService->>HealthService: Validate new streams
+    HealthService->>ConversionService: Check HTTPS→HTTP
+    ConversionService-->>HealthService: Best URL
+    HealthService-->>ValidationService: Validation result
+    ValidationService->>Cache: Store results
+    ValidationService-->>ChannelService: Valid channels
+    ChannelService-->>StreamHandler: Filtered channels
+    StreamHandler-->>Stremio: Response with streams
+```
+
+### 5. Monitoreo de Métricas
+```bash
+# Ver métricas en tiempo real
+curl http://localhost:7000/metrics
+
+# Respuesta de ejemplo
+{
+  "totalChannels": 1250,
+  "validChannels": 980,
+  "validationRate": 78.4,
+  "averageResponseTime": 1.2,
+  "cacheHitRate": 65.3,
+  "httpsConversions": 234,
+  "failedValidations": 45
+}
+```
+
+### 6. Debugging de Validación
+```javascript
+// Activar logs detallados
+DEBUG=tv-addon:* npm start
+
+// Logs de validación específica
+[2024-01-15 10:30:45] DEBUG: Validating URL: https://example.com/stream.m3u8
+[2024-01-15 10:30:45] DEBUG: HEAD request failed, trying GET
+[2024-01-15 10:30:46] DEBUG: Stream valid, response time: 1250ms
+[2024-01-15 10:30:46] DEBUG: HTTPS→HTTP conversion beneficial: true
+```
+
+### 7. Casos de Uso Comunes
+
+#### Caso 1: IPTV con Múltiples Fuentes
+```javascript
+// Configuración para operador IPTV
+{
+  "sources": {
+    "primary": "https://cdn.provider.com/playlist.m3u",
+    "backup": "https://backup.provider.com/playlist.m3u",
+    "local": "/data/emergency.m3u"
+  },
+  "validation": {
+    "enabled": true,
+    "interval": "1h",
+    "concurrent": 50
+  }
+}
+```
+
+#### Caso 2: Canal Personalizado
+```javascript
+// Agregar canal manualmente
+{
+  "name": "Mi Canal HD",
+  "url": "http://mistream.com/canal1.m3u8",
+  "logo": "http://milogo.com/logo.png",
+  "category": "Local",
+  "country": "MX",
+  "quality": "HD"
+}
+```
+
+#### Caso 3: Validación Programada
+```bash
+# Script de validación diaria
+#!/bin/bash
+node scripts/validate-channels.js --batch-size=100 --retry-failed=true
+# Guardar resultados en CSV
+# Enviar alertas si < 80% válidos
+```
+
+## 📄 Licencia
+
+MIT License - Ver archivo LICENSE para detalles
 
 ---
 
