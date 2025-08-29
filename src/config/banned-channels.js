@@ -15,25 +15,69 @@
 import { isIP, isIPv4, isIPv6 } from 'net';
 import { URL } from 'url';
 
-// Lista de canales prohibidos por defecto
-const BANNED_CHANNELS = [
-  'ADULT',
-  'XXX',
-  'PORN',
-  'SEX',
-  'EROTIC',
-  'PLAYBOY',
-  'HUSTLER',
-  'VIVID',
-  'BRAZZERS',
-  'NAUGHTY',
-  '- Rs',
-  'EXTREME',
-  'VIOLENCE',
-  'GORE',
-  'HORROR',
-  'TERROR'
-];
+/**
+ * Carga la lista de canales prohibidos desde variables de entorno
+ * @returns {Array<string>} Lista de canales prohibidos
+ */
+function loadBannedChannelsFromEnv() {
+  const envValue = process.env.BANNED_CHANNELS;
+  
+  if (!envValue || envValue.trim() === '') {
+    console.log('[BANNED_CHANNELS] Variable de entorno no encontrada, usando lista por defecto');
+    return getDefaultBannedChannels();
+  }
+  
+  try {
+    const channels = envValue.split(',').map(channel => channel.trim()).filter(channel => channel.length > 0);
+    console.log(`[BANNED_CHANNELS] Cargados ${channels.length} canales desde variable de entorno`);
+    return channels;
+  } catch (error) {
+    console.error('[BANNED_CHANNELS] Error al parsear variable de entorno:', error.message);
+    console.log('[BANNED_CHANNELS] Usando lista por defecto como fallback');
+    return getDefaultBannedChannels();
+  }
+}
+
+/**
+ * Obtiene la lista por defecto de canales prohibidos
+ * @returns {Array<string>} Lista por defecto de canales prohibidos
+ */
+function getDefaultBannedChannels() {
+  return [
+    'ADULT',
+    'XXX',
+    'PORN',
+    'SEX',
+    'EROTIC',
+    'PLAYBOY',
+    'HUSTLER',
+    'VIVID',
+    'BRAZZERS',
+    'NAUGHTY',
+    '- Rs',
+    'Al',
+    'Saudi',
+    'Sama',
+    'Asharq',
+    'Arryadia',
+    'Bahrain',
+    'Dubai',
+    'Ad',
+    'Rotana',
+    'ksa',
+    'libya',
+    'tunisia',
+    'ien',
+    'EXTREME',
+    'VIOLENCE',
+    'GORE',
+    'HORROR',
+    'TERROR'
+  ];
+}
+
+// Lista de canales prohibidos cargada desde variables de entorno
+const BANNED_CHANNELS = loadBannedChannelsFromEnv();
 
 // Función para parsear variables de entorno separadas por comas
 function parseEnvArray(envVar, defaultValue = []) {
@@ -90,10 +134,53 @@ function normalizeChannelName(channelName) {
   }
   
   return channelName
-    .toUpperCase()
-    .trim()
-    .replace(/[^A-Z0-9\s]/g, '')
-    .replace(/\s+/g, ' ');
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * Calcula la distancia de Levenshtein entre dos cadenas
+ * @param {string} str1 - Primera cadena
+ * @param {string} str2 - Segunda cadena
+ * @returns {number} Distancia de Levenshtein
+ */
+function levenshteinDistance(str1, str2) {
+  const matrix = Array(str2.length + 1).fill(null).map(() => Array(str1.length + 1).fill(null));
+  
+  for (let i = 0; i <= str1.length; i++) matrix[0][i] = i;
+  for (let j = 0; j <= str2.length; j++) matrix[j][0] = j;
+  
+  for (let j = 1; j <= str2.length; j++) {
+    for (let i = 1; i <= str1.length; i++) {
+      const cost = str1[i - 1] === str2[j - 1] ? 0 : 1;
+      matrix[j][i] = Math.min(
+        matrix[j][i - 1] + 1,
+        matrix[j - 1][i] + 1,
+        matrix[j - 1][i - 1] + cost
+      );
+    }
+  }
+  
+  return matrix[str2.length][str1.length];
+}
+
+/**
+ * Calcula la similitud entre dos cadenas (0-1)
+ * @param {string} str1 - Primera cadena
+ * @param {string} str2 - Segunda cadena
+ * @returns {number} Similitud entre 0 y 1
+ */
+function calculateStringSimilarity(str1, str2) {
+  if (!str1 || !str2) return 0;
+  if (str1 === str2) return 1;
+  
+  const maxLength = Math.max(str1.length, str2.length);
+  if (maxLength === 0) return 1;
+  
+  const distance = levenshteinDistance(str1, str2);
+  return 1 - (distance / maxLength);
 }
 
 /**
@@ -101,20 +188,77 @@ function normalizeChannelName(channelName) {
  * @param {string} channelName - Nombre del canal a verificar
  * @returns {boolean} true si el canal está prohibido, false de lo contrario
  */
-function isChannelBanned(channelName) {
+/**
+ * Verifica si un canal está prohibido usando similitud de 90%
+ * @param {string} channelName - Nombre del canal a verificar
+ * @param {number} [threshold=0.9] - Umbral de similitud (0-1)
+ * @returns {boolean} - true si el canal está prohibido
+ */
+function isChannelBanned(channelName, threshold = 0.9) {
   if (!channelName || typeof channelName !== 'string') {
     return false;
   }
   
-  const normalizedName = normalizeChannelName(channelName);
+  const normalizedInput = normalizeChannelName(channelName);
   
-  if (!normalizedName) {
+  if (!normalizedInput) {
     return false;
   }
   
+  // Primero verificar coincidencia exacta
+  const exactMatch = BANNED_CHANNELS.some(bannedTerm => {
+    const normalizedBanned = normalizeChannelName(bannedTerm);
+    return normalizedInput === normalizedBanned;
+  });
+  
+  if (exactMatch) {
+    return true;
+  }
+  
+  // Luego verificar similitud y contención
   return BANNED_CHANNELS.some(bannedTerm => {
     const normalizedBanned = normalizeChannelName(bannedTerm);
-    return normalizedName.includes(normalizedBanned) || normalizedBanned.includes(normalizedName);
+    const similarity = calculateStringSimilarity(normalizedInput, normalizedBanned);
+    
+    // Verificar si el término prohibido está contenido en el nombre
+    const isContained = normalizedInput.includes(normalizedBanned) || normalizedBanned.includes(normalizedInput);
+    
+    return similarity >= threshold || (isContained && normalizedBanned.length >= 2);
+  });
+}
+
+/**
+ * Verifica si un canal está prohibido con umbral personalizable
+ * @param {string} channelName - Nombre del canal a verificar
+ * @param {number} threshold - Umbral de similitud (0-1)
+ * @returns {boolean} - true si el canal está prohibido
+ */
+function isChannelBannedWithThreshold(channelName, threshold = 0.9) {
+  if (!channelName) {
+    return false;
+  }
+  
+  const normalizedInput = normalizeChannelName(channelName);
+  
+  // Primero verificar coincidencia exacta
+  const exactMatch = BANNED_CHANNELS.some(bannedTerm => {
+    const normalizedBanned = normalizeChannelName(bannedTerm);
+    return normalizedInput === normalizedBanned;
+  });
+  
+  if (exactMatch) {
+    return true;
+  }
+  
+  // Luego verificar similitud con umbral personalizado
+  return BANNED_CHANNELS.some(bannedTerm => {
+    const normalizedBanned = normalizeChannelName(bannedTerm);
+    const similarity = calculateStringSimilarity(normalizedInput, normalizedBanned);
+    
+    // Verificar si el término prohibido está contenido en el nombre
+    const isContained = normalizedInput.includes(normalizedBanned) || normalizedBanned.includes(normalizedInput);
+    
+    return similarity >= threshold || (isContained && normalizedBanned.length >= 2);
   });
 }
 
@@ -411,8 +555,30 @@ function filterBannedChannels(channels) {
  * Obtiene todos los términos prohibidos
  * @returns {Array} Array de términos prohibidos
  */
+/**
+ * Obtiene la lista actual de canales prohibidos
+ * @returns {Array<string>} Lista de canales prohibidos
+ */
 function getBannedTerms() {
   return [...BANNED_CHANNELS];
+}
+
+/**
+ * Obtiene la lista actual de canales prohibidos (alias)
+ * @returns {Array<string>} Lista de canales prohibidos
+ */
+function getBannedChannels() {
+  return [...BANNED_CHANNELS];
+}
+
+/**
+ * Establece el umbral de similitud por defecto
+ * @param {number} threshold - Nuevo umbral (0-1)
+ */
+function setSimilarityThreshold(threshold) {
+  if (threshold >= 0 && threshold <= 1) {
+    console.log(`[BANNED_CHANNELS] Umbral de similitud establecido a: ${threshold}`);
+  }
 }
 
 /**
@@ -754,7 +920,7 @@ function applyTwoStageFiltering(channels) {
 }
 
 export {
-  // Constantes
+  // Constantes principales
   BANNED_CHANNELS,
   BANNED_IPS,
   BANNED_IP_RANGES,
@@ -763,11 +929,21 @@ export {
   CUSTOM_BANNED_TERMS,
   BANNED_PATTERNS,
   
-  // Funciones de normalización y validación de nombres
+  // Funciones de carga y configuración
+  loadBannedChannelsFromEnv,
+  getDefaultBannedChannels,
+  
+  // Funciones de normalización y verificación
   normalizeChannelName,
   isChannelBanned,
+  isChannelBannedWithThreshold,
   
-  // Funciones de validación de IPs
+  // Funciones de similitud
+  levenshteinDistance,
+  calculateStringSimilarity,
+  setSimilarityThreshold,
+  
+  // Funciones de manejo de IPs
   extractIPFromURL,
   isIPInCIDRRange,
   isIPv4InCIDR,
@@ -775,12 +951,12 @@ export {
   isIPBanned,
   isChannelURLBanned,
   
-  // Funciones de validación de URLs y dominios
+  // Funciones de manejo de dominios
   extractDomainFromURL,
   isDomainBanned,
   isURLBanned,
   
-  // Funciones de validación de patrones y términos personalizados
+  // Funciones de patrones y términos personalizados
   isChannelNameMatchingPatterns,
   isChannelNameContainingCustomTerms,
   isChannelBannedByAnyReason,
@@ -790,6 +966,7 @@ export {
   
   // Funciones de gestión de términos prohibidos
   getBannedTerms,
+  getBannedChannels,
   addBannedTerm,
   removeBannedTerm,
   
@@ -816,11 +993,11 @@ export {
   addCustomBannedTerm,
   removeCustomBannedTerm,
   
-  // Funciones de gestión de patrones regex
+  // Funciones de gestión de patrones
   getBannedPatterns,
   addBannedPattern,
   removeBannedPattern,
   
-  // Función obsoleta
+  // Funciones de filtrado avanzado
   applyTwoStageFiltering
 };
