@@ -221,9 +221,9 @@ function isChannelBanned(channelName, threshold = 0.9) {
     const similarity = calculateStringSimilarity(normalizedInput, normalizedBanned);
     
     // Verificar si el término prohibido está contenido en el nombre
-    // Para términos cortos (<=2 caracteres), requerir coincidencia como palabra completa
+    // Para términos cortos (<=3 caracteres), requerir coincidencia como palabra completa
     let isContained = false;
-    if (normalizedBanned.length <= 2) {
+    if (normalizedBanned.length <= 3) {
       // Para términos muy cortos, verificar como palabra completa con separadores
       const wordBoundaryRegex = new RegExp(`\\b${normalizedBanned.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
       isContained = wordBoundaryRegex.test(normalizedInput);
@@ -265,9 +265,18 @@ function isChannelBannedWithThreshold(channelName, threshold = 0.9) {
     const similarity = calculateStringSimilarity(normalizedInput, normalizedBanned);
     
     // Verificar si el término prohibido está contenido en el nombre
-    const isContained = normalizedInput.includes(normalizedBanned) || normalizedBanned.includes(normalizedInput);
+    // Para términos cortos (<=3 caracteres), requerir coincidencia como palabra completa
+    let isContained = false;
+    if (normalizedBanned.length <= 3) {
+      // Para términos muy cortos, verificar como palabra completa con separadores
+      const wordBoundaryRegex = new RegExp(`\\b${normalizedBanned.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+      isContained = wordBoundaryRegex.test(normalizedInput);
+    } else {
+      // Para términos más largos, usar contención normal
+      isContained = normalizedInput.includes(normalizedBanned) || normalizedBanned.includes(normalizedInput);
+    }
     
-    return similarity >= threshold || (isContained && normalizedBanned.length >= 2);
+    return similarity >= threshold || isContained;
   });
 }
 

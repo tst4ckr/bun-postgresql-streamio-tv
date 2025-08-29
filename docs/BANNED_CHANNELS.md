@@ -8,7 +8,7 @@ El sistema `BANNED_CHANNELS` permite filtrar canales de televisión basándose e
 
 - **Coincidencia exacta**: Nombres idénticos después de normalización
 - **Similitud del 90%**: Usando algoritmo de distancia Levenshtein
-- **Contención inteligente**: Términos contenidos con lógica específica para palabras cortas
+- **Contención inteligente**: Para términos cortos (≤3 caracteres), utiliza coincidencia de palabra completa para evitar falsos positivos
 - **Configuración dinámica**: Carga desde variables de entorno con fallback automático
 
 ## 🚀 Características Principales
@@ -186,6 +186,10 @@ Los términos regionales incluidos fueron solicitados específicamente para filt
 - **Coincidencia exacta primero**: Evita cálculos innecesarios
 - **Normalización eficiente**: Cache de cadenas normalizadas
 - **Algoritmo Levenshtein optimizado**: Implementación con matriz dinámica
+- **Contención inteligente mejorada**: 
+  - Términos ≤3 caracteres: Coincidencia de palabra completa con regex
+  - Términos >3 caracteres: Contención normal bidireccional
+  - Eliminación de falsos positivos para términos como 'Al', 'Ad', 'ien'
 - **Validación temprana**: Verificación de tipos antes del procesamiento
 
 ### Métricas
