@@ -17,56 +17,56 @@ config();
 const testChannels = [
   // Canales que DEBEN ser filtrados (contienen términos prohibidos)
   new Channel({
-    id: 'adult-1',
+    id: 'tv_adult_1',
     name: 'ADULT Channel HD',
     streamUrl: 'http://example.com/adult',
     genre: 'Entertainment',
     country: 'US'
   }),
   new Channel({
-    id: 'xxx-1',
+    id: 'tv_xxx_1',
     name: 'XXX Movies',
     streamUrl: 'http://example.com/xxx',
     genre: 'Entertainment',
     country: 'US'
   }),
   new Channel({
-    id: 'porn-1',
+    id: 'tv_porn_1',
     name: 'PORN HD',
     streamUrl: 'http://example.com/porn',
     genre: 'Entertainment',
     country: 'US'
   }),
   new Channel({
-    id: 'playboy-1',
+    id: 'tv_playboy_1',
     name: 'Playboy TV',
     streamUrl: 'http://example.com/playboy',
     genre: 'Entertainment',
     country: 'US'
   }),
   new Channel({
-    id: 'saudi-1',
+    id: 'tv_saudi_1',
     name: 'Saudi Sports',
     streamUrl: 'http://example.com/saudi',
     genre: 'Sports',
     country: 'SA'
   }),
   new Channel({
-    id: 'al-jazeera',
+    id: 'tv_al_jazeera',
     name: 'Al Jazeera News',
     streamUrl: 'http://example.com/aljazeera',
     genre: 'News',
     country: 'QA'
   }),
   new Channel({
-    id: 'extreme-1',
+    id: 'tv_extreme_1',
     name: 'EXTREME Sports',
     streamUrl: 'http://example.com/extreme',
     genre: 'Sports',
     country: 'US'
   }),
   new Channel({
-    id: 'violence-1',
+    id: 'tv_violence_1',
     name: 'VIOLENCE Movies',
     streamUrl: 'http://example.com/violence',
     genre: 'Movies',
@@ -75,28 +75,28 @@ const testChannels = [
   
   // Canales que NO deben ser filtrados (nombres normales)
   new Channel({
-    id: 'normal-1',
+    id: 'tv_normal_1',
     name: 'CNN International',
     streamUrl: 'http://example.com/cnn',
     genre: 'News',
     country: 'US'
   }),
   new Channel({
-    id: 'normal-2',
+    id: 'tv_normal_2',
     name: 'Discovery Channel',
     streamUrl: 'http://example.com/discovery',
     genre: 'Documentary',
     country: 'US'
   }),
   new Channel({
-    id: 'normal-3',
+    id: 'tv_normal_3',
     name: 'ESPN Sports',
     streamUrl: 'http://example.com/espn',
     genre: 'Sports',
     country: 'US'
   }),
   new Channel({
-    id: 'normal-4',
+    id: 'tv_normal_4',
     name: 'National Geographic',
     streamUrl: 'http://example.com/natgeo',
     genre: 'Documentary',
@@ -125,8 +125,8 @@ function runBannedChannelsTest() {
   testChannels.forEach(channel => {
     const isBanned = isChannelBannedByAnyReason(channel);
     const shouldBeBanned = [
-      'adult-1', 'xxx-1', 'porn-1', 'playboy-1', 
-      'saudi-1', 'al-jazeera', 'extreme-1', 'violence-1'
+      'tv_adult_1', 'tv_xxx_1', 'tv_porn_1', 'tv_playboy_1', 
+      'tv_saudi_1', 'tv_al_jazeera', 'tv_extreme_1', 'tv_violence_1'
     ].includes(channel.id);
     
     const status = isBanned === shouldBeBanned ? '✅' : '❌';
@@ -151,8 +151,8 @@ function runBannedChannelsTest() {
   console.log(`  📊 Canales removidos: ${removedCount}`);
   
   // Verificar que se removieron los canales correctos
-  const expectedRemovedCount = 8; // adult-1, xxx-1, porn-1, playboy-1, saudi-1, al-jazeera, extreme-1, violence-1
-  const expectedFinalCount = 4; // normal-1, normal-2, normal-3, normal-4
+  const expectedRemovedCount = 8; // tv_adult_1, tv_xxx_1, tv_porn_1, tv_playboy_1, tv_saudi_1, tv_al_jazeera, tv_extreme_1, tv_violence_1
+  const expectedFinalCount = 4; // tv_normal_1, tv_normal_2, tv_normal_3, tv_normal_4
   
   if (removedCount === expectedRemovedCount && finalCount === expectedFinalCount) {
     console.log('  ✅ Filtrado masivo correcto');
@@ -192,7 +192,7 @@ function runBannedChannelsTest() {
 }
 
 // Ejecutar las pruebas si el script se ejecuta directamente
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (process.argv[1] && process.argv[1].endsWith('test-banned-channels-filtering.js')) {
   try {
     const success = runBannedChannelsTest();
     process.exit(success ? 0 : 1);
