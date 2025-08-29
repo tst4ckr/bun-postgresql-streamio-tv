@@ -361,7 +361,7 @@ export class AutomaticChannelRepository extends ChannelRepository {
    * @returns {boolean}
    */
   #shouldValidateBeforeFiltering() {
-    return this.#config.get('validation.validateBeforeFiltering', false);
+    return this.#config.getConfig('validation')?.validateBeforeFiltering || false;
   }
 
   /**
@@ -369,7 +369,7 @@ export class AutomaticChannelRepository extends ChannelRepository {
    * @returns {boolean}
    */
   #shouldValidateFilteredChannels() {
-    return this.#config.get('validation.validateFilteredChannels', false);
+    return this.#config.getConfig('validation')?.validateFilteredChannels || false;
   }
 
   /**
@@ -377,7 +377,7 @@ export class AutomaticChannelRepository extends ChannelRepository {
    * @returns {boolean}
    */
   #shouldValidateAfterFiltering() {
-    return this.#config.get('validation.validateAfterFiltering', false);
+    return this.#config.getConfig('validation')?.validateAfterFiltering || false;
   }
 
   /**

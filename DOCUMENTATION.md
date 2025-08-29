@@ -19,6 +19,9 @@ El **TV IPTV Addon** es una extensión para Stremio que proporciona acceso a can
 
 ### Características Principales
 - ✅ Validación multi-etapa de streams HTTP/HTTPS
+- ✅ Validación pre-filtrado de conectividad de canales
+- ✅ Análisis de canales removidos por filtros inteligentes
+- ✅ Validación post-filtrado para garantizar calidad final
 - ✅ Conversión automática HTTPS→HTTP
 - ✅ Cache de validación con TTL configurable
 - ✅ Procesamiento por lotes concurrente
@@ -457,11 +460,67 @@ const result = await converter.processChannel(channel);
 
 ## 🔄 Sistema de Validación de Streams
 
-### Diagrama de Flujo de Validación
+### Diagrama de Flujo de Validación Multi-Etapa
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│                           MULTI-STAGE STREAM VALIDATION FLOW                                │
+├─────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                             │
+│  [Carga de Canales]                                                                        │
+│         ↓                                                                                   │
+│  [1. VALIDACIÓN PRE-FILTRADO] ──Habilitado──→ [Validar Conectividad Inicial]             │
+│         │                                           ↓                                       │
+│         │                                    [Log: X/Y válidos]                           │
+│         ↓                                           ↓                                       │
+│  [Aplicar Filtros Inteligentes]                    │                                       │
+│         ↓                                           │                                       │
+│  [2. ANÁLISIS DE REMOVIDOS] ──Habilitado──→ [Validar Canales Removidos]                  │
+│         │                                           ↓                                       │
+│         │                                    [Log: Falsos Positivos]                      │
+│         ↓                                           ↓                                       │
+│  [Canales Filtrados]                               │                                       │
+│         ↓                                           │                                       │
+│  [3. VALIDACIÓN POST-FILTRADO] ──Habilitado──→ [Validar Resultado Final]                 │
+│         │                                           ↓                                       │
+│         │                                    [Log: Canales Finales Válidos]               │
+│         ↓                                           ↓                                       │
+│  [Resultado Final] ←─────────────────────────────────                                     │
+│                                                                                             │
+└─────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Etapas de Validación
+
+#### 1. Validación Pre-Filtrado
+**Propósito**: Validar conectividad antes de aplicar filtros inteligentes
+**Configuración**: `VALIDATE_BEFORE_FILTERING=true`
+**Beneficios**:
+- Identifica canales inválidos tempranamente
+- Optimiza el proceso de filtrado
+- Proporciona métricas de calidad inicial
+
+#### 2. Análisis de Canales Removidos
+**Propósito**: Detectar falsos positivos en filtros inteligentes
+**Configuración**: `VALIDATE_FILTERED_CHANNELS=true`
+**Beneficios**:
+- Identifica canales válidos removidos incorrectamente
+- Permite ajustar criterios de filtrado
+- Mejora la precisión del sistema
+
+#### 3. Validación Post-Filtrado
+**Propósito**: Garantizar que todos los canales finales sean válidos
+**Configuración**: `VALIDATE_AFTER_FILTERING=true`
+**Beneficios**:
+- Asegura calidad del resultado final
+- Elimina canales problemáticos
+- Proporciona confianza en el catálogo
+
+### Flujo de Validación Individual
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                   STREAM VALIDATION FLOW                     │
+│                   INDIVIDUAL STREAM VALIDATION               │
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
 │  Input Channel                                              │
