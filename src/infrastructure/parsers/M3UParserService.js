@@ -28,7 +28,7 @@ export class M3UParserService {
       defaultLanguage: config.defaultLanguage ?? 'es',
       enableQualityDetection: config.enableQualityDetection ?? true,
       enableLogoExtraction: config.enableLogoExtraction ?? true,
-      maxChannelsPerFile: config.maxChannelsPerFile ?? 10000,
+      maxChannelsPerFile: config.maxChannelsPerFile ?? 20000,
       ...config
     };
   }
