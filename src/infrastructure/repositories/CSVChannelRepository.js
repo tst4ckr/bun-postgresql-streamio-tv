@@ -278,6 +278,16 @@ export class CSVChannelRepository extends ChannelRepository {
       filteredChannels = this.#contentFilter.filterChannels(filteredChannels);
     }
     
+    // Aplicar filtrado de canales prohibidos
+    const beforeBannedCount = filteredChannels.length;
+    filteredChannels = filterBannedChannels(filteredChannels);
+    const afterBannedCount = filteredChannels.length;
+    const bannedRemovedCount = beforeBannedCount - afterBannedCount;
+    
+    if (bannedRemovedCount > 0) {
+      this.#logger.info(`Filtros de canales prohibidos aplicados: ${bannedRemovedCount} canales removidos de ${beforeBannedCount}`);
+    }
+    
     return filteredChannels;
   }
 
@@ -296,6 +306,16 @@ export class CSVChannelRepository extends ChannelRepository {
     // Aplicar filtros de contenido si están activos
     if (this.#contentFilter.hasActiveFilters()) {
       filteredChannels = this.#contentFilter.filterChannels(filteredChannels);
+    }
+    
+    // Aplicar filtrado de canales prohibidos
+    const beforeBannedCount = filteredChannels.length;
+    filteredChannels = filterBannedChannels(filteredChannels);
+    const afterBannedCount = filteredChannels.length;
+    const bannedRemovedCount = beforeBannedCount - afterBannedCount;
+    
+    if (bannedRemovedCount > 0) {
+      this.#logger.info(`Filtros de canales prohibidos aplicados: ${bannedRemovedCount} canales removidos de ${beforeBannedCount}`);
     }
     
     return filteredChannels;
@@ -358,6 +378,16 @@ export class CSVChannelRepository extends ChannelRepository {
     // Aplicar filtros de contenido si están activos
     if (this.#contentFilter.hasActiveFilters()) {
       activeChannels = this.#contentFilter.filterChannels(activeChannels);
+    }
+    
+    // Aplicar filtrado de canales prohibidos
+    const beforeBannedCount = activeChannels.length;
+    activeChannels = filterBannedChannels(activeChannels);
+    const afterBannedCount = activeChannels.length;
+    const bannedRemovedCount = beforeBannedCount - afterBannedCount;
+    
+    if (bannedRemovedCount > 0) {
+      this.#logger.info(`Filtros de canales prohibidos aplicados: ${bannedRemovedCount} canales removidos de ${beforeBannedCount}`);
     }
     
     return activeChannels.slice(Math.max(0, skip), Math.max(0, skip) + limit);

@@ -224,6 +224,16 @@ export class LocalM3UChannelRepository extends ChannelRepository {
       channels = filterResult.filteredChannels;
     }
     
+    // Aplicar filtrado de canales prohibidos
+    const beforeBannedCount = channels.length;
+    channels = filterBannedChannels(channels);
+    const afterBannedCount = channels.length;
+    const bannedRemovedCount = beforeBannedCount - afterBannedCount;
+    
+    if (bannedRemovedCount > 0) {
+      this.#logger.info(`Filtros de canales prohibidos aplicados: ${bannedRemovedCount} canales removidos de ${beforeBannedCount}`);
+    }
+    
     return channels;
   }
   
@@ -236,6 +246,16 @@ export class LocalM3UChannelRepository extends ChannelRepository {
     if (this.#contentFilter.hasActiveFilters()) {
       const filterResult = this.#contentFilter.filterChannels(channels);
       channels = filterResult.filteredChannels;
+    }
+    
+    // Aplicar filtrado de canales prohibidos
+    const beforeBannedCount = channels.length;
+    channels = filterBannedChannels(channels);
+    const afterBannedCount = channels.length;
+    const bannedRemovedCount = beforeBannedCount - afterBannedCount;
+    
+    if (bannedRemovedCount > 0) {
+      this.#logger.info(`Filtros de canales prohibidos aplicados: ${bannedRemovedCount} canales removidos de ${beforeBannedCount}`);
     }
     
     return channels;
@@ -268,6 +288,16 @@ export class LocalM3UChannelRepository extends ChannelRepository {
     if (this.#contentFilter.hasActiveFilters()) {
       const filterResult = this.#contentFilter.filterChannels(channels);
       channels = filterResult.filteredChannels;
+    }
+    
+    // Aplicar filtrado de canales prohibidos
+    const beforeBannedCount = channels.length;
+    channels = filterBannedChannels(channels);
+    const afterBannedCount = channels.length;
+    const bannedRemovedCount = beforeBannedCount - afterBannedCount;
+    
+    if (bannedRemovedCount > 0) {
+      this.#logger.info(`Filtros de canales prohibidos aplicados: ${bannedRemovedCount} canales removidos de ${beforeBannedCount}`);
     }
     
     return channels;
@@ -309,6 +339,16 @@ export class LocalM3UChannelRepository extends ChannelRepository {
     if (this.#contentFilter.hasActiveFilters()) {
       const filterResult = this.#contentFilter.filterChannels(channels);
       channels = filterResult.filteredChannels;
+    }
+    
+    // Aplicar filtrado de canales prohibidos
+    const beforeBannedCount = channels.length;
+    channels = filterBannedChannels(channels);
+    const afterBannedCount = channels.length;
+    const bannedRemovedCount = beforeBannedCount - afterBannedCount;
+    
+    if (bannedRemovedCount > 0) {
+      this.#logger.info(`Filtros de canales prohibidos aplicados: ${bannedRemovedCount} canales removidos de ${beforeBannedCount}`);
     }
     
     return channels.slice(skip, skip + limit);

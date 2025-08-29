@@ -10,6 +10,7 @@ import { HttpsToHttpConversionService } from '../services/HttpsToHttpConversionS
 import { StreamHealthService } from '../services/StreamHealthService.js';
 import { StreamValidationService } from '../services/StreamValidationService.js';
 import { filterAllowedChannels } from '../../config/allowed-channels.js';
+import { filterBannedChannels } from '../../config/banned-channels.js';
 import fetch from 'node-fetch';
 import { URL } from 'url';
 
@@ -522,25 +523,60 @@ export class AutomaticChannelRepository extends ChannelRepository {
 
   async getChannelsPaginated(offset = 0, limit = 50) {
     const allChannels = await this.getAllChannels();
-    return allChannels.slice(offset, offset + limit);
+    
+    // Aplicar filtrado de canales prohibidos
+    const beforeBannedCount = allChannels.length;
+    const filteredChannels = filterBannedChannels(allChannels);
+    const afterBannedCount = filteredChannels.length;
+    const bannedRemovedCount = beforeBannedCount - afterBannedCount;
+    
+    if (bannedRemovedCount > 0) {
+      this.#logger.info(`Filtros de canales prohibidos aplicados: ${bannedRemovedCount} canales removidos de ${beforeBannedCount}`);
+    }
+    
+    return filteredChannels.slice(offset, offset + limit);
   }
 
   async searchChannels(query) {
     const allChannels = await this.getAllChannels();
     const searchTerm = query.toLowerCase();
     
-    return allChannels.filter(channel => 
+    let searchResults = allChannels.filter(channel => 
       channel.name.toLowerCase().includes(searchTerm) ||
       channel.group.toLowerCase().includes(searchTerm) ||
       channel.country.toLowerCase().includes(searchTerm)
     );
+    
+    // Aplicar filtrado de canales prohibidos
+    const beforeBannedCount = searchResults.length;
+    searchResults = filterBannedChannels(searchResults);
+    const afterBannedCount = searchResults.length;
+    const bannedRemovedCount = beforeBannedCount - afterBannedCount;
+    
+    if (bannedRemovedCount > 0) {
+      this.#logger.info(`Filtros de canales prohibidos aplicados: ${bannedRemovedCount} canales removidos de ${beforeBannedCount}`);
+    }
+    
+    return searchResults;
   }
 
   async getChannelsByCountry(country) {
     const allChannels = await this.getAllChannels();
-    return allChannels.filter(channel => 
+    let countryChannels = allChannels.filter(channel => 
       channel.country.toLowerCase() === country.toLowerCase()
     );
+    
+    // Aplicar filtrado de canales prohibidos
+    const beforeBannedCount = countryChannels.length;
+    countryChannels = filterBannedChannels(countryChannels);
+    const afterBannedCount = countryChannels.length;
+    const bannedRemovedCount = beforeBannedCount - afterBannedCount;
+    
+    if (bannedRemovedCount > 0) {
+      this.#logger.info(`Filtros de canales prohibidos aplicados: ${bannedRemovedCount} canales removidos de ${beforeBannedCount}`);
+    }
+    
+    return countryChannels;
   }
 
   async getChannelsByGroup(group) {

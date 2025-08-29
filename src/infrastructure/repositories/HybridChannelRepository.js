@@ -556,15 +556,47 @@ export class HybridChannelRepository extends ChannelRepository {
   async getChannelsByGenre(genre) {
     await this.#refreshIfNeeded();
     const channels = this.#channels.filter(ch => ch.genre.toLowerCase() === genre.toLowerCase());
-    const activeChannels = this.#filterActiveChannels(channels);
-    return this.#contentFilter.hasActiveFilters() ? this.#contentFilter.filterChannels(activeChannels) : activeChannels;
+    let activeChannels = this.#filterActiveChannels(channels);
+    
+    // Aplicar filtros de contenido si están activos
+    if (this.#contentFilter.hasActiveFilters()) {
+      activeChannels = this.#contentFilter.filterChannels(activeChannels);
+    }
+    
+    // Aplicar filtrado de canales prohibidos
+    const beforeBannedCount = activeChannels.length;
+    activeChannels = filterBannedChannels(activeChannels);
+    const afterBannedCount = activeChannels.length;
+    const bannedRemovedCount = beforeBannedCount - afterBannedCount;
+    
+    if (bannedRemovedCount > 0) {
+      this.#logger.info(`Filtros de canales prohibidos aplicados: ${bannedRemovedCount} canales removidos de ${beforeBannedCount}`);
+    }
+    
+    return activeChannels;
   }
 
   async getChannelsByCountry(country) {
     await this.#refreshIfNeeded();
     const channels = this.#channels.filter(ch => ch.country.toLowerCase().includes(country.toLowerCase()));
-    const activeChannels = this.#filterActiveChannels(channels);
-    return this.#contentFilter.hasActiveFilters() ? this.#contentFilter.filterChannels(activeChannels) : activeChannels;
+    let activeChannels = this.#filterActiveChannels(channels);
+    
+    // Aplicar filtros de contenido si están activos
+    if (this.#contentFilter.hasActiveFilters()) {
+      activeChannels = this.#contentFilter.filterChannels(activeChannels);
+    }
+    
+    // Aplicar filtrado de canales prohibidos
+    const beforeBannedCount = activeChannels.length;
+    activeChannels = filterBannedChannels(activeChannels);
+    const afterBannedCount = activeChannels.length;
+    const bannedRemovedCount = beforeBannedCount - afterBannedCount;
+    
+    if (bannedRemovedCount > 0) {
+      this.#logger.info(`Filtros de canales prohibidos aplicados: ${bannedRemovedCount} canales removidos de ${beforeBannedCount}`);
+    }
+    
+    return activeChannels;
   }
 
   async getChannelsByLanguage(language) {
@@ -581,8 +613,24 @@ export class HybridChannelRepository extends ChannelRepository {
       ch.name.toLowerCase().includes(term) || 
       ch.genre.toLowerCase().includes(term)
     );
-    const activeChannels = this.#filterActiveChannels(channels);
-    return this.#contentFilter.hasActiveFilters() ? this.#contentFilter.filterChannels(activeChannels) : activeChannels;
+    let activeChannels = this.#filterActiveChannels(channels);
+    
+    // Aplicar filtros de contenido si están activos
+    if (this.#contentFilter.hasActiveFilters()) {
+      activeChannels = this.#contentFilter.filterChannels(activeChannels);
+    }
+    
+    // Aplicar filtrado de canales prohibidos
+    const beforeBannedCount = activeChannels.length;
+    activeChannels = filterBannedChannels(activeChannels);
+    const afterBannedCount = activeChannels.length;
+    const bannedRemovedCount = beforeBannedCount - afterBannedCount;
+    
+    if (bannedRemovedCount > 0) {
+      this.#logger.info(`Filtros de canales prohibidos aplicados: ${bannedRemovedCount} canales removidos de ${beforeBannedCount}`);
+    }
+    
+    return activeChannels;
   }
 
   async getChannelsByFilter(filter) {
@@ -608,9 +656,24 @@ export class HybridChannelRepository extends ChannelRepository {
 
   async getChannelsPaginated(skip = 0, limit = 50) {
     await this.#refreshIfNeeded();
-    const activeChannels = this.#filterActiveChannels([...this.#channels]);
-    const filteredChannels = this.#contentFilter.hasActiveFilters() ? this.#contentFilter.filterChannels(activeChannels) : activeChannels;
-    return filteredChannels.slice(skip, skip + limit);
+    let activeChannels = this.#filterActiveChannels([...this.#channels]);
+    
+    // Aplicar filtros de contenido si están activos
+    if (this.#contentFilter.hasActiveFilters()) {
+      activeChannels = this.#contentFilter.filterChannels(activeChannels);
+    }
+    
+    // Aplicar filtrado de canales prohibidos
+    const beforeBannedCount = activeChannels.length;
+    activeChannels = filterBannedChannels(activeChannels);
+    const afterBannedCount = activeChannels.length;
+    const bannedRemovedCount = beforeBannedCount - afterBannedCount;
+    
+    if (bannedRemovedCount > 0) {
+      this.#logger.info(`Filtros de canales prohibidos aplicados: ${bannedRemovedCount} canales removidos de ${beforeBannedCount}`);
+    }
+    
+    return activeChannels.slice(skip, skip + limit);
   }
 
   async getChannelsPaginatedUnfiltered(skip = 0, limit = 50) {
