@@ -5,7 +5,6 @@
 
 import { HttpsToHttpConversionService } from './HttpsToHttpConversionService.js';
 import { StreamHealthService } from './StreamHealthService.js';
-import { EnhancedStreamValidationService } from './EnhancedStreamValidationService.js';
 
 /**
  * Servicio de validación temprana de streams
@@ -23,7 +22,6 @@ export class StreamValidationService {
   #logger;
   #httpsToHttpService;
   #streamHealthService;
-  #enhancedValidator;
   #validationCache = new Map(); // URL -> {result, timestamp}
   #stats = {
     totalProcessed: 0,
@@ -46,11 +44,6 @@ export class StreamValidationService {
     // Inicializar servicios dependientes
     this.#streamHealthService = new StreamHealthService(config, logger);
     this.#httpsToHttpService = new HttpsToHttpConversionService(config, this.#streamHealthService, logger);
-    
-    // Inicializar servicio de validación mejorado
-    this.#enhancedValidator = new EnhancedStreamValidationService(
-      config, logger, this.#streamHealthService, this.#httpsToHttpService
-    );
   }
 
   /**
@@ -74,7 +67,6 @@ export class StreamValidationService {
       timeout: validation.earlyValidationTimeout || 5000,
       batchSize: validation.earlyValidationBatchSize || 100,
       quickCheck: validation.validationQuickCheck !== false,
-      useEnhancedValidation: validation.useEnhancedValidation === true,
       skipHttpsIfHttpWorks: validation.validationSkipHttpsIfHttpWorks !== false,
       cacheTimeout: validation.validationCacheTimeout || 3600000, // 1 hora
       maxRetries: validation.validationMaxRetries || 1
@@ -106,30 +98,7 @@ export class StreamValidationService {
 
       // Validación rápida con HEAD request si está habilitada
       let validationResult;
-      if (config.useEnhancedValidation) {
-        // Usar validación mejorada para mejor detección de calidad
-        const enhancedResult = await this.#enhancedValidator.validateStreamComprehensive(channel.streamUrl, {
-          streamProfile: this.#detectChannelProfile(channel),
-          cacheTTL: config.cacheTimeout
-        });
-        
-        validationResult = {
-          isValid: enhancedResult.isValid && enhancedResult.streamable,
-          channel: {
-            ...channel,
-            qualityScore: enhancedResult.qualityScore,
-            bufferingRisk: enhancedResult.bufferingRisk,
-            overallRating: enhancedResult.overallRating
-          },
-          converted: false,
-          meta: {
-            enhancedValidation: true,
-            confidence: enhancedResult.confidence,
-            summary: enhancedResult.summary,
-            recommendations: enhancedResult.recommendations
-          }
-        };
-      } else if (config.quickCheck) {
+      if (config.quickCheck) {
         validationResult = await this.#quickValidation(channel.streamUrl, config);
       } else {
         // Usar conversión HTTPS→HTTP completa
@@ -538,36 +507,6 @@ export class StreamValidationService {
   clearCache() {
     this.#validationCache.clear();
     this.#logger.info('🗑️ Cache de validación limpiado');
-  }
-
-  /**
-   * Detecta el perfil del canal para validación mejorada
-   * @private
-   * @param {Object} channel - Canal a analizar
-   * @returns {string}
-   */
-  #detectChannelProfile(channel) {
-    const url = channel.streamUrl || '';
-    const name = (channel.name || '').toLowerCase();
-    
-    // Detectar tipo de contenido por URL o nombre
-    if (url.includes('sport') || name.includes('sport') || name.includes('espn') || name.includes('fox sports')) {
-      return 'sports';
-    }
-    
-    if (url.includes('news') || name.includes('news') || name.includes('cnn') || name.includes('bbc')) {
-      return 'news';
-    }
-    
-    if (url.includes('movie') || name.includes('movie') || name.includes('cinema')) {
-      return 'movies';
-    }
-    
-    if (name.includes('hd') || name.includes('4k') || url.includes('hd')) {
-      return 'high_quality';
-    }
-    
-    return 'general';
   }
 
   /**

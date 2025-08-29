@@ -174,13 +174,6 @@ export class TVAddonConfig {
         earlyValidationBatchSize: parseInt(process.env.EARLY_VALIDATION_BATCH_SIZE) || 100,
         earlyValidationCacheSize: parseInt(process.env.EARLY_VALIDATION_CACHE_SIZE) || 1000,
         earlyValidationCacheTtl: parseInt(process.env.EARLY_VALIDATION_CACHE_TTL) || 3600,
-        
-        // Configuración de validación avanzada
-        useEnhancedValidation: process.env.USE_ENHANCED_VALIDATION === 'true',
-        enhancedValidationQualityThreshold: parseFloat(process.env.ENHANCED_VALIDATION_QUALITY_THRESHOLD) || 0.7,
-        enhancedValidationLatencyThreshold: parseInt(process.env.ENHANCED_VALIDATION_LATENCY_THRESHOLD) || 3000,
-        enhancedValidationThroughputThreshold: parseInt(process.env.ENHANCED_VALIDATION_THROUGHPUT_THRESHOLD) || 500000,
-        
         // Configuración de deduplicación inteligente
         enableIntelligentDeduplication: process.env.ENABLE_INTELLIGENT_DEDUPLICATION === 'true',
       deduplicationStrategy: process.env.DEDUPLICATION_STRATEGY || 'prioritize_working',
