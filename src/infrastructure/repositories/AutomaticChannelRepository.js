@@ -97,7 +97,7 @@ export class AutomaticChannelRepository extends ChannelRepository {
       this.#logger.info(`M3U descargado: ${m3uContent.length} caracteres`);
 
       // Parsear contenido M3U
-      const parsedChannels = await this.#m3uParser.parseM3UContent(m3uContent);
+      const parsedChannels = await this.#m3uParser.parseM3U(m3uContent);
       this.#logger.info(`Canales parseados: ${parsedChannels.length}`);
 
       // Filtrar URLs que cumplan criterios

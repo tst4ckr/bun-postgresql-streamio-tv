@@ -20,7 +20,7 @@ const testEnvConfig = {
   
   // Configuración mínima requerida
   SERVER_PORT: 3000,
-  ADDON_ID: 'test-automatic-mode',
+  ADDON_ID: 'org.test.automatic-mode',
   ADDON_NAME: 'Test Automatic Mode',
   ADDON_DESCRIPTION: 'Prueba del modo automático',
   
