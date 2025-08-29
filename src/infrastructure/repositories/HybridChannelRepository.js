@@ -14,6 +14,7 @@ import { StreamHealthService } from '../services/StreamHealthService.js';
 import { StreamValidationService } from '../services/StreamValidationService.js';
 import { ChannelDeduplicationService, DeduplicationConfig } from '../../domain/services/ChannelDeduplicationService.js';
 import { filterAllowedChannels } from '../../config/allowed-channels.js';
+import { filterBannedChannels } from '../../config/banned-channels.js';
 
 /**
  * Repositorio híbrido que combina múltiples fuentes de canales
@@ -522,10 +523,20 @@ export class HybridChannelRepository extends ChannelRepository {
         this.#logger.debug(`Canales removidos por categoría: religioso=${stats.removedByCategory.religious}, adulto=${stats.removedByCategory.adult}, político=${stats.removedByCategory.political}`);
       }
       
-      return filteredChannels;
+      activeChannels = filteredChannels;
     }
     
-    return activeChannels;
+    // Aplicar filtrado de canales prohibidos (BANNED_CHANNELS)
+    const beforeBannedCount = activeChannels.length;
+    const finalChannels = filterBannedChannels(activeChannels);
+    const afterBannedCount = finalChannels.length;
+    const bannedRemovedCount = beforeBannedCount - afterBannedCount;
+    
+    if (bannedRemovedCount > 0) {
+      this.#logger.info(`Filtros de canales prohibidos aplicados: ${bannedRemovedCount} canales removidos de ${beforeBannedCount}`);
+    }
+    
+    return finalChannels;
   }
 
   async getAllChannelsUnfiltered() {

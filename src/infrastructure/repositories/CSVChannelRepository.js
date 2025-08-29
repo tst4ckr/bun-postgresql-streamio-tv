@@ -8,6 +8,7 @@ import csv from 'csv-parser';
 import { ChannelRepository, RepositoryError, ChannelNotFoundError } from '../../domain/repositories/ChannelRepository.js';
 import { Channel } from '../../domain/entities/Channel.js';
 import ContentFilterService from '../../domain/services/ContentFilterService.js';
+import { filterBannedChannels } from '../../config/banned-channels.js';
 
 /**
  * Repositorio de canales basado en archivo CSV
@@ -232,6 +233,16 @@ export class CSVChannelRepository extends ChannelRepository {
           political: stats.removedByCategory.political
         });
       }
+    }
+    
+    // Aplicar filtrado de canales prohibidos
+    const beforeBannedCount = channels.length;
+    channels = filterBannedChannels(channels);
+    const afterBannedCount = channels.length;
+    const bannedRemovedCount = beforeBannedCount - afterBannedCount;
+    
+    if (bannedRemovedCount > 0) {
+      this.#logger.info(`Filtros de canales prohibidos aplicados: ${bannedRemovedCount} canales removidos de ${beforeBannedCount}`);
     }
     
     return channels;

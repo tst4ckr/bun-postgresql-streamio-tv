@@ -9,6 +9,7 @@ import { Channel } from '../../domain/entities/Channel.js';
 import { M3UParserService } from '../parsers/M3UParserService.js';
 import ContentFilterService from '../../domain/services/ContentFilterService.js';
 import { filterAllowedChannels } from '../../config/allowed-channels.js';
+import { filterBannedChannels } from '../../config/banned-channels.js';
 import fetch from 'node-fetch';
 
 /**
@@ -164,6 +165,16 @@ export class RemoteM3UChannelRepository extends ChannelRepository {
       }
     }
     
+    // Aplicar filtrado de canales prohibidos (BANNED_CHANNELS)
+    const beforeBannedCount = channels.length;
+    channels = filterBannedChannels(channels);
+    const afterBannedCount = channels.length;
+    const bannedRemovedCount = beforeBannedCount - afterBannedCount;
+    
+    if (bannedRemovedCount > 0) {
+      this.#logger.info(`Filtros de canales prohibidos aplicados: ${bannedRemovedCount} canales removidos de ${beforeBannedCount}`);
+    }
+    
     return channels;
   }
 
@@ -186,6 +197,9 @@ export class RemoteM3UChannelRepository extends ChannelRepository {
       filteredChannels = this.#contentFilter.filterChannels(filteredChannels);
     }
     
+    // Aplicar filtrado de canales prohibidos
+    filteredChannels = filterBannedChannels(filteredChannels);
+    
     return filteredChannels;
   }
   
@@ -198,6 +212,9 @@ export class RemoteM3UChannelRepository extends ChannelRepository {
     if (this.#contentFilter.hasActiveFilters()) {
       filteredChannels = this.#contentFilter.filterChannels(filteredChannels);
     }
+    
+    // Aplicar filtrado de canales prohibidos
+    filteredChannels = filterBannedChannels(filteredChannels);
     
     return filteredChannels;
   }
@@ -226,6 +243,9 @@ export class RemoteM3UChannelRepository extends ChannelRepository {
       filteredChannels = this.#contentFilter.filterChannels(filteredChannels);
     }
     
+    // Aplicar filtrado de canales prohibidos
+    filteredChannels = filterBannedChannels(filteredChannels);
+    
     return filteredChannels;
   }
   
@@ -237,6 +257,9 @@ export class RemoteM3UChannelRepository extends ChannelRepository {
     if (this.#contentFilter.hasActiveFilters()) {
       activeChannels = this.#contentFilter.filterChannels(activeChannels);
     }
+    
+    // Aplicar filtrado de canales prohibidos
+    activeChannels = filterBannedChannels(activeChannels);
     
     return activeChannels.slice(skip, skip + limit);
   }

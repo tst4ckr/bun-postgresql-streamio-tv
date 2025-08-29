@@ -9,6 +9,7 @@ import { ChannelRepository, RepositoryError, ChannelNotFoundError } from '../../
 import { Channel } from '../../domain/entities/Channel.js';
 import { M3UParserService } from '../parsers/M3UParserService.js';
 import ContentFilterService from '../../domain/services/ContentFilterService.js';
+import { filterBannedChannels } from '../../config/banned-channels.js';
 
 /**
  * Repositorio de canales basado en un archivo M3U local
@@ -183,6 +184,16 @@ export class LocalM3UChannelRepository extends ChannelRepository {
           político: filterResult.removedByCategory.political
         });
       }
+    }
+    
+    // Aplicar filtrado de canales prohibidos
+    const beforeBannedCount = channels.length;
+    channels = filterBannedChannels(channels);
+    const afterBannedCount = channels.length;
+    const bannedRemovedCount = beforeBannedCount - afterBannedCount;
+    
+    if (bannedRemovedCount > 0) {
+      this.#logger.info(`Filtros de canales prohibidos aplicados: ${bannedRemovedCount} canales removidos de ${beforeBannedCount}`);
     }
     
     return channels;

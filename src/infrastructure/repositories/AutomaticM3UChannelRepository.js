@@ -8,6 +8,7 @@ import { M3UParserService } from '../parsers/M3UParserService.js';
 import { Channel } from '../../domain/entities/Channel.js';
 import { ChannelDeduplicationService, DeduplicationConfig } from '../../domain/services/ChannelDeduplicationService.js';
 import ContentFilterService from '../../domain/services/ContentFilterService.js';
+import { filterBannedChannels } from '../../config/banned-channels.js';
 
 /**
  * Repositorio automático que procesa M3U desde URL configurada
@@ -334,7 +335,24 @@ export class AutomaticM3UChannelRepository extends ChannelRepository {
    */
   async getAllChannels() {
     const channels = await this.getAllChannelsUnfiltered();
-    return channels.filter(channel => !this.#deactivatedChannels.has(channel.id));
+    let filteredChannels = channels.filter(channel => !this.#deactivatedChannels.has(channel.id));
+    
+    // Aplicar filtros de contenido si están activos
+    if (this.#contentFilter.hasActiveFilters()) {
+      filteredChannels = this.#contentFilter.filterChannels(filteredChannels);
+    }
+    
+    // Aplicar filtrado de canales prohibidos
+    const beforeBannedCount = filteredChannels.length;
+    filteredChannels = filterBannedChannels(filteredChannels);
+    const afterBannedCount = filteredChannels.length;
+    const bannedRemovedCount = beforeBannedCount - afterBannedCount;
+    
+    if (bannedRemovedCount > 0) {
+      this.#logger.info(`Filtros de canales prohibidos aplicados: ${bannedRemovedCount} canales removidos de ${beforeBannedCount}`);
+    }
+    
+    return filteredChannels;
   }
 
   /**
