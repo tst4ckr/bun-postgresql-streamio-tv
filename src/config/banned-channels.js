@@ -134,9 +134,10 @@ function normalizeChannelName(channelName) {
   }
   
   return channelName
+    .trim()
     .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, ' ')
-    .replace(/\s+/g, ' ')
+    .replace(/[^a-z0-9\s]/g, '') // Remover caracteres especiales excepto espacios
+    .replace(/\s+/g, ' ') // Normalizar espacios
     .trim();
 }
 
@@ -154,11 +155,11 @@ function levenshteinDistance(str1, str2) {
   
   for (let j = 1; j <= str2.length; j++) {
     for (let i = 1; i <= str1.length; i++) {
-      const cost = str1[i - 1] === str2[j - 1] ? 0 : 1;
+      const indicator = str1[i - 1] === str2[j - 1] ? 0 : 1;
       matrix[j][i] = Math.min(
-        matrix[j][i - 1] + 1,
-        matrix[j - 1][i] + 1,
-        matrix[j - 1][i - 1] + cost
+        matrix[j][i - 1] + 1,     // deletion
+        matrix[j - 1][i] + 1,     // insertion
+        matrix[j - 1][i - 1] + indicator // substitution
       );
     }
   }
@@ -167,27 +168,31 @@ function levenshteinDistance(str1, str2) {
 }
 
 /**
- * Calcula la similitud entre dos cadenas (0-1)
+ * Calcula la similitud entre dos cadenas usando algoritmo mejorado
  * @param {string} str1 - Primera cadena
  * @param {string} str2 - Segunda cadena
  * @returns {number} Similitud entre 0 y 1
  */
 function calculateStringSimilarity(str1, str2) {
-  if (!str1 || !str2) return 0;
-  if (str1 === str2) return 1;
+  if (str1 === str2) return 1.0;
+  if (!str1 || !str2) return 0.0;
+
+  // Verificar si una es subcadena de la otra
+  const shorter = str1.length < str2.length ? str1 : str2;
+  const longer = str1.length < str2.length ? str2 : str1;
   
+  if (longer.includes(shorter) && shorter.length >= 2) {
+    const lengthRatio = shorter.length / longer.length;
+    return Math.min(0.95, 0.7 + (lengthRatio * 0.25));
+  }
+
+  // Algoritmo de distancia de Levenshtein normalizada
   const maxLength = Math.max(str1.length, str2.length);
-  if (maxLength === 0) return 1;
-  
   const distance = levenshteinDistance(str1, str2);
+  
   return 1 - (distance / maxLength);
 }
 
-/**
- * Verifica si un canal está prohibido
- * @param {string} channelName - Nombre del canal a verificar
- * @returns {boolean} true si el canal está prohibido, false de lo contrario
- */
 /**
  * Verifica si un canal está prohibido usando similitud de 90%
  * @param {string} channelName - Nombre del canal a verificar
@@ -232,8 +237,8 @@ function isChannelBanned(channelName, threshold = 0.9) {
       isContained = normalizedInput.includes(normalizedBanned) || normalizedBanned.includes(normalizedInput);
     }
     
-    return similarity >= threshold || isContained;
-   });
+    return similarity >= threshold || isContained || isContained;
+  });
 }
 
 /**
@@ -569,10 +574,6 @@ function filterBannedChannels(channels) {
   });
 }
 
-/**
- * Obtiene todos los términos prohibidos
- * @returns {Array} Array de términos prohibidos
- */
 /**
  * Obtiene la lista actual de canales prohibidos
  * @returns {Array<string>} Lista de canales prohibidos
