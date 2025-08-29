@@ -27,7 +27,7 @@ const BANNED_CHANNELS = [
   'VIVID',
   'BRAZZERS',
   'NAUGHTY',
-  'SPICE',
+  '- Rs',
   'EXTREME',
   'VIOLENCE',
   'GORE',
