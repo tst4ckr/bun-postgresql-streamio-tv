@@ -8,6 +8,7 @@ import { Channel } from '../../domain/entities/Channel.js';
 import { M3UParserService } from '../parsers/M3UParserService.js';
 import { HttpsToHttpConversionService } from '../services/HttpsToHttpConversionService.js';
 import { StreamHealthService } from '../services/StreamHealthService.js';
+import { filterBannedChannels } from '../../config/banned-channels.js';
 import fetch from 'node-fetch';
 import { URL } from 'url';
 
@@ -117,7 +118,11 @@ export class AutomaticChannelRepository extends ChannelRepository {
       const uniqueChannels = this.#removeDuplicates(allChannels);
       this.#logger.info(`Canales únicos finales: ${uniqueChannels.length}`);
 
-      this.#channels = uniqueChannels;
+      // 7. Aplicar filtro de canales prohibidos al final del proceso
+      const bannedFilteredChannels = filterBannedChannels(uniqueChannels);
+      this.#logger.info(`Filtro de canales prohibidos aplicado: ${uniqueChannels.length - bannedFilteredChannels.length} canales removidos`);
+
+      this.#channels = bannedFilteredChannels;
       this.#buildChannelMap();
 
     } catch (error) {

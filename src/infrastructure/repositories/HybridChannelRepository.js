@@ -13,6 +13,7 @@ import { HttpsToHttpConversionService } from '../services/HttpsToHttpConversionS
 import { StreamHealthService } from '../services/StreamHealthService.js';
 import { StreamValidationService } from '../services/StreamValidationService.js';
 import { ChannelDeduplicationService, DeduplicationConfig } from '../../domain/services/ChannelDeduplicationService.js';
+import { filterBannedChannels } from '../../config/banned-channels.js';
 
 /**
  * Repositorio híbrido que combina múltiples fuentes de canales
@@ -266,8 +267,14 @@ export class HybridChannelRepository extends ChannelRepository {
       // Aplicar deduplicación centralizada
       const deduplicationResult = await this.#deduplicationService.deduplicateChannels(allChannels);
       
-      // Actualizar canales y mapa con resultados deduplicados
-      this.#channels = deduplicationResult.channels;
+      // Aplicar filtro de canales prohibidos
+      const beforeBannedCount = deduplicationResult.channels.length;
+      const filteredChannels = filterBannedChannels(deduplicationResult.channels);
+      const afterBannedCount = filteredChannels.length;
+      const bannedRemovedCount = beforeBannedCount - afterBannedCount;
+      
+      // Actualizar canales y mapa con resultados filtrados
+      this.#channels = filteredChannels;
       this.#channelMap.clear();
       this.#channels.forEach(channel => {
         this.#channelMap.set(channel.id, channel);
@@ -280,7 +287,7 @@ export class HybridChannelRepository extends ChannelRepository {
       const hdUpgrades = metrics.hdUpgrades;
       
       this.#logger.info(
-        `📊 Deduplicación completada: ${allCsvChannels.length} CSV (preservados) + ${m3uAdded} M3U (validados) = ${this.#channels.length} canales finales (${m3uDuplicates} duplicados omitidos, ${hdUpgrades} actualizados a HD)`
+        `📊 Deduplicación completada: ${allCsvChannels.length} CSV (preservados) + ${m3uAdded} M3U (validados) = ${this.#channels.length} canales finales (${m3uDuplicates} duplicados omitidos, ${hdUpgrades} actualizados a HD${bannedRemovedCount > 0 ? `, ${bannedRemovedCount} canales prohibidos removidos` : ''})`
       );
       
       this.#lastLoadTime = new Date();
