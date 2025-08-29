@@ -428,6 +428,12 @@ export class AutomaticChannelRepository extends ChannelRepository {
     this.#logger.info('Canales refrescados exitosamente');
   }
 
+  async refreshFromRemote() {
+    this.#logger.info('Forzando refresco desde fuente automática...');
+    await this.#downloadAndProcessM3U();
+    this.#lastLoadTime = new Date();
+  }
+
   getRepositoryInfo() {
     return {
       type: 'automatic',
