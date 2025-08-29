@@ -6,576 +6,431 @@
 2. [Arquitectura del Sistema](#arquitectura-del-sistema)
 3. [Flujo de Datos](#flujo-de-datos)
 4. [Componentes Principales](#componentes-principales)
-5. [Configuración](#configuración)
-6. [Manejo de Errores](#manejo-de-errores)
-7. [Seguridad](#seguridad)
-8. [Despliegue](#despliegue)
+5. [Sistema de Validación de Streams](#sistema-de-validación-de-streams)
+6. [Servicios de Infraestructura](#servicios-de-infraestructura)
+7. [Configuración](#configuración)
+8. [Manejo de Errores](#manejo-de-errores)
+9. [Seguridad](#seguridad)
+10. [Despliegue](#despliegue)
 
 ## 🎯 Visión General
 
-El **TV IPTV Addon** es una extensión para Stremio que proporciona acceso a canales de televisión en vivo desde fuentes IPTV (archivos M3U/M3U8 y CSV). Está diseñado siguiendo principios de Clean Architecture y Domain-Driven Design (DDD) para mantener una base de código escalable y mantenible.
+El **TV IPTV Addon** es una extensión para Stremio que proporciona acceso a canales de televisión en vivo desde fuentes IPTV. Implementa arquitectura limpia con validación robusta de streams.
 
 ### Características Principales
-- ✅ Soporte para múltiples fuentes de datos (CSV, M3U local/remoto)
-- ✅ Validación automática de streams
-- ✅ Filtrado por país, idioma y género
-- ✅ Sistema avanzado de filtros de contenido (religioso, adulto, político)
-- ✅ Cache optimizado para rendimiento
-- ✅ Manejo robusto de errores
-- ✅ Configuración centralizada via variables de entorno
+- ✅ Validación multi-etapa de streams HTTP/HTTPS
+- ✅ Conversión automática HTTPS→HTTP
+- ✅ Cache de validación con TTL configurable
+- ✅ Procesamiento por lotes concurrente
+- ✅ Sistema de filtros de contenido avanzado
+- ✅ Manejo robusto de errores y reintentos
 
 ## 🏗️ Arquitectura del Sistema
 
-### Patrones de Diseño Implementados
+### Diagrama de Arquitectura Completa
 
 ```
-┌─────────────────────────────────────────────┐
-│              Capa de Presentación            │
-│            (Handlers de Stremio)            │
-├─────────────────────────────────────────────┤
-│              Capa de Aplicación            │
-│         (Servicios y Casos de Uso)         │
-├─────────────────────────────────────────────┤
-│              Capa de Dominio                 │
-│        (Entidades y Value Objects)         │
-├─────────────────────────────────────────────┤
-│            Capa de Infraestructura          │
-│   (Repositorios, Parsers, Configuración)    │
-└─────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                    STREMIO CLIENT                            │
+└─────────────────────────┬───────────────────────────────────┘
+                          │ HTTP/HTTPS
+┌─────────────────────────┴───────────────────────────────────┐
+│                    API LAYER                                │
+│  ┌─────────────────┐  ┌─────────────────┐                 │
+│  │ Catalog Handler │  │ Stream Handler  │                 │
+│  └────────┬────────┘  └────────┬────────┘                 │
+└───────────┼───────────────────┼───────────────────────────┘
+            │                   │
+┌───────────┴───────────────────┴───────────────────────────┐
+│                 APPLICATION LAYER                          │
+│  ┌─────────────────┐  ┌─────────────────┐                 │
+│  │ ChannelService  │  │ ValidationSvc   │                 │
+│  └────────┬────────┘  └────────┬────────┘                 │
+└───────────┼───────────────────┼───────────────────────────┘
+            │                   │
+┌───────────┴───────────────────┴───────────────────────────┐
+│                  DOMAIN LAYER                              │
+│  ┌─────────────────┐  ┌─────────────────┐                 │
+│  │ Channel Entity  │  │ StreamQuality   │                 │
+│  └─────────────────┘  └─────────────────┘                 │
+└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                INFRASTRUCTURE LAYER                        │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌───────────┐│
+│  │ HybridRepo      │  │ StreamValidation  │  │ HealthSvc ││
+│  │ CSVRepo         │  │ HTTPS→HTTP Conv   │  │ BitelUID  ││
+│  │ RemoteM3URepo   │  │ Cache Manager     │  │ Parser    ││
+│  └─────────────────┘  └─────────────────┘  └───────────┘│
+└─────────────────────────────────────────────────────────────┘
 ```
 
-### Principios SOLID Aplicados
-- **S**ingle Responsibility: Cada clase tiene una única responsabilidad
-- **O**pen/Closed: Extensible sin modificar código existente
-- **L**iskov Substitution: Interfaces bien definidas
-- **I**nterface Segregation: Interfaces específicas y cohesivas
-- **D**ependency Inversion: Dependencias en abstracciones, no concreciones
+### Principios SOLID
+- **S**: Cada servicio tiene responsabilidad única
+- **O**: Extensible mediante nuevos repositorios/filtros
+- **L**: Interfaces bien definidas para todos los componentes
+- **I**: APIs específicas para cada caso de uso
+- **D**: Inyección de dependencias en constructores
 
-## 🔄 Flujo de Datos
+## 🔄 Flujo de Datos Detallado
 
-### 1. Inicialización del Addon
+### 1. Inicialización del Sistema
 ```
-index.js → TVAddonConfig → ChannelRepositoryFactory → Repositorio Activo
+index.js
+    ↓
+TVAddonConfig (env vars)
+    ↓
+ChannelRepositoryFactory
+    ↓
+HybridChannelRepository
+    ↓
+ContentFilterService
+    ↓
+StreamValidationService
 ```
 
-### 2. Petición de Catálogo
+### 2. Flujo de Validación de Streams
 ```
-Stremio Client → Catalog Handler → ChannelService → Repositorio → Canales → Meta Preview
+Channel → StreamValidationService → HttpsToHttpConversionService → StreamHealthService
+   ↓              ↓                        ↓                         ↓
+Cache Check → Quick HEAD → HTTPS/HTTP Test → Final Validation → Result Cache
 ```
 
-### 3. Petición de Stream
+### 3. Procesamiento por Lotes
 ```
-Stremio Client → Stream Handler → ChannelService → Stream Validation → Respuesta Stream
+Batch Input → Concurrent Workers → Individual Validation → Statistics → Cache Update
 ```
 
 ## 🧩 Componentes Principales
 
-### 1. Entidades del Dominio (`/src/domain/`)
+### 1. Entidades del Dominio
 
-#### Channel Entity (`Channel.js`)
-Representa un canal de televisión con:
-- Identidad única (`tv_nombre-canal`)
-- Propiedades inmutables (nombre, URL, país, idioma)
-- Value Objects para calidad y tipo
-- Métodos de conversión para Stremio
-
+#### Channel Entity (`/src/domain/entities/Channel.js`)
+**Propósito**: Representar un canal de TV con identidad única
+**Dependencias**: Ninguna (entidad pura)
+**API expuesta**:
 ```javascript
-const canal = new Channel({
-  id: 'tv_televisa',
-  name: 'Televisa',
+const channel = new Channel({
+  id: 'tv_televisa_hd',
+  name: 'Televisa HD',
   streamUrl: 'https://example.com/stream.m3u8',
-  genre: 'Entertainment',
-  country: 'México',
-  language: 'es'
+  country: 'MX',
+  language: 'es',
+  quality: 'HD'
 });
+
+channel.getId();           // "tv_televisa_hd"
+channel.getStreamUrl();    // URL del stream
+channel.toStremioFormat(); // Formato para Stremio
+```
+**Limitaciones**: Inmutable después de creación
+
+#### StreamQuality VO (`/src/domain/value-objects/StreamQuality.js`)
+**Propósito**: Encapsular lógica de calidad
+**Valores**: Auto, SD, HD, FullHD, 4K
+**Detección**: Automática desde URL patterns
+
+### 2. Repositorios
+
+#### HybridChannelRepository (`/src/infrastructure/repositories/HybridChannelRepository.js`)
+**Propósito**: Combinar múltiples fuentes con priorización
+**Dependencias**: ContentFilterService, otros repositorios
+**Orden de prioridad**:
+1. CSV local (prioridad absoluta)
+2. M3U remoto (solo nuevos)
+3. M3U local (solo nuevos)
+
+**API principal**:
+```javascript
+const repo = new HybridChannelRepository(config, contentFilter);
+const channels = await repo.getAllChannels();
+const filtered = await repo.getChannelsByCountry('MX');
 ```
 
-#### StreamQuality Value Object (`StreamQuality.js`)
-- Encapsula la lógica de calidad de stream
-- Valores válidos: Auto, SD, HD, Full HD, 4K
-- Detección automática desde URLs
-- Comparación y normalización
+#### CSVChannelRepository (`/src/infrastructure/repositories/CSVChannelRepository.js`)
+**Propósito**: Leer canales desde CSV local
+**Formato esperado**:
+```csv
+name,url,country,language,genre
+televisa,https://...,MX,es,Entertainment
+```
 
-### 2. Repositorios (`/src/infrastructure/repositories/`)
+#### RemoteM3UChannelRepository (`/src/infrastructure/repositories/RemoteM3UChannelRepository.js`)
+**Propósito**: Descargar y parsear M3U remotos
+**Features**: Cache, retry, backup URLs
 
-#### ChannelRepository (Interfaz Abstracta)
-Define el contrato para todas las implementaciones:
-- `getAllChannels()` - Obtener todos los canales
-- `getChannelById(id)` - Buscar por ID
-- `searchChannels(term)` - Búsqueda por nombre
-- `getChannelsByGenre/country/language()` - Filtrado
+### 3. Servicios de Validación
 
-#### CSVChannelRepository
-- Lee canales desde archivos CSV locales
-- Cache con refresco automático
-- Validación de filas CSV
-- Filtros de configuración aplicados
+#### StreamValidationService (`/src/infrastructure/services/StreamValidationService.js`)
+**Propósito**: Validación temprana y exhaustiva de streams
+**Dependencias**: HttpsToHttpConversionService, StreamHealthService
+**Características**:
+- ✅ Cache TTL configurable (default: 5 min)
+- ✅ Validación concurrente (default: 10 workers)
+- ✅ Batch processing
+- ✅ Métricas detalladas
 
-#### HybridChannelRepository
+**API principal**:
+```javascript
+const validator = new StreamValidationService(config);
+await validator.enableValidation();
 
-Repositorio que combina múltiples fuentes de canales con **priorización estricta**:
+// Validar individual
+const result = await validator.validateChannel(channel);
 
-##### Priorización de Fuentes
-- **CSV local**: Prioridad ABSOLUTA, nunca se sobrescribe
-- **URLs M3U remotas/locales**: Solo agregan canales NO presentes en CSV
-- **Deduplicación**: Automática por ID de canal, CSV siempre gana
-- **Orden de carga**: CSV → M3U remotas → M3U locales
+// Validar por lotes
+const results = await validator.validateChannelsBatch(channels, {
+  concurrency: 5,
+  showProgress: true
+});
 
-##### Características Técnicas
-- Gestión unificada de múltiples repositorios
-- Estadísticas detalladas de duplicados omitidos
-- Logging específico para priorización CSV
-- Mantenimiento de prioridad durante refrescos
-- Integración completa con filtros de contenido
+// Estadísticas
+const stats = validator.getStats();
+// { total: 100, valid: 85, invalid: 15, cacheHits: 23 }
+```
 
-#### RemoteM3UChannelRepository
-- Descarga y parsea listas M3U remotas
-- Manejo de errores y failover
-- Actualización periódica
-- Soporte para URLs de respaldo
+**Flujo interno**:
+1. Check cache
+2. Quick HEAD request
+3. HTTPS→HTTP conversion (si falla)
+4. Full validation
+5. Cache result
 
-### 3. Parsers (`/src/infrastructure/parsers/`)
+#### HttpsToHttpConversionService (`/src/infrastructure/services/HttpsToHttpConversionService.js`)
+**Propósito**: Convertir HTTPS→HTTP cuando HTTPS falla
+**Dependencias**: StreamHealthService
+**Lógica**:
+- Prueba HTTPS primero
+- Si falla, prueba HTTP equivalente
+- Solo retorna HTTP si funciona
+- Mantiene estadísticas de conversión
 
-#### M3UParserService
-- Parsea archivos M3U/M3U8 con validación robusta
-- Extrae metadatos (logo, grupo, país)
-- Detección automática de calidad
-- Normalización de géneros y países
+**API**:
+```javascript
+const converter = new HttpsToHttpConversionService();
+const result = await converter.processChannel(channel);
+// { originalWorks: true/false, httpWorks: true/false, finalUrl: '...' }
+```
 
-### 4. Handlers de Stremio (`/src/application/handlers/`)
+#### StreamHealthService (`/src/infrastructure/services/StreamHealthService.js`)
+**Propósito**: Verificar salud de streams individualmente
+**Métodos**:
+- `checkStream(url)`: HEAD request con timeout
+- `checkChannel(channel)`: Wrapper con retry
+- `checkChannels(channels)`: Batch processing
 
-#### StreamHandler
-Convierte canales al formato requerido por Stremio:
-- Genera nombres descriptivos con calidad
-- Añade behavior hints para streams especiales
-- Maneja configuración de usuario
+**Configuración**:
+```javascript
+{
+  timeout: 5000,        // 5s timeout
+  retries: 3,           // 3 intentos
+  backoff: 'exponential' // Backoff exponencial
+}
+```
 
-### 5. Servicios de Soporte
+### 4. Servicios de Soporte
 
-#### StreamHealthService
-- Verifica disponibilidad de streams
-- Validación no intrusiva (HEAD requests)
-- Reportes de salud por lotes
-- Timeout configurable
+#### BitelUidService (`/src/infrastructure/services/BitelUidService.js`)
+**Propósito**: Procesar URLs con formato Bitel
+**Función**: Extraer UID de URLs Bitel para validación
 
-#### ContentFilterService
-- Sistema avanzado de filtrado de contenido
-- Detección por palabras clave y patrones
-- Filtros configurables (religioso, adulto, político)
-- Múltiples modos de coincidencia (exacto, parcial, difuso)
-- Estadísticas detalladas de filtrado
-- Configuración de sensibilidad ajustable
+#### M3UParserService (`/src/infrastructure/parsers/M3UParserService.js`)
+**Propósito**: Parsear archivos M3U/M3U8
+**Features**:
+- Extracción de metadatos (#EXTINF)
+- Detección de logos
+- Normalización de grupos
+- Validación de URLs
 
-#### SecurityMiddleware
-- Configura CORS para dominios de Stremio
-- Rate limiting para protección DDoS
-- Headers de seguridad con Helmet
+## 🔄 Sistema de Validación de Streams
 
-#### ErrorHandler
-- Manejo centralizado de errores
-- Logging estructurado
-- Respuestas seguras para Stremio
-- Graceful shutdown
+### Diagrama de Flujo de Validación
 
-## ⚙️ Configuración
+```
+┌─────────────────────────────────────────────────────────────┐
+│                   STREAM VALIDATION FLOW                     │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  Input Channel                                              │
+│       ↓                                                     │
+│  [Cache Lookup] ──Si──→ [Return Cached]                   │
+│       │No                                                  │
+│       ↓                                                     │
+│  [Quick HEAD Test] ──Fallo──→ [HTTPS→HTTP Conversion]      │
+│       │Éxito                    ↓                           │
+│       │                    [HTTP Test]                      │
+│       │                        │                           │
+│       │                        ↓                           │
+│       └────────────────→ [Final Validation]               │
+│                                │                           │
+│                                ↓                           │
+│                           [Cache Result]                    │
+│                                │                           │
+│                                ↓                           │
+│                           [Return Status]                   │
+└─────────────────────────────────────────────────────────────┘
+```
 
-### Variables de Entorno Principales
+### Estados de Validación
+
+| Estado | Descripción | Acción |
+|--------|-------------|---------|
+| `VALID` | Stream funcional | Incluir en catálogo |
+| `INVALID` | Stream roto | Excluir/marcar |
+| `TIMEOUT` | Timeout excedido | Reintentar luego |
+| `CONVERTED` | HTTPS→HTTP exitoso | Usar HTTP |
+
+### Configuración de Validación
 
 ```bash
-# Fuente de datos
-CHANNELS_SOURCE=remote_m3u          # csv, m3u, remote_m3u, hybrid
-M3U_URL=https://iptv-org.github.io/iptv/countries/es.m3u
-BACKUP_M3U_URL=https://iptv-org.github.io/iptv/countries/mx.m3u
-
-# Filtros básicos
-ALLOWED_COUNTRIES=MX,ES,AR,CO,US
-BLOCKED_COUNTRIES=
-ENABLE_ADULT_CHANNELS=false
-
-# Filtros de contenido avanzados
-ENABLE_CONTENT_FILTERS=true
-FILTER_RELIGIOUS_CONTENT=true
-FILTER_ADULT_CONTENT=true
-FILTER_POLITICAL_CONTENT=false
-FILTER_SENSITIVITY=medium           # low, medium, high
-FILTER_MATCH_MODE=partial           # exact, partial, fuzzy
-
-# Cache (segundos)
-STREAM_CACHE_MAX_AGE=300
-CATALOG_CACHE_MAX_AGE=1800
-
-# Validación
+# Variables de entorno
 VALIDATE_STREAMS_ON_STARTUP=true
 VALIDATE_STREAMS_INTERVAL_HOURS=6
+STREAM_VALIDATION_TIMEOUT=5000
+STREAM_VALIDATION_CONCURRENCY=10
+STREAM_CACHE_TTL_MINUTES=5
 ```
 
-### Configuración por Usuario
-El addon soporta configuración personalizada:
-- URL M3U personalizada
-- Calidad preferida (HD/SD/Auto)
-- Idioma preferido
-- Filtros de contenido personalizados
+## 🛠️ Servicios de Infraestructura
 
-## 🛡️ Sistema de Filtros de Contenido
+### 1. ContentFilterService (`/src/domain/services/ContentFilterService.js`)
+**Propósito**: Filtrar contenido por categorías
+**Categorías**:
+- Religioso: iglesia, pastor, dios, jesus
+- Adulto: xxx, adult, porn, +18
+- Político: política, gobierno, presidente
 
-### Arquitectura del Sistema de Filtros
-
-El `ContentFilterService` implementa un sistema robusto de filtrado que opera a nivel de repositorio, aplicándose automáticamente a todos los métodos de recuperación de canales.
-
-#### Componentes Principales
-
-```javascript
-// Estructura del ContentFilterService
-class ContentFilterService {
-  constructor(filterConfig)     // Inicialización con configuración
-  isActive()                   // Verifica si hay filtros activos
-  filterChannels(channels)     // Aplica filtros a lista de canales
-  getActiveFilters()          // Obtiene lista de filtros activos
-  getFilterConfiguration()    // Obtiene configuración actual
-}
-```
-
-#### Tipos de Filtros Implementados
-
-1. **Filtro Religioso** (`FILTER_RELIGIOUS_CONTENT`)
-   - Detecta contenido religioso, evangélico, católico
-   - Palabras clave: iglesia, pastor, dios, jesus, cristo, biblia, gospel
-   - Aplicable a canales de predicación, misas, programas espirituales
-
-2. **Filtro de Contenido Adulto** (`FILTER_ADULT_CONTENT`)
-   - Bloquea contenido explícito o para adultos
-   - Palabras clave: xxx, adult, porn, sexy, hot, +18, adulto, erótico
-   - Protección para entornos familiares
-
-3. **Filtro Político** (`FILTER_POLITICAL_CONTENT`)
-   - Oculta contenido político y gubernamental
-   - Palabras clave: política, gobierno, presidente, elecciones, congreso
-   - Útil para evitar contenido polarizante
-
-#### Configuración de Sensibilidad
-
+**Configuración**:
 ```bash
-# Niveles de sensibilidad
-FILTER_SENSITIVITY=low      # Solo coincidencias exactas obvias
-FILTER_SENSITIVITY=medium   # Balance entre precisión y cobertura
-FILTER_SENSITIVITY=high     # Máxima detección, puede tener falsos positivos
-```
-
-#### Modos de Coincidencia
-
-```bash
-# Modos de detección
-FILTER_MATCH_MODE=exact     # Solo palabras completas exactas
-FILTER_MATCH_MODE=partial   # Coincidencias parciales en texto
-FILTER_MATCH_MODE=fuzzy     # Detección difusa con tolerancia a errores
-```
-
-#### Integración en Repositorios
-
-Todos los repositorios (`HybridChannelRepository`, `CSVChannelRepository`, `RemoteM3UChannelRepository`, `LocalM3UChannelRepository`) integran automáticamente el filtrado:
-
-```javascript
-// Ejemplo de integración en método getAllChannels
-async getAllChannels() {
-  let channels = await this.getBaseChannels();
-  
-  // Aplicar filtros de contenido si están activos
-  if (this.#contentFilter.isActive()) {
-    const filterResult = this.#contentFilter.filterChannels(channels);
-    channels = filterResult.filteredChannels;
-    
-    // Logging de estadísticas
-    this.#logger.info(`Filtros aplicados: ${filterResult.removedChannels.length} canales removidos`);
-  }
-  
-  return channels;
-}
-```
-
-#### Estadísticas de Filtrado
-
-El sistema proporciona estadísticas detalladas:
-
-```javascript
-// Ejemplo de estadísticas retornadas
-{
-  enabled: true,
-  removedChannels: 15,
-  removalPercentage: "12.50",
-  removedByCategory: {
-    religious: 8,
-    adult: 5,
-    political: 2
-  },
-  activeFilters: ["religious", "adult"],
-  totalChannelsProcessed: 120
-}
-```
-
-### Ejemplos de Configuración de Filtros
-
-#### Configuración Familiar Estricta
-```bash
-# Máxima protección para entornos familiares
 ENABLE_CONTENT_FILTERS=true
 FILTER_RELIGIOUS_CONTENT=true
-FILTER_ADULT_CONTENT=true
-FILTER_POLITICAL_CONTENT=true
-FILTER_SENSITIVITY=high
-FILTER_MATCH_MODE=fuzzy
-
-# Palabras clave personalizadas adicionales
-CUSTOM_RELIGIOUS_KEYWORDS=evangelio,misa,oración,santo,bendición
-CUSTOM_ADULT_KEYWORDS=sensual,provocativo,nocturno,+21
-CUSTOM_POLITICAL_KEYWORDS=campaña,partido,senado,diputado
-```
-
-#### Configuración Moderada
-```bash
-# Solo filtrado de contenido adulto
-ENABLE_CONTENT_FILTERS=true
-FILTER_RELIGIOUS_CONTENT=false
 FILTER_ADULT_CONTENT=true
 FILTER_POLITICAL_CONTENT=false
 FILTER_SENSITIVITY=medium
 FILTER_MATCH_MODE=partial
 ```
 
-#### Configuración Permisiva
+### 2. ChannelDeduplicationService (`/src/domain/services/ChannelDeduplicationService.js`)
+**Propósito**: Eliminar duplicados manteniendo prioridad
+**Algoritmo**: Hash por ID (nombre-canal), CSV siempre gana
+
+### 3. ErrorHandler (`/src/infrastructure/error/ErrorHandler.js`)
+**Propósito**: Manejo centralizado de errores
+**Features**: Logging estructurado, respuestas seguras, graceful shutdown
+
+## ⚙️ Configuración del Sistema
+
+### Variables de Entorno Críticas
+
 ```bash
-# Filtrado mínimo, solo contenido explícito obvio
+# Core
+PORT=7000
+NODE_ENV=production
+
+# Fuentes de Datos
+CHANNELS_SOURCE=hybrid
+M3U_URL=https://iptv-org.github.io/iptv/countries/es.m3u
+CSV_FILE_PATH=./data/channels.csv
+
+# Validación
+VALIDATE_STREAMS_ON_STARTUP=true
+STREAM_VALIDATION_TIMEOUT=5000
+STREAM_VALIDATION_CONCURRENCY=10
+
+# Cache
+STREAM_CACHE_TTL_MINUTES=5
+CATALOG_CACHE_MAX_AGE=1800
+
+# Filtros
 ENABLE_CONTENT_FILTERS=true
-FILTER_RELIGIOUS_CONTENT=false
-FILTER_ADULT_CONTENT=true
-FILTER_POLITICAL_CONTENT=false
-FILTER_SENSITIVITY=low
-FILTER_MATCH_MODE=exact
+FILTER_SENSITIVITY=medium
+ALLOWED_COUNTRIES=MX,ES,AR,CO,US
 ```
 
-#### Sin Filtros
-```bash
-# Contenido completo sin restricciones
-ENABLE_CONTENT_FILTERS=false
-```
+### Requisitos del Sistema
 
-### Verificación de Filtros
+- **Runtime**: Bun.js (versión 1.0+)
+- **Memoria**: 512MB mínimo (recomendado 1GB)
+- **Red**: Acceso HTTP/HTTPS a URLs IPTV
+- **Almacenamiento**: 100MB para cache y logs
 
-Para verificar que los filtros funcionan correctamente:
+## 🔐 Seguridad y Protocolos
 
-```bash
-# Ejecutar prueba básica de filtros
-node scripts/test-csv-priority.js
+### Protocolos Implementados
+- **HTTP/1.1**: Para validación de streams
+- **HTTPS**: Para repositorios remotos
+- **CORS**: Restringido a dominios Stremio
+- **Rate Limiting**: 100 req/min por IP
 
-# Ejecutar prueba completa con estadísticas
-node scripts/test-csv-priority-with-m3u.js
-```
-
-### Personalización Avanzada
-
-#### Palabras Clave por Categoría
-
-```bash
-# Religioso - Detecta contenido religioso/espiritual
-CUSTOM_RELIGIOUS_KEYWORDS=iglesia,pastor,dios,jesus,cristo,biblia,gospel,evangelio,misa,oración,santo,bendición,católico,protestante,cristiano
-
-# Adulto - Detecta contenido para adultos
-CUSTOM_ADULT_KEYWORDS=xxx,adult,porn,sexy,hot,+18,adulto,erótico,sensual,provocativo,nocturno,+21,desnudo,íntimo
-
-# Político - Detecta contenido político/gubernamental
-CUSTOM_POLITICAL_KEYWORDS=política,gobierno,presidente,elecciones,congreso,senado,diputado,campaña,partido,ministerio,alcalde,gobernador
-```
-
-#### Configuración de Logging
-
-```bash
-# Habilitar logging detallado de filtros
-FILTER_DETAILED_LOGGING=true
-FILTER_LOG_REMOVED_CHANNELS=true
-FILTER_LOG_STATISTICS=true
-```
-
-Esto generará logs como:
-```
-[INFO] Filtros de contenido aplicados: 12 canales removidos (8.33%)
-[INFO] Por categoría: religioso=5, adulto=4, político=3
-[INFO] Canales removidos: Canal Religioso TV, Contenido Adulto Plus, Noticias Políticas
-```
-  activeFilters: ["religious", "adult"],
-  filterConfiguration: {
-    sensitivity: "medium",
-    matchMode: "partial"
-  }
+### Headers de Seguridad
+```javascript
+{
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'DENY',
+  'X-XSS-Protection': '1; mode=block',
+  'Strict-Transport-Security': 'max-age=31536000'
 }
 ```
 
-#### Personalización de Palabras Clave
+## 🚀 Despliegue y Operación
 
+### Docker Compose (Producción)
+```yaml
+version: '3.8'
+services:
+  tv-addon:
+    build: .
+    ports:
+      - "7000:7000"
+    environment:
+      - NODE_ENV=production
+      - CHANNELS_SOURCE=hybrid
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    restart: unless-stopped
+```
+
+### Monitoreo
+
+**Endpoints de salud**:
+- `GET /health` - Estado del servicio
+- `GET /metrics` - Métricas de validación
+- `GET /manifest.json` - Configuración Stremio
+
+**Logs estructurados**:
+```json
+{
+  "timestamp": "2024-01-01T00:00:00Z",
+  "level": "info",
+  "service": "StreamValidationService",
+  "message": "Validation completed",
+  "metadata": { "valid": 85, "invalid": 15, "cacheHits": 23 }
+}
+```
+
+## 📊 Ejemplos de Uso
+
+### Validar Streams Manualmente
 ```bash
-# Personalizar listas de palabras clave
-RELIGIOUS_KEYWORDS=iglesia,pastor,dios,jesus,cristo,biblia,gospel,cristiano
-ADULT_KEYWORDS=xxx,adult,porn,sexy,hot,+18,adulto,erotico,sexual
-POLITICAL_KEYWORDS=politica,gobierno,presidente,elecciones,congreso,senado
+# Validar todos los streams
+node scripts/validate-channels.js
+
+# Validar con configuración personalizada
+VALIDATE_STREAMS_CONCURRENCY=20 node scripts/test-validation-flow.js
+
+# Ver estadísticas de validación
+curl http://localhost:7000/metrics
 ```
 
-#### Consideraciones de Rendimiento
-
-- **Filtrado Eficiente**: O(n) donde n es el número de canales
-- **Cache de Patrones**: Las expresiones regulares se compilan una vez
-- **Filtrado Lazy**: Solo se aplica cuando hay filtros activos
-- **Impacto Mínimo**: < 5ms adicionales en listas de 1000+ canales
-
-## 🔐 Seguridad
-
-### Medidas Implementadas
-- **CORS**: Solo permite dominios de Stremio y localhost
-- **Rate Limiting**: 100 requests/minuto por IP
-- **Helmet**: Headers de seguridad HTTP
-- **Input Validation**: Validación de todas las entradas
-- **Error Masking**: No expone detalles internos
-
-### Ejemplo de Configuración CORS
-```javascript
-const allowedOrigins = [
-  'https://app.strem.io',
-  'https://web.strem.io',
-  'http://localhost:3000'
-];
+### Integración con CI/CD
+```yaml
+# GitHub Actions
+- name: Validate Streams
+  run: |
+    npm run validate-streams
+    npm run test-validation-flow
 ```
-
-## 🚨 Manejo de Errores
-
-### Jerarquía de Errores
-```
-AddonError (base)
-├── ConfigurationError
-├── StreamError
-├── ValidationError
-└── RepositoryError
-    ├── ChannelNotFoundError
-    └── RepositoryValidationError
-```
-
-### Respuestas de Error para Stremio
-- Catálogo vacío en lugar de errores 500
-- Cache corto para errores (60s)
-- Logging detallado en servidor
-
-## 🚀 Despliegue
-
-### Desarrollo Local
-```bash
-# Instalar dependencias
-bun install
-
-# Configurar variables de entorno
-cp config.env.example .env
-# Editar .env con tu configuración
-
-# Ejecutar en desarrollo
-bun run dev
-```
-
-### Producción
-```bash
-# Build optimizado
-bun run build
-
-# Ejecutar con PM2
-pm2 start src/index.js --name tv-iptv-addon
-```
-
-### Docker
-```bash
-# Construir imagen
-docker build -t tv-iptv-addon .
-
-# Ejecutar
-docker run -p 7000:7000 --env-file .env tv-iptv-addon
-```
-
-## 📊 Monitoreo y Debugging
-
-### Logs
-- Niveles: debug, info, warn, error
-- Estructura: timestamp, nivel, mensaje, metadata
-- Archivo: `logs/addon.log`
-
-### Métricas
-- Contador de canales por fuente
-- Tasa de éxito de validación
-- Tiempo de respuesta de handlers
-- Errores por tipo
-
-### Endpoints de Debug
-- `GET /manifest.json` - Información del addon
-- Logs incluyen URLs de instalación
-
-## 🔧 Solución de Problemas
-
-### Problemas Comunes
-
-1. **No aparecen canales**
-   - Verificar `CHANNELS_SOURCE` y URLs
-   - Revisar logs de inicialización
-   - Validar formato de archivo CSV/M3U
-
-2. **Streams no funcionan**
-   - Ejecutar validación manual
-   - Verificar URLs en navegador
-   - Revisar configuración de CORS
-
-3. **Error de CORS**
-   - Verificar `CORS_ORIGIN` en configuración
-   - Asegurar HTTPS en producción
-
-4. **Error: directory to serve does not exist**
-   - El directorio `static/` debe existir para servir archivos estáticos
-   - Solución: Crear directorio `static/` con archivo `.gitkeep`
-   - El sistema ahora detecta automáticamente si el directorio existe
-
-5. **Alto uso de memoria**
-   - Ajustar `CACHE_CHANNELS_HOURS`
-   - Limitar `MAX_CONCURRENT_STREAMS`
-   - Revisar fuga de memoria en validaciones
-
-### Comandos de Debug
-```bash
-# Validar configuración
-bun run validate-config
-
-# Verificar streams manualmente
-bun run validate-channels
-
-# Logs detallados
-LOG_LEVEL=debug bun run dev
-```
-
-## 🔄 Flujo de Actualización de Datos
-
-1. **Auto-actualización**: Repositorios remotos se actualizan cada `UPDATE_INTERVAL_HOURS`
-2. **Validación manual**: Streams se validan solo al inicio del sistema o manualmente
-3. **Cache refresh**: Datos se recargan según `CACHE_CHANNELS_HOURS`
-4. **Failover automático**: Si falla M3U principal, usa backup
-
-## 📋 Checklist de Despliegue
-
-- [ ] Variables de entorno configuradas
-- [ ] URLs de M3U válidas y accesibles
-- [ ] Puerto disponible (por defecto 7000)
-- [ ] HTTPS configurado en producción
-- [ ] Logs configurados
-- [ ] Monitoreo activado
-- [ ] Rate limiting apropiado
-- [ ] CORS configurado correctamente
-
-## 📞 Soporte
-
-Para reportar problemas o solicitar features:
-1. Verificar logs en `logs/addon.log`
-2. Revisar configuración en `.env`
-3. Ejecutar validación manual
-4. Consultar documentación de troubleshooting
 
 ---
 
-*Documentación generada automáticamente basada en el código fuente del TV IPTV Addon*
+*Documentación de arquitectura v2.0 - Incluye sistema completo de validación de streams*
