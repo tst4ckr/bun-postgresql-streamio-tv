@@ -38,6 +38,7 @@ export class HybridChannelRepository extends ChannelRepository {
   #channels = [];
   #channelMap = new Map();
   #isInitialized = false;
+  #isInitializing = false;
   #lastLoadTime = null;
   #deactivatedChannels = new Set();
   #validatedChannels = new Map(); // channelId -> timestamp
@@ -136,7 +137,17 @@ export class HybridChannelRepository extends ChannelRepository {
       return;
     }
 
+    if (this.#isInitializing) {
+      this.#logger.info('Inicialización en progreso, esperando...');
+      // Esperar hasta que termine la inicialización
+      while (this.#isInitializing && !this.#isInitialized) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      return;
+    }
+
     try {
+      this.#isInitializing = true;
       this.#logger.info('Inicializando repositorio híbrido...');
       
       // 1. Cargar canales del CSV principal primero
@@ -298,6 +309,8 @@ export class HybridChannelRepository extends ChannelRepository {
       
     } catch (error) {
       throw new RepositoryError(`Error inicializando repositorio híbrido: ${error.message}`, error);
+    } finally {
+      this.#isInitializing = false;
     }
   }
 
@@ -456,6 +469,23 @@ export class HybridChannelRepository extends ChannelRepository {
    * @returns {Promise<void>}
    */
   async #refreshIfNeeded() {
+    // No refrescar si está inicializando
+    if (this.#isInitializing) {
+      return;
+    }
+    
+    if (!this.#isInitialized) {
+      if (this.#isInitializing) {
+        // Si está inicializando, esperar a que termine
+        while (this.#isInitializing && !this.#isInitialized) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+      } else {
+        await this.initialize();
+      }
+      return;
+    }
+    
     if (this.#needsRefresh()) {
       await this.#refreshAllSources();
     }

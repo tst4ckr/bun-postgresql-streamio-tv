@@ -24,6 +24,7 @@ export class RemoteM3UChannelRepository extends ChannelRepository {
   #channels = [];
   #channelMap = new Map();
   #isInitialized = false;
+  #isInitializing = false;
   #lastLoadTime = null;
   #deactivatedChannels = new Set();
   #validatedChannels = new Map(); // channelId -> timestamp
@@ -48,13 +49,26 @@ export class RemoteM3UChannelRepository extends ChannelRepository {
       this.#logger.warn('Repositorio M3U Remoto ya inicializado');
       return;
     }
+
+    if (this.#isInitializing) {
+      this.#logger.info('Inicialización en progreso, esperando...');
+      // Esperar hasta que termine la inicialización
+      while (this.#isInitializing && !this.#isInitialized) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      return;
+    }
+
     try {
+      this.#isInitializing = true;
       this.#logger.info(`Cargando canales desde M3U remoto: ${this.#m3uUrl}`);
       await this.#fetchAndParseM3U();
       this.#isInitialized = true;
       this.#logger.info(`Repositorio M3U Remoto inicializado con ${this.#channels.length} canales`);
     } catch (error) {
       throw new RepositoryError(`Error inicializando repositorio M3U remoto: ${error.message}`, error);
+    } finally {
+      this.#isInitializing = false;
     }
   }
 
@@ -142,6 +156,23 @@ export class RemoteM3UChannelRepository extends ChannelRepository {
   }
 
   async #refreshIfNeeded() {
+    // No refrescar si está inicializando
+    if (this.#isInitializing) {
+      return;
+    }
+    
+    if (!this.#isInitialized) {
+      if (this.#isInitializing) {
+        // Si está inicializando, esperar a que termine
+        while (this.#isInitializing && !this.#isInitialized) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+      } else {
+        await this.initialize();
+      }
+      return;
+    }
+    
     if (this.#needsRefresh()) {
       this.#logger.info('Refrescando canales desde M3U remoto...');
       await this.#fetchAndParseM3U();

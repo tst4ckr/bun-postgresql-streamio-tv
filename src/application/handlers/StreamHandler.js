@@ -77,6 +77,9 @@ export class StreamHandler {
     // Validar argumentos
     this.#validateStreamRequest(args);
     
+    // Validar que el repositorio esté completamente inicializado
+    await this.#ensureRepositoryReady();
+    
     // Solo manejar tipos TV
     if (!this.#isSupportedType(type)) {
       this.#logger.warn(`Tipo no soportado: ${type}`);
@@ -404,6 +407,24 @@ export class StreamHandler {
       staleRevalidate: this.#config.cache.streamStaleRevalidate,
       staleError: this.#config.cache.streamStaleError
     };
+  }
+
+  /**
+   * Asegura que el repositorio esté completamente inicializado
+   * @private
+   * @returns {Promise<void>}
+   */
+  async #ensureRepositoryReady() {
+    // Verificar si el channelService tiene método de inicialización
+    if (typeof this.#channelService.initialize === 'function') {
+      // Esperar a que la inicialización esté completa
+      await this.#channelService.initialize();
+    }
+    
+    // Verificar estado de inicialización si está disponible
+    if (this.#channelService.isInitialized !== undefined && !this.#channelService.isInitialized) {
+      throw new Error('Repositorio de canales no está inicializado');
+    }
   }
 
   /**

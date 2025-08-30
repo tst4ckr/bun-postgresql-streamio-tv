@@ -24,6 +24,7 @@ export class AutomaticChannelRepository extends ChannelRepository {
   #channels = [];
   #channelMap = new Map();
   #isInitialized = false;
+  #isInitializing = false;
   #lastLoadTime = null;
   #m3uParser;
   #httpsToHttpService;
@@ -55,7 +56,17 @@ export class AutomaticChannelRepository extends ChannelRepository {
       return;
     }
 
+    if (this.#isInitializing) {
+      this.#logger.info('Inicialización en progreso, esperando...');
+      // Esperar hasta que termine la inicialización
+      while (this.#isInitializing && !this.#isInitialized) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      return;
+    }
+
     try {
+      this.#isInitializing = true;
       this.#logger.info('Inicializando repositorio automático...');
       
       // Descargar y procesar M3U
@@ -68,6 +79,8 @@ export class AutomaticChannelRepository extends ChannelRepository {
     } catch (error) {
       this.#logger.error('Error inicializando repositorio automático:', error);
       throw new RepositoryError(`Error inicializando repositorio automático: ${error.message}`);
+    } finally {
+      this.#isInitializing = false;
     }
   }
 
@@ -499,7 +512,14 @@ export class AutomaticChannelRepository extends ChannelRepository {
 
   async getAllChannels() {
     if (!this.#isInitialized) {
-      await this.initialize();
+      if (this.#isInitializing) {
+        // Si está inicializando, esperar a que termine
+        while (this.#isInitializing && !this.#isInitialized) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+      } else {
+        await this.initialize();
+      }
     }
     
     if (this.#needsRefresh()) {
@@ -516,7 +536,14 @@ export class AutomaticChannelRepository extends ChannelRepository {
 
   async getChannelById(id) {
     if (!this.#isInitialized) {
-      await this.initialize();
+      if (this.#isInitializing) {
+        // Si está inicializando, esperar a que termine
+        while (this.#isInitializing && !this.#isInitialized) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+      } else {
+        await this.initialize();
+      }
     }
     
     return this.#channelMap.get(id) || null;
@@ -524,7 +551,14 @@ export class AutomaticChannelRepository extends ChannelRepository {
 
   async getChannelsCount() {
     if (!this.#isInitialized) {
-      await this.initialize();
+      if (this.#isInitializing) {
+        // Si está inicializando, esperar a que termine
+        while (this.#isInitializing && !this.#isInitialized) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+      } else {
+        await this.initialize();
+      }
     }
     
     return this.#channels.length;
