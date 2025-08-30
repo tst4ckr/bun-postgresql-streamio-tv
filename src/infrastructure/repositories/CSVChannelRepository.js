@@ -28,6 +28,7 @@ export class CSVChannelRepository extends ChannelRepository {
   #deactivatedChannels = new Set();
   #validatedChannels = new Map(); // channelId -> timestamp
   #contentFilter; // Servicio de filtrado de contenido
+  #urlAvailabilityCache = new Map(); // streamUrl -> {available: boolean, timestamp: Date}
 
   /**
    * @param {string} filePath - Ruta al archivo CSV
@@ -75,7 +76,8 @@ export class CSVChannelRepository extends ChannelRepository {
     return new Promise((resolve, reject) => {
       const channels = [];
       const channelMap = new Map();
-      const processedIds = new Set();
+      const processedUrls = new Set();
+      const pendingChecks = [];
 
       createReadStream(this.#filePath)
         .pipe(csv())
@@ -90,9 +92,9 @@ export class CSVChannelRepository extends ChannelRepository {
             // Crear canal desde CSV
             const channel = Channel.fromCSV(row);
 
-            // Evitar duplicados
-            if (processedIds.has(channel.id)) {
-              this.#logger.warn(`Canal duplicado ignorado: ${channel.id}`);
+            // Evitar duplicados por stream_url y verificar disponibilidad
+            if (processedUrls.has(channel.streamUrl)) {
+              this.#logger.warn(`Stream duplicado ignorado: ${channel.streamUrl}`);
               return;
             }
 
@@ -102,36 +104,140 @@ export class CSVChannelRepository extends ChannelRepository {
               return;
             }
 
-            channels.push(channel);
-            channelMap.set(channel.id, channel);
-            processedIds.add(channel.id);
+            // Verificar disponibilidad HTTP de forma asíncrona
+            const checkPromise = this.#checkStreamAvailability(channel)
+              .then(isAvailable => {
+                if (isAvailable) {
+                  channels.push(channel);
+                  channelMap.set(channel.id, channel);
+                  processedUrls.add(channel.streamUrl);
+                  this.#logger.debug(`Stream activo agregado: ${channel.streamUrl}`);
+                } else {
+                  this.#logger.warn(`Stream descartado - no disponible: ${channel.streamUrl}`);
+                }
+              })
+              .catch(error => {
+                this.#logger.error(`Error verificando disponibilidad de ${channel.streamUrl}:`, error.message);
+              });
+            
+            pendingChecks.push(checkPromise);
 
           } catch (error) {
             this.#logger.error(`Error procesando fila CSV:`, error, row);
           }
         })
         .on('end', () => {
-          // Aplicar filtro de canales prohibidos antes de almacenar en caché
-          const filteredChannels = filterBannedChannels(channels);
-          const bannedCount = channels.length - filteredChannels.length;
-          
-          // Reconstruir el mapa de canales con los canales filtrados
-          const filteredChannelMap = new Map();
-          filteredChannels.forEach(channel => {
-            filteredChannelMap.set(channel.id, channel);
-          });
-          
-          this.#channels = filteredChannels;
-          this.#channelMap = filteredChannelMap;
-          this.#lastLoadTime = new Date();
-          
-          this.#logger.info(`CSV cargado: ${filteredChannels.length} canales válidos (${bannedCount} canales prohibidos removidos)`);
-          resolve();
+          // Esperar a que todas las verificaciones asíncronas se completen
+          Promise.allSettled(pendingChecks)
+            .then(() => {
+              // Aplicar filtro de canales prohibidos antes de almacenar en caché
+              const filteredChannels = filterBannedChannels(channels);
+              const bannedCount = channels.length - filteredChannels.length;
+              
+              // Reconstruir el mapa de canales con los canales filtrados
+              const filteredChannelMap = new Map();
+              filteredChannels.forEach(channel => {
+                filteredChannelMap.set(channel.id, channel);
+              });
+              
+              this.#channels = filteredChannels;
+              this.#channelMap = filteredChannelMap;
+              this.#lastLoadTime = new Date();
+              
+              this.#logger.info(`CSV cargado: ${filteredChannels.length} canales válidos (${bannedCount} canales prohibidos removidos)`);
+              resolve();
+            })
+            .catch(error => {
+              reject(new RepositoryError(`Error en verificaciones asíncronas: ${error.message}`, error));
+            });
         })
         .on('error', (error) => {
           reject(new RepositoryError(`Error leyendo archivo CSV: ${error.message}`, error));
         });
     });
+  }
+
+  /**
+   * Verifica rápidamente la disponibilidad de un stream mediante HTTP HEAD
+   * @private
+   * @param {Channel} channel - Canal a verificar
+   * @returns {Promise<boolean>} - true si el stream está disponible
+   */
+  async #checkStreamAvailability(channel) {
+    if (!channel.streamUrl || !channel.streamUrl.startsWith('http')) {
+      return false;
+    }
+
+    // Verificar caché de disponibilidad (válido por 5 minutos)
+    const cached = this.#urlAvailabilityCache.get(channel.streamUrl);
+    if (cached && (new Date() - cached.timestamp) < 300000) {
+      return cached.available;
+    }
+
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2000); // 2 segundos timeout
+
+      const response = await fetch(channel.streamUrl, {
+        method: 'HEAD',
+        signal: controller.signal,
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+      });
+
+      clearTimeout(timeoutId);
+      
+      const isAvailable = response.ok || (response.status >= 300 && response.status < 400);
+      
+      // Cachear resultado
+      this.#urlAvailabilityCache.set(channel.streamUrl, {
+        available: isAvailable,
+        timestamp: new Date()
+      });
+      
+      return isAvailable;
+    } catch (error) {
+      // Si HEAD falla, intentar con GET pero más eficiente
+      if (error.name === 'AbortError') {
+        this.#logger.debug(`Timeout verificando ${channel.streamUrl}`);
+        this.#urlAvailabilityCache.set(channel.streamUrl, {
+          available: false,
+          timestamp: new Date()
+        });
+        return false;
+      }
+
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 1500); // 1.5 segundos para GET
+
+        const response = await fetch(channel.streamUrl, {
+          method: 'GET',
+          signal: controller.signal,
+          headers: {
+            'Range': 'bytes=0-0', // Solo headers
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+          }
+        });
+
+        clearTimeout(timeoutId);
+        const isAvailable = response.ok;
+        
+        this.#urlAvailabilityCache.set(channel.streamUrl, {
+          available: isAvailable,
+          timestamp: new Date()
+        });
+        
+        return isAvailable;
+      } catch {
+        this.#urlAvailabilityCache.set(channel.streamUrl, {
+          available: false,
+          timestamp: new Date()
+        });
+        return false;
+      }
+    }
   }
 
   /**
