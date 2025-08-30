@@ -290,7 +290,12 @@ export class AutomaticM3UChannelRepository extends ChannelRepository {
     if (allChannels.length > 0) {
       const deduplicationResult = await this.#deduplicationService.deduplicateChannels(allChannels);
       
-      this.#channels = deduplicationResult.channels;
+      // Aplicar filtro de canales prohibidos antes de almacenar en caché
+      const beforeBannedCount = deduplicationResult.channels.length;
+      const filteredChannels = filterBannedChannels(deduplicationResult.channels);
+      const bannedRemovedCount = beforeBannedCount - filteredChannels.length;
+      
+      this.#channels = filteredChannels;
       this.#channelMap.clear();
       this.#channels.forEach(channel => {
         this.#channelMap.set(channel.id, channel);
@@ -299,7 +304,8 @@ export class AutomaticM3UChannelRepository extends ChannelRepository {
       const metrics = deduplicationResult.metrics;
       this.#logger.info(
         `📊 Deduplicación automática completada: ${this.#channels.length} canales únicos ` +
-        `(${metrics.duplicatesRemoved} duplicados eliminados, ${metrics.hdUpgrades} actualizados a HD)`
+        `(${metrics.duplicatesRemoved} duplicados eliminados, ${metrics.hdUpgrades} actualizados a HD` +
+        `${bannedRemovedCount > 0 ? `, ${bannedRemovedCount} canales prohibidos removidos` : ''})`
       );
     }
   }

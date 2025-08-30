@@ -265,12 +265,18 @@ export class HybridChannelRepository extends ChannelRepository {
       
       // Aplicar filtro inteligente de canales permitidos
       const beforeAllowedCount = deduplicationResult.channels.length;
-      const filteredChannels = filterAllowedChannels(deduplicationResult.channels);
-      const afterAllowedCount = filteredChannels.length;
+      const allowedFilteredChannels = filterAllowedChannels(deduplicationResult.channels);
+      const afterAllowedCount = allowedFilteredChannels.length;
       const allowedRemovedCount = beforeAllowedCount - afterAllowedCount;
       
+      // Aplicar filtro de canales prohibidos
+      const beforeBannedCount = allowedFilteredChannels.length;
+      const finalFilteredChannels = filterBannedChannels(allowedFilteredChannels);
+      const afterBannedCount = finalFilteredChannels.length;
+      const bannedRemovedCount = beforeBannedCount - afterBannedCount;
+      
       // Actualizar canales y mapa con resultados filtrados
-      this.#channels = filteredChannels;
+      this.#channels = finalFilteredChannels;
       this.#channelMap.clear();
       this.#channels.forEach(channel => {
         this.#channelMap.set(channel.id, channel);
@@ -283,7 +289,7 @@ export class HybridChannelRepository extends ChannelRepository {
       const hdUpgrades = metrics.hdUpgrades;
       
       this.#logger.info(
-        `📊 Deduplicación completada: ${allCsvChannels.length} CSV (preservados) + ${m3uAdded} M3U (validados) = ${this.#channels.length} canales finales (${m3uDuplicates} duplicados omitidos, ${hdUpgrades} actualizados a HD${allowedRemovedCount > 0 ? `, ${allowedRemovedCount} canales no permitidos removidos` : ''})`
+        `📊 Deduplicación completada: ${allCsvChannels.length} CSV (preservados) + ${m3uAdded} M3U (validados) = ${this.#channels.length} canales finales (${m3uDuplicates} duplicados omitidos, ${hdUpgrades} actualizados a HD${allowedRemovedCount > 0 ? `, ${allowedRemovedCount} canales no permitidos removidos` : ''}${bannedRemovedCount > 0 ? `, ${bannedRemovedCount} canales prohibidos removidos` : ''})`
       );
       
       this.#lastLoadTime = new Date();

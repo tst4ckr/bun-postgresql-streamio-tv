@@ -111,11 +111,21 @@ export class CSVChannelRepository extends ChannelRepository {
           }
         })
         .on('end', () => {
-          this.#channels = channels;
-          this.#channelMap = channelMap;
+          // Aplicar filtro de canales prohibidos antes de almacenar en caché
+          const filteredChannels = filterBannedChannels(channels);
+          const bannedCount = channels.length - filteredChannels.length;
+          
+          // Reconstruir el mapa de canales con los canales filtrados
+          const filteredChannelMap = new Map();
+          filteredChannels.forEach(channel => {
+            filteredChannelMap.set(channel.id, channel);
+          });
+          
+          this.#channels = filteredChannels;
+          this.#channelMap = filteredChannelMap;
           this.#lastLoadTime = new Date();
           
-          this.#logger.info(`CSV cargado: ${channels.length} canales válidos`);
+          this.#logger.info(`CSV cargado: ${filteredChannels.length} canales válidos (${bannedCount} canales prohibidos removidos)`);
           resolve();
         })
         .on('error', (error) => {

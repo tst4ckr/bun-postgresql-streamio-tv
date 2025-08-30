@@ -75,13 +75,20 @@ export class LocalM3UChannelRepository extends ChannelRepository {
       }
 
       const parsedChannels = await this.#parser.parseM3U(content);
-      this.#channels = parsedChannels.filter(channel => this.#passesConfigFilters(channel));
+      let filteredChannels = parsedChannels.filter(channel => this.#passesConfigFilters(channel));
+      
+      // Aplicar filtrado de canales prohibidos durante la inicialización
+      const beforeBannedCount = filteredChannels.length;
+      filteredChannels = filterBannedChannels(filteredChannels);
+      const bannedRemovedCount = beforeBannedCount - filteredChannels.length;
+      
+      this.#channels = filteredChannels;
       
       this.#channelMap.clear();
       this.#channels.forEach(channel => this.#channelMap.set(channel.id, channel));
       
       this.#lastLoadTime = new Date();
-      this.#logger.info(`M3U local cargado: ${this.#channels.length} canales válidos desde ${this.#m3uFilePath}`);
+      this.#logger.info(`M3U local cargado: ${this.#channels.length} canales válidos desde ${this.#m3uFilePath}${bannedRemovedCount > 0 ? ` (${bannedRemovedCount} canales prohibidos removidos)` : ''}`);
 
     } catch (error) {
       if (error.code === 'ENOENT') {

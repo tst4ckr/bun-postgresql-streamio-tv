@@ -140,12 +140,21 @@ export class AutomaticChannelRepository extends ChannelRepository {
         await this.#validateRemovedChannels(channelsToFilter, allowedFilteredChannels);
       }
 
-      // 10. Validar conectividad de canales finales después del filtrado (si está habilitado)
-      let finalChannels = allowedFilteredChannels;
+      // 10. Aplicar filtrado de canales prohibidos
+      const beforeBannedCount = allowedFilteredChannels.length;
+      const bannedFilteredChannels = filterBannedChannels(allowedFilteredChannels);
+      const bannedRemovedCount = beforeBannedCount - bannedFilteredChannels.length;
+      
+      if (bannedRemovedCount > 0) {
+        this.#logger.info(`Filtro de canales prohibidos aplicado: ${bannedRemovedCount} canales removidos`);
+      }
+
+      // 11. Validar conectividad de canales finales después del filtrado (si está habilitado)
+      let finalChannels = bannedFilteredChannels;
       if (this.#shouldValidateAfterFiltering()) {
-        const postFilterValidation = await this.#validateChannelsAfterFiltering(allowedFilteredChannels);
+        const postFilterValidation = await this.#validateChannelsAfterFiltering(bannedFilteredChannels);
         finalChannels = postFilterValidation.validChannels;
-        this.#logger.info(`Validación post-filtrado: ${postFilterValidation.validChannels.length}/${allowedFilteredChannels.length} canales válidos`);
+        this.#logger.info(`Validación post-filtrado: ${postFilterValidation.validChannels.length}/${bannedFilteredChannels.length} canales válidos`);
       }
 
       this.#channels = finalChannels;

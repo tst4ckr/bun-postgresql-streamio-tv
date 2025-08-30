@@ -73,16 +73,22 @@ export class RemoteM3UChannelRepository extends ChannelRepository {
       const configFilteredChannels = parsedChannels.filter(channel => this.#passesConfigFilters(channel));
       
       // Aplicar filtro inteligente de canales permitidos
-      const beforeFilterCount = configFilteredChannels.length;
-      this.#channels = filterAllowedChannels(configFilteredChannels);
-      const afterFilterCount = this.#channels.length;
-      const removedCount = beforeFilterCount - afterFilterCount;
+      const beforeAllowedCount = configFilteredChannels.length;
+      const allowedFilteredChannels = filterAllowedChannels(configFilteredChannels);
+      const afterAllowedCount = allowedFilteredChannels.length;
+      const allowedRemovedCount = beforeAllowedCount - afterAllowedCount;
+      
+      // Aplicar filtro de canales prohibidos
+      const beforeBannedCount = allowedFilteredChannels.length;
+      this.#channels = filterBannedChannels(allowedFilteredChannels);
+      const afterBannedCount = this.#channels.length;
+      const bannedRemovedCount = beforeBannedCount - afterBannedCount;
       
       this.#channelMap.clear();
       this.#channels.forEach(channel => this.#channelMap.set(channel.id, channel));
       
       this.#lastLoadTime = new Date();
-      this.#logger.info(`M3U remoto cargado: ${this.#channels.length} canales válidos${removedCount > 0 ? ` (${removedCount} canales no permitidos removidos)` : ''}`);
+      this.#logger.info(`M3U remoto cargado: ${this.#channels.length} canales válidos${allowedRemovedCount > 0 ? ` (${allowedRemovedCount} canales no permitidos removidos)` : ''}${bannedRemovedCount > 0 ? `, ${bannedRemovedCount} canales prohibidos removidos` : ''}`);
 
     } catch (error) {
       this.#logger.error(`Error al obtener o parsear M3U de ${this.#m3uUrl}`, error);
