@@ -74,8 +74,13 @@ export class HybridChannelRepository extends ChannelRepository {
     // Inicializar servicio de validación temprana de streams
     this.#streamValidationService = new StreamValidationService(config, logger);
     
-    // Inicializar servicio de deduplicación
-    this.#deduplicationService = new ChannelDeduplicationService(DeduplicationConfig.fromEnvironment());
+    // Inicializar servicio de deduplicación con configuración personalizada
+    const deduplicationConfig = new DeduplicationConfig({
+      enableIntelligentDeduplication: config.enableIntelligentDeduplication,
+      strategy: config.deduplicationStrategy,
+      ignoreFiles: config.deduplicationIgnoreFiles || []
+    });
+    this.#deduplicationService = new ChannelDeduplicationService(deduplicationConfig);
     
     // Inicializar parser para modo automático
     this.#m3uParser = new M3UParserService(config.filters);

@@ -47,7 +47,8 @@ class DeduplicationConfig {
     preserveSourcePriority = true,
     sourcePriority = ['csv', 'm3u'],
     enableHdUpgrade = true,
-    enableMetrics = true
+    enableMetrics = true,
+    ignoreFiles = []
   } = {}) {
     this.criteria = criteria;
     this.strategy = strategy;
@@ -58,6 +59,7 @@ class DeduplicationConfig {
     this.sourcePriority = sourcePriority;
     this.enableHdUpgrade = enableHdUpgrade;
     this.enableMetrics = enableMetrics;
+    this.ignoreFiles = ignoreFiles;
   }
 
   /**
@@ -66,11 +68,16 @@ class DeduplicationConfig {
    * @returns {DeduplicationConfig}
    */
   static fromEnvironment() {
+    const ignoreFiles = process.env.DEDUPLICATION_IGNORE_FILES 
+      ? process.env.DEDUPLICATION_IGNORE_FILES.split(',').map(file => file.trim()).filter(file => file.length > 0)
+      : [];
+    
     return new DeduplicationConfig({
       enableIntelligentDeduplication: process.env.ENABLE_INTELLIGENT_DEDUPLICATION !== 'false',
       enableHdUpgrade: process.env.ENABLE_HD_UPGRADE !== 'false',
       nameSimilarityThreshold: parseFloat(process.env.NAME_SIMILARITY_THRESHOLD || '0.85'),
-      urlSimilarityThreshold: parseFloat(process.env.URL_SIMILARITY_THRESHOLD || '0.90')
+      urlSimilarityThreshold: parseFloat(process.env.URL_SIMILARITY_THRESHOLD || '0.90'),
+      ignoreFiles: ignoreFiles
     });
   }
 }
@@ -159,10 +166,18 @@ export class ChannelDeduplicationService {
     this.#metrics.reset();
     this.#metrics.totalChannels = channels.length;
 
-    this.#logger.info(`🔍 Iniciando deduplicación de ${channels.length} canales`);
+    // Filtrar canales de archivos ignorados
+    const filteredChannels = this.#filterIgnoredFiles(channels);
+    const ignoredCount = channels.length - filteredChannels.length;
+    
+    if (ignoredCount > 0) {
+      this.#logger.info(`📋 Canales ignorados de deduplicación: ${ignoredCount}`);
+    }
+
+    this.#logger.info(`🔍 Iniciando deduplicación de ${filteredChannels.length} canales`);
 
     try {
-      const deduplicatedChannels = await this.#performDeduplication(channels);
+      const deduplicatedChannels = await this.#performDeduplication(filteredChannels);
       
       this.#metrics.processingTimeMs = Math.max(1, Date.now() - startTime);
       // CORRECCIÓN: duplicatesRemoved debe ser igual a duplicatesFound
@@ -187,9 +202,34 @@ export class ChannelDeduplicationService {
   }
 
   /**
+   * Filtra canales de archivos que deben ser ignorados en la deduplicación
+   * @private
+   * @param {Array<Channel>} channels 
+   * @returns {Array<Channel>}
+   */
+  #filterIgnoredFiles(channels) {
+    if (!this.#config.ignoreFiles || this.#config.ignoreFiles.length === 0) {
+      return channels;
+    }
+
+    return channels.filter(channel => {
+      if (!channel.source) return true;
+      
+      // Normalizar rutas para comparación
+      const channelSource = channel.source.replace(/\\/g, '/').toLowerCase();
+      
+      return !this.#config.ignoreFiles.some(ignoreFile => {
+        const normalizedIgnoreFile = ignoreFile.replace(/\\/g, '/').toLowerCase();
+        return channelSource.includes(normalizedIgnoreFile) || 
+               channelSource.endsWith(normalizedIgnoreFile);
+      });
+    });
+  }
+
+  /**
    * Realiza la deduplicación según la configuración
    * @private
-   * @param {Array<Channel>} channels
+   * @param {Array<Channel>} channels 
    * @returns {Promise<Array<Channel>>}
    */
   async #performDeduplication(channels) {

@@ -177,6 +177,8 @@ export class TVAddonConfig {
         // Configuración de deduplicación inteligente
         enableIntelligentDeduplication: process.env.ENABLE_INTELLIGENT_DEDUPLICATION === 'true',
       deduplicationStrategy: process.env.DEDUPLICATION_STRATEGY || 'prioritize_working',
+      // Archivos CSV que deben ignorarse en la deduplicación
+      deduplicationIgnoreFiles: this.#parseFileList(process.env.DEDUPLICATION_IGNORE_FILES),
       
       // Validación antes del filtrado
       validateBeforeFiltering: process.env.VALIDATE_BEFORE_FILTERING === 'true',
@@ -238,6 +240,17 @@ export class TVAddonConfig {
   #parseKeywordList(keywordList) {
     if (!keywordList) return [];
     return keywordList.split(',').map(k => k.trim().toLowerCase()).filter(k => k.length > 0);
+  }
+
+  /**
+   * Parsea lista de archivos desde variable de entorno
+   * @private
+   * @param {string} fileList 
+   * @returns {string[]}
+   */
+  #parseFileList(fileList) {
+    if (!fileList) return [];
+    return fileList.split(',').map(f => f.trim()).filter(f => f.length > 0);
   }
 
 
