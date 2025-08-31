@@ -394,18 +394,18 @@ export class StreamHandler {
   }
 
   /**
-   * Crea respuesta de stream
+   * Crea respuesta de streams para Stremio con cache optimizado para TV en vivo
    * @private
-   * @param {Array} streams 
+   * @param {Array} streams - Array de streams
    * @returns {Object}
    */
   #createStreamResponse(streams) {
+    const cacheMaxAge = this.#config.cache.streamCacheMaxAge || 30;
     return {
-      streams,
-      // Cache corto para TV en vivo
-      cacheMaxAge: this.#config.cache.streamCacheMaxAge,
-      staleRevalidate: this.#config.cache.streamStaleRevalidate,
-      staleError: this.#config.cache.streamStaleError
+      streams: streams || [],
+      cacheMaxAge: cacheMaxAge,
+      staleRevalidate: this.#config.cache.streamStaleRevalidate || cacheMaxAge * 2,
+      staleError: this.#config.cache.streamStaleError || cacheMaxAge * 10
     };
   }
 

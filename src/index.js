@@ -204,7 +204,9 @@ class TVIPTVAddon {
 
     return {
       metas,
-      cacheMaxAge: this.#config.cache.catalogCacheMaxAge
+      cacheMaxAge: this.#config.cache.catalogCacheMaxAge,
+      staleRevalidate: this.#config.cache.catalogCacheMaxAge * 2,
+      staleError: this.#config.cache.catalogCacheMaxAge * 4
     };
   }
 
@@ -223,7 +225,9 @@ class TVIPTVAddon {
 
     return {
       meta: channel.toMetaDetail(),
-      cacheMaxAge: this.#config.cache.metaCacheMaxAge
+      cacheMaxAge: this.#config.cache.metaCacheMaxAge,
+      staleRevalidate: this.#config.cache.metaCacheMaxAge * 2,
+      staleError: this.#config.cache.metaCacheMaxAge * 4
     };
   }
 

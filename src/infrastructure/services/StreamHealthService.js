@@ -102,13 +102,28 @@ export class StreamHealthService {
    * @returns {Promise<{id:string,name:string,ok:boolean,meta?:object}>}
    */
   async checkChannel(channel) {
-    const result = await this.checkStream(channel.streamUrl, channel.id);
-    return {
-      id: channel.id,
-      name: channel.name,
-      ok: result.ok,
-      meta: result
-    };
+    try {
+      const result = await this.checkStream(channel.streamUrl, channel.id);
+      return {
+        id: channel.id,
+        name: channel.name,
+        ok: result.ok,
+        meta: result
+      };
+    } catch (error) {
+      // Manejo explícito de errores para evitar promesas rechazadas no manejadas
+      this.#logger.warn(`Error validando canal ${channel.id} (${channel.name}): ${error.message}`);
+      return {
+        id: channel.id,
+        name: channel.name,
+        ok: false,
+        meta: { 
+          reason: error.message,
+          error: true,
+          finalError: true
+        }
+      };
+    }
   }
 
   /**
@@ -137,6 +152,7 @@ export class StreamHealthService {
         if (!channel) break;
         
         try {
+          // checkChannel ya maneja errores internamente, pero agregamos protección adicional
           const res = await this.checkChannel(channel);
           results.push(res);
           
@@ -151,17 +167,23 @@ export class StreamHealthService {
           }
           
         } catch (error) {
+          // Doble protección: este catch no debería ejecutarse ya que checkChannel maneja errores
+          this.#logger.error(`Error crítico validando canal ${channel.id}: ${error.message}`);
           completed++;
           fail++;
           results.push({ 
             id: channel.id, 
             name: channel.name, 
             ok: false, 
-            meta: { reason: error.message } 
+            meta: { 
+              reason: `Error crítico: ${error.message}`, 
+              error: true,
+              criticalError: true
+            } 
           });
           
           if (showProgress && (completed % 100 === 0 || completed === total)) {
-            this.#logger.info(`❌ [${completed}/${total}] ${channel.name} - ERROR: ${error.message}`);
+            this.#logger.info(`❌ [${completed}/${total}] ${channel.name} - ERROR CRÍTICO: ${error.message}`);
           }
         }
       }

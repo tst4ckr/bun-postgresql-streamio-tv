@@ -260,22 +260,31 @@ export class ErrorHandler {
     
     this.#trackError(handlerType, error);
     
-    // Respuestas seguras según especificaciones del SDK de Stremio
+    // Respuestas seguras según especificaciones del SDK de Stremio con cache optimizado
     switch (handlerType) {
       case 'catalog':
+        const catalogCacheMaxAge = Math.min(this.#config.cache.catalogCacheMaxAge, 300);
         return {
           metas: [],
-          cacheMaxAge: Math.min(this.#config.cache.catalogCacheMaxAge, 300)
+          cacheMaxAge: catalogCacheMaxAge,
+          staleRevalidate: catalogCacheMaxAge * 2,
+          staleError: catalogCacheMaxAge * 4
         };
       case 'meta':
+        const metaCacheMaxAge = Math.min(this.#config.cache.metaCacheMaxAge, 300);
         return {
           meta: null,
-          cacheMaxAge: Math.min(this.#config.cache.metaCacheMaxAge, 300)
+          cacheMaxAge: metaCacheMaxAge,
+          staleRevalidate: metaCacheMaxAge * 2,
+          staleError: metaCacheMaxAge * 4
         };
       case 'stream':
+        const streamCacheMaxAge = Math.min(this.#config.cache.streamCacheMaxAge || 30, 30);
         return {
           streams: [],
-          cacheMaxAge: Math.min(this.#config.cache.streamCacheMaxAge || 300, 300)
+          cacheMaxAge: streamCacheMaxAge,
+          staleRevalidate: streamCacheMaxAge * 2,
+          staleError: streamCacheMaxAge * 10
         };
       default:
         return this.#createErrorResponse(error, handlerType);

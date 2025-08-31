@@ -15,6 +15,7 @@ export class BitelUidService {
   #logger;
   #uidCache;
   #lastGenerationTime;
+  #stats;
 
   /**
    * @param {Object} config - Configuración del servicio
@@ -45,7 +46,11 @@ export class BitelUidService {
       }
       return processedUrl;
     } catch (error) {
-      this.#logger.warn(`Error procesando URL BITEL para ${channelId}: ${error.message}`);
+      // Manejo robusto de errores para evitar promesas rechazadas no manejadas
+      this.#logger.warn(`Error procesando URL Bitel ${streamUrl}: ${error.message}. Usando URL original.`);
+      // Incrementar contador de errores para monitoreo
+      if (!this.#stats) this.#stats = {};
+      this.#stats.errors = (this.#stats.errors || 0) + 1;
       return streamUrl; // Fallback a URL original
     }
   }
