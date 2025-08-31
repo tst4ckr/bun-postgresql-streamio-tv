@@ -706,14 +706,34 @@ export class HybridChannelRepository extends ChannelRepository {
     try {
       this.#logger.info('Refrescando todas las fuentes del repositorio híbrido...');
       
-      // Refrescar CSV
+      // 1. Refrescar CSV principal
       await this.#csvRepository.refreshFromRemote();
       const csvChannels = await this.#csvRepository.getAllChannelsUnfiltered();
+      this.#logger.info(`Refrescados ${csvChannels.length} canales desde CSV principal`);
       
-      // Reinicializar con canales CSV
-      this.#channels = [...csvChannels];
+      // 2. Refrescar CSVs adicionales
+      const additionalCsvChannels = [];
+      for (let i = 0; i < this.#additionalCsvRepositories.length; i++) {
+        const additionalCsvRepo = this.#additionalCsvRepositories[i];
+        try {
+          await additionalCsvRepo.refreshFromRemote();
+          const channels = await additionalCsvRepo.getAllChannelsUnfiltered();
+          additionalCsvChannels.push(...channels);
+          this.#logger.info(`CSV adicional ${i + 1}: ${channels.length} canales refrescados`);
+        } catch (error) {
+          this.#logger.error(`Error refrescando CSV adicional ${i + 1}:`, error);
+          // Continuar con los siguientes archivos aunque uno falle
+        }
+      }
+      
+      // 3. Combinar todos los canales CSV (principal + adicionales)
+      const allCsvChannels = [...csvChannels, ...additionalCsvChannels];
+      this.#logger.info(`🔄 Procesando ${csvChannels.length} canales CSV principales + ${additionalCsvChannels.length} canales CSV adicionales = ${allCsvChannels.length} canales CSV totales`);
+      
+      // 4. Reinicializar con todos los canales CSV
+      this.#channels = [...allCsvChannels];
       this.#channelMap.clear();
-      csvChannels.forEach(channel => this.#channelMap.set(channel.id, channel));
+      allCsvChannels.forEach(channel => this.#channelMap.set(channel.id, channel));
       
       // Procesar AUTO_M3U_URL en modo automático si está configurado
       const { autoM3uUrl } = this.#config.dataSources;
@@ -796,14 +816,14 @@ export class HybridChannelRepository extends ChannelRepository {
           `✅ Refresco M3U validado: ${validM3uChannels.length} válidos, ${invalidM3uChannels.length} inválidos`
         );
         this.#logger.info(
-          `📋 Canales CSV preservados durante refresco: ${csvChannels.length}`
+          `📋 Canales CSV preservados durante refresco: ${allCsvChannels.length}`
         );
         
         validatedM3uChannels = validM3uChannels;
         
         // Actualizar solo canales M3U desactivados
         // Limpiar solo los IDs de M3U, preservar cualquier estado de CSV
-        const csvChannelIds = new Set(csvChannels.map(ch => ch.id));
+        const csvChannelIds = new Set(allCsvChannels.map(ch => ch.id));
         const currentDeactivated = Array.from(this.#deactivatedChannels)
           .filter(id => csvChannelIds.has(id)); // Preservar estados CSV
         
@@ -815,18 +835,30 @@ export class HybridChannelRepository extends ChannelRepository {
         });
       }
       
-      // Deduplicación inteligente con prioridad CSV absoluta
+      // 5. Deduplicación inteligente con prioridad CSV absoluta
       this.#channels = [];
       this.#channelMap.clear();
       
       // Combinar todos los canales para deduplicación centralizada
-      const allChannels = [...csvChannels, ...validatedM3uChannels];
+      const allChannels = [...allCsvChannels, ...validatedM3uChannels];
       
       // Aplicar deduplicación centralizada
       const deduplicationResult = await this.#deduplicationService.deduplicateChannels(allChannels);
       
-      // Actualizar canales y mapa con resultados deduplicados
-      this.#channels = deduplicationResult.channels;
+      // Aplicar filtro inteligente de canales permitidos
+      const beforeAllowedCount = deduplicationResult.channels.length;
+      const allowedFilteredChannels = filterAllowedChannels(deduplicationResult.channels);
+      const afterAllowedCount = allowedFilteredChannels.length;
+      const allowedRemovedCount = beforeAllowedCount - afterAllowedCount;
+      
+      // Aplicar filtro de canales prohibidos
+      const beforeBannedCount = allowedFilteredChannels.length;
+      const finalFilteredChannels = filterBannedChannels(allowedFilteredChannels);
+      const afterBannedCount = finalFilteredChannels.length;
+      const bannedRemovedCount = beforeBannedCount - afterBannedCount;
+      
+      // Actualizar canales y mapa con resultados filtrados
+      this.#channels = finalFilteredChannels;
       this.#channelMap.clear();
       this.#channels.forEach(channel => {
         this.#channelMap.set(channel.id, channel);
@@ -834,16 +866,16 @@ export class HybridChannelRepository extends ChannelRepository {
       
       // Extraer métricas para logging
       const metrics = deduplicationResult.metrics;
-      const totalM3uAdded = this.#channels.length - csvChannels.length;
-      const totalM3uDuplicates = metrics.duplicatesRemoved;
-      const totalHdUpgrades = metrics.hdUpgrades;
+      const m3uAdded = this.#channels.length - allCsvChannels.length;
+      const m3uDuplicates = metrics.duplicatesRemoved;
+      const hdUpgrades = metrics.hdUpgrades;
       
-      if (this.#m3uRepositories.length > 0) {
-        this.#logger.info(`📊 Refresco completado: ${csvChannels.length} CSV + ${totalM3uAdded} M3U = ${this.#channels.length} canales (${totalM3uDuplicates} duplicados omitidos, ${totalHdUpgrades} actualizados a HD)`);
-      }
+      this.#logger.info(
+        `📊 Refresco completado: ${allCsvChannels.length} CSV (preservados) + ${m3uAdded} M3U (validados) = ${this.#channels.length} canales finales (${m3uDuplicates} duplicados omitidos, ${hdUpgrades} actualizados a HD${allowedRemovedCount > 0 ? `, ${allowedRemovedCount} canales no permitidos removidos` : ''}${bannedRemovedCount > 0 ? `, ${bannedRemovedCount} canales prohibidos removidos` : ''})`
+      );
       
       this.#lastLoadTime = new Date();
-      this.#logger.info(`Refresco completado: ${this.#channels.length} canales totales`);
+      this.#logger.info(`🎯 Refresco completado: ${this.#channels.length} canales válidos y únicos`);
       
     } catch (error) {
       this.#logger.error('Error refrescando fuentes:', error);
