@@ -236,7 +236,7 @@ export class ChannelDeduplicationService {
             this.#logger.info(`🔄 Canal actualizado a HD: ${channel.name} (${existingChannel.quality.value} → ${channel.quality.value})`);
           }
         } else {
-          this.#logger.warn(`[WARN] Canal duplicado ignorado: ${channel.id}`);
+          this.#logger.debug(`Canal duplicado ignorado: ${channel.id}`);
         }
       } else {
         // Canal único, agregar directamente
@@ -296,7 +296,7 @@ export class ChannelDeduplicationService {
         } else {
           // Mantener el canal existente, ignorar el nuevo
           removedChannels.push(channel);
-          this.#logger.warn(`[WARN] Canal duplicado ignorado: ${channel.id}`);
+          this.#logger.debug(`Canal duplicado ignorado: ${channel.id}`);
         }
       } else {
         // Canal único, agregar a la lista
