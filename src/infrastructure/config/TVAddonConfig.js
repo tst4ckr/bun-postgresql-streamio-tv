@@ -157,21 +157,21 @@ export class TVAddonConfig {
       validation: {
         validateStreamsOnStartup: process.env.VALIDATE_STREAMS_ON_STARTUP === 'true',
         removeInvalidStreams: process.env.REMOVE_INVALID_STREAMS === 'true',
-        streamValidationTimeout: parseInt(process.env.STREAM_VALIDATION_TIMEOUT) || 15,
-        streamValidationMaxRetries: parseInt(process.env.STREAM_VALIDATION_MAX_RETRIES) || 2,
+        streamValidationTimeout: parseInt(process.env.STREAM_VALIDATION_TIMEOUT) || 45, // Optimizado para alta latencia
+        streamValidationMaxRetries: parseInt(process.env.STREAM_VALIDATION_MAX_RETRIES) || 3, // Más reintentos para conexiones lentas
         streamValidationRetryDelay: parseInt(process.env.STREAM_VALIDATION_RETRY_DELAY) || 2000,
-        validationBatchSize: parseInt(process.env.VALIDATION_BATCH_SIZE) || 50,
-        maxValidationConcurrency: parseInt(process.env.MAX_VALIDATION_CONCURRENCY) || 5,
+        validationBatchSize: parseInt(process.env.VALIDATION_BATCH_SIZE) || 25, // Reducido para alta latencia
+        maxValidationConcurrency: parseInt(process.env.MAX_VALIDATION_CONCURRENCY) || 5, // Optimizado para servidores internacionales
         // Configuración de conversión HTTPS a HTTP
         convertHttpsToHttp: process.env.CONVERT_HTTPS_TO_HTTP === 'true',
         validateHttpConversion: process.env.VALIDATE_HTTP_CONVERSION === 'true',
-        httpConversionTimeout: parseInt(process.env.HTTP_CONVERSION_TIMEOUT) || 5,
-        httpConversionMaxRetries: parseInt(process.env.HTTP_CONVERSION_MAX_RETRIES) || 2,
+        httpConversionTimeout: parseInt(process.env.HTTP_CONVERSION_TIMEOUT) || 20, // Aumentado para alta latencia
+        httpConversionMaxRetries: parseInt(process.env.HTTP_CONVERSION_MAX_RETRIES) || 3, // Más reintentos
         // Configuración de validación temprana
         enableEarlyValidation: process.env.ENABLE_EARLY_VALIDATION === 'true',
-        earlyValidationTimeout: parseInt(process.env.EARLY_VALIDATION_TIMEOUT) || 8,
-        earlyValidationConcurrency: parseInt(process.env.EARLY_VALIDATION_CONCURRENCY) || 10,
-        earlyValidationBatchSize: parseInt(process.env.EARLY_VALIDATION_BATCH_SIZE) || 100,
+        earlyValidationTimeout: parseInt(process.env.EARLY_VALIDATION_TIMEOUT) || 30, // Optimizado para alta latencia
+        earlyValidationConcurrency: parseInt(process.env.EARLY_VALIDATION_CONCURRENCY) || 3, // Reducido para alta latencia
+        earlyValidationBatchSize: parseInt(process.env.EARLY_VALIDATION_BATCH_SIZE) || 15, // Reducido para alta latencia
         earlyValidationCacheSize: parseInt(process.env.EARLY_VALIDATION_CACHE_SIZE) || 1000,
         earlyValidationCacheTtl: parseInt(process.env.EARLY_VALIDATION_CACHE_TTL) || 3600,
         // Configuración de deduplicación inteligente

@@ -120,7 +120,7 @@ export class HttpsToHttpConversionService {
    */
   async processChannels(channels, options = {}) {
     const {
-      concurrency = this.#config.validation?.maxValidationConcurrency || 10,
+      concurrency = this.#config.validation?.maxValidationConcurrency || 5, // Optimizado para alta latencia
       showProgress = true,
       onlyWorkingHttp = true
     } = options;
@@ -225,8 +225,8 @@ export class HttpsToHttpConversionService {
    */
   async processChannelsBatched(getChannelsFunction, options = {}) {
     const {
-      batchSize = this.#config.validation?.validationBatchSize || 50,
-      concurrency = this.#config.validation?.maxValidationConcurrency || 10,
+      batchSize = this.#config.validation?.validationBatchSize || 25, // Optimizado para alta latencia
+      concurrency = this.#config.validation?.maxValidationConcurrency || 5, // Optimizado para alta latencia
       showProgress = true,
       onlyWorkingHttp = true
     } = options;

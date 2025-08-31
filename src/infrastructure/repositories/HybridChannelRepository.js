@@ -575,11 +575,11 @@ export class HybridChannelRepository extends ChannelRepository {
       let processedM3uChannels = allM3uChannels;
       
       if (this.#httpsToHttpService.isEnabled() && allM3uChannels.length > 0) {
-        this.#logger.info(`🔄 Iniciando conversión HTTPS→HTTP para ${allM3uChannels.length} canales M3U con ${this.#config.validation?.maxValidationConcurrency || 10} workers`);
+        this.#logger.info(`🔄 Iniciando conversión HTTPS→HTTP para ${allM3uChannels.length} canales M3U con ${this.#config.validation?.maxValidationConcurrency || 5} workers (optimizado para alta latencia)`);
         
         try {
           const conversionResult = await this.#httpsToHttpService.processChannels(allM3uChannels, {
-            concurrency: this.#config.validation?.maxValidationConcurrency || 10,
+            concurrency: this.#config.validation?.maxValidationConcurrency || 5, // Optimizado para alta latencia
             showProgress: true,
             onlyWorkingHttp: true
           });
@@ -752,7 +752,7 @@ export class HybridChannelRepository extends ChannelRepository {
         
         try {
           const conversionResult = await this.#httpsToHttpService.processChannels(allM3uChannels, {
-            concurrency: this.#config.validation?.maxValidationConcurrency || 10,
+            concurrency: this.#config.validation?.maxValidationConcurrency || 5, // Optimizado para alta latencia
             showProgress: false, // Menos verbose durante refresco
             onlyWorkingHttp: true
           });
@@ -923,7 +923,7 @@ export class HybridChannelRepository extends ChannelRepository {
         
         // Procesar solo canales M3U con validación HTTP
         const conversionResult = await this.#httpsToHttpService.processChannels(m3uChannels, {
-          concurrency: this.#config.validation?.maxValidationConcurrency || 10,
+          concurrency: this.#config.validation?.maxValidationConcurrency || 5, // Optimizado para alta latencia
           showProgress: true,
           onlyWorkingHttp: true
         });

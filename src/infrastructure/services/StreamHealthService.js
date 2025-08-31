@@ -28,10 +28,10 @@ export class StreamHealthService {
     // Procesar URL con BitelUidService si es necesario
     const processedUrl = channelId ? this.#bitelUidService.processStreamUrl(url, channelId) : url;
     
-    // Timeout progresivo: 15s, 25s, 35s según mejores prácticas Context7
-    const baseTimeout = this.#config.validation.streamValidationTimeout || 15;
-    const timeoutMs = (baseTimeout + (retryCount * 10)) * 1000;
-    const maxRetries = this.#config.validation.maxValidationRetries || 2;
+    // Timeout progresivo optimizado para alta latencia: 45s, 60s, 75s para servidores internacionales
+    const baseTimeout = this.#config.validation.streamValidationTimeout || 45;
+    const timeoutMs = (baseTimeout + (retryCount * 15)) * 1000;
+    const maxRetries = this.#config.validation.maxValidationRetries || 3;
     
     const headers = { 'User-Agent': 'Stremio-TV-IPTV-Addon/1.0.0' };
     
@@ -107,10 +107,10 @@ export class StreamHealthService {
         };
       }
     } catch (error) {
-      // Implementar retry con backoff exponencial para errores temporales
+      // Implementar retry con backoff exponencial optimizado para alta latencia
       if (retryCount < maxRetries && isRetryableError(error)) {
-        const backoffMs = Math.min(1000 * Math.pow(2, retryCount), 5000);
-        this.#logger.debug(`Reintentando validación de ${channelId || 'stream'} en ${backoffMs}ms (intento ${retryCount + 1}/${maxRetries + 1})`);
+        const backoffMs = Math.min(2000 * Math.pow(2, retryCount), 10000); // Backoff más largo para conexiones lentas
+        this.#logger.debug(`Reintentando validación de ${channelId || 'stream'} en ${backoffMs}ms (intento ${retryCount + 1}/${maxRetries + 1}) - Optimizado para alta latencia`);
         
         await new Promise(resolve => setTimeout(resolve, backoffMs));
         return this.checkStream(url, channelId, retryCount + 1);
@@ -163,8 +163,11 @@ export class StreamHealthService {
    * @param {boolean} showProgress - Mostrar progreso en tiempo real
    * @returns {Promise<{ok:number,fail:number,total:number,results:Array}>}
    */
-  async checkChannels(channels, concurrency = 10, showProgress = true) {
-    const limit = Math.max(1, Math.min(concurrency, this.#config.streaming.maxConcurrentStreams || 20));
+  async checkChannels(channels, concurrency = null, showProgress = true) {
+    // Usar concurrencia optimizada para alta latencia desde configuración
+    const defaultConcurrency = this.#config.validation?.maxValidationConcurrency || 5;
+    const actualConcurrency = concurrency || defaultConcurrency;
+    const limit = Math.max(1, Math.min(actualConcurrency, this.#config.streaming.maxConcurrentStreams || 20));
     const queue = [...channels];
     const results = [];
     const total = channels.length;
@@ -173,7 +176,7 @@ export class StreamHealthService {
     let fail = 0;
 
     if (showProgress) {
-      this.#logger.info(`🔍 Iniciando validación de ${total} canales con ${limit} workers concurrentes...`);
+      this.#logger.info(`🔍 Iniciando validación de ${total} canales con ${limit} workers concurrentes (optimizado para alta latencia)...`);
     }
 
     const worker = async () => {
@@ -236,8 +239,8 @@ export class StreamHealthService {
    */
   async validateAllChannelsBatched(getChannelsFunction, options = {}) {
     const {
-      batchSize = this.#config.validation?.validationBatchSize || 50,
-      concurrency = this.#config.validation?.maxValidationConcurrency || 10,
+      batchSize = this.#config.validation?.validationBatchSize || 25, // Reducido para alta latencia
+      concurrency = this.#config.validation?.maxValidationConcurrency || 5, // Reducido para alta latencia
       showProgress = true
     } = options;
 
@@ -249,7 +252,7 @@ export class StreamHealthService {
     const allResults = [];
 
     if (showProgress) {
-      this.#logger.info(`🔍 Iniciando validación completa por lotes (tamaño: ${batchSize}, concurrencia: ${concurrency})...`);
+      this.#logger.info(`🔍 Iniciando validación completa por lotes optimizada para alta latencia (tamaño: ${batchSize}, concurrencia: ${concurrency})...`);
     }
 
     while (true) {
