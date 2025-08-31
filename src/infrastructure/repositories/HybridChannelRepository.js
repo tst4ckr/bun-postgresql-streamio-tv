@@ -49,6 +49,7 @@ export class HybridChannelRepository extends ChannelRepository {
   #streamValidationService; // Servicio de validación temprana de streams
   #deduplicationService; // Servicio de deduplicación de canales
   #m3uParser; // Parser para modo automático
+  #playlistErrorStats; // Estadísticas de errores de playlist
 
   /**
    * @param {string} csvPath - Ruta al archivo CSV local
@@ -78,6 +79,9 @@ export class HybridChannelRepository extends ChannelRepository {
     
     // Inicializar parser para modo automático
     this.#m3uParser = new M3UParserService(config.filters);
+    
+    // Inicializar estadísticas de errores de playlist
+    this.#resetPlaylistErrorStats();
     
     // Crear repositorio CSV principal
     this.#csvRepository = new CSVChannelRepository(csvPath, config, logger);
@@ -333,6 +337,8 @@ export class HybridChannelRepository extends ChannelRepository {
     const allChannels = [];
     const maxConcurrent = 5; // Limitar concurrencia para evitar sobrecarga
     
+    this.#resetPlaylistErrorStats();
+    this.#playlistErrorStats.totalPlaylists = playlistUrls.length;
     this.#logger.info(`🔄 Procesando ${playlistUrls.length} playlists con máximo ${maxConcurrent} concurrentes...`);
     
     // Procesar en lotes para controlar la concurrencia
@@ -367,14 +373,16 @@ export class HybridChannelRepository extends ChannelRepository {
           
           if (channels.length > 0) {
             this.#logger.debug(`✅ Playlist ${globalIndex} procesada: ${channels.length} canales`);
+            this.#playlistErrorStats.successfulPlaylists++;
             return channels;
           } else {
             this.#logger.debug(`⚠️ Playlist ${globalIndex} sin canales válidos`);
+            this.#playlistErrorStats.successfulPlaylists++;
             return [];
           }
           
         } catch (error) {
-          this.#logger.warn(`❌ Error procesando playlist ${globalIndex} (${playlistUrl}): ${error.message}`);
+          this.#trackPlaylistError(globalIndex, playlistUrl, error.message);
           return [];
         }
       });
@@ -393,8 +401,86 @@ export class HybridChannelRepository extends ChannelRepository {
       }
     }
     
+    this.#logPlaylistErrorStats();
     this.#logger.info(`✅ Procesamiento de playlists completado: ${allChannels.length} canales totales`);
     return allChannels;
+  }
+
+  /**
+   * Reinicia las estadísticas de errores de playlist
+   * @private
+   */
+  #resetPlaylistErrorStats() {
+    this.#playlistErrorStats = {
+      totalPlaylists: 0,
+      successfulPlaylists: 0,
+      failedPlaylists: 0,
+      errors: [],
+      errorsByType: new Map()
+    };
+  }
+
+  /**
+   * Registra un error de playlist
+   * @private
+   * @param {number} index - Índice de la playlist
+   * @param {string} url - URL de la playlist
+   * @param {string} errorMessage - Mensaje de error
+   */
+  #trackPlaylistError(index, url, errorMessage) {
+    this.#playlistErrorStats.failedPlaylists++;
+    this.#playlistErrorStats.errors.push({
+      index,
+      url,
+      error: errorMessage,
+      timestamp: new Date()
+    });
+    
+    // Categorizar errores por tipo
+    let errorType = 'unknown';
+    if (errorMessage.includes('HTTP')) {
+      errorType = 'http_error';
+    } else if (errorMessage.includes('timeout') || errorMessage.includes('ETIMEDOUT')) {
+      errorType = 'timeout';
+    } else if (errorMessage.includes('ENOTFOUND') || errorMessage.includes('ECONNREFUSED')) {
+      errorType = 'connection';
+    } else if (errorMessage.includes('vacío')) {
+      errorType = 'empty_content';
+    }
+    
+    const currentCount = this.#playlistErrorStats.errorsByType.get(errorType) || 0;
+    this.#playlistErrorStats.errorsByType.set(errorType, currentCount + 1);
+    
+    this.#logger.warn(`❌ Error procesando playlist ${index} (${url}): ${errorMessage}`);
+  }
+
+  /**
+   * Registra las estadísticas de errores de playlist
+   * @private
+   */
+  #logPlaylistErrorStats() {
+    const stats = this.#playlistErrorStats;
+    
+    if (stats.failedPlaylists > 0) {
+      this.#logger.warn(`📊 Resumen de errores de playlist: ${stats.failedPlaylists} de ${stats.totalPlaylists} playlists fallaron`);
+      
+      // Log errores por tipo
+      for (const [type, count] of stats.errorsByType) {
+        this.#logger.warn(`   - ${type}: ${count} errores`);
+      }
+      
+      // Log algunos ejemplos de errores
+      const maxExamples = 3;
+      const examples = stats.errors.slice(0, maxExamples);
+      this.#logger.warn(`   Ejemplos de errores:`);
+      examples.forEach(error => {
+        this.#logger.warn(`     • Playlist ${error.index}: ${error.error}`);
+      });
+      
+      if (stats.errors.length > maxExamples) {
+        this.#logger.warn(`     ... y ${stats.errors.length - maxExamples} errores más`);
+      }
+    }
   }
 
   /**

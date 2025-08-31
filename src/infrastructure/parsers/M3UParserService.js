@@ -17,6 +17,11 @@ export class M3UParserService {
   #config;
 
   /**
+   * @private
+   */
+  #invalidEntryStats;
+
+  /**
    * @param {Object} config - Configuración del parser
    */
   constructor(config = {}) {
@@ -31,6 +36,7 @@ export class M3UParserService {
       maxChannelsPerFile: config.maxChannelsPerFile ?? 20000,
       ...config
     };
+    this.#resetInvalidEntryStats();
   }
 
   /**
@@ -143,6 +149,7 @@ export class M3UParserService {
    */
   async #processEntries(rawEntries) {
     const channels = [];
+    this.#resetInvalidEntryStats();
 
     for (const entry of rawEntries) {
       try {
@@ -154,7 +161,7 @@ export class M3UParserService {
         }
       } catch (error) {
         if (this.#config.skipInvalidEntries) {
-          console.warn(`Entrada inválida en línea ${entry.lineNumber}: ${error.message}`);
+          this.#trackInvalidEntry(error.message, entry.lineNumber);
           continue;
         } else {
           throw new M3UParseError(
@@ -165,6 +172,7 @@ export class M3UParserService {
       }
     }
 
+    this.#logInvalidEntryStats();
     return channels;
   }
 
@@ -444,6 +452,79 @@ export class M3UParserService {
     console.log(`M3U parseado: ${validChannels.length} canales válidos de ${channels.length} totales`);
     
     return validChannels;
+  }
+
+  /**
+   * Reinicia las estadísticas de entradas inválidas
+   * @private
+   */
+  #resetInvalidEntryStats() {
+    this.#invalidEntryStats = {
+      total: 0,
+      byErrorType: new Map(),
+      lines: []
+    };
+  }
+
+  /**
+   * Registra una entrada inválida
+   * @private
+   * @param {string} errorMessage - Mensaje de error
+   * @param {number} lineNumber - Número de línea
+   */
+  #trackInvalidEntry(errorMessage, lineNumber) {
+    this.#invalidEntryStats.total++;
+    
+    // Contar por tipo de error
+    const errorType = this.#categorizeError(errorMessage);
+    const currentCount = this.#invalidEntryStats.byErrorType.get(errorType) || 0;
+    this.#invalidEntryStats.byErrorType.set(errorType, currentCount + 1);
+    
+    // Guardar líneas para referencia (máximo 10)
+    if (this.#invalidEntryStats.lines.length < 10) {
+      this.#invalidEntryStats.lines.push({ line: lineNumber, error: errorMessage });
+    }
+  }
+
+  /**
+   * Categoriza el tipo de error
+   * @private
+   * @param {string} errorMessage - Mensaje de error
+   * @returns {string}
+   */
+  #categorizeError(errorMessage) {
+    if (errorMessage.includes('formato correcto')) {
+      return 'Formato de ID incorrecto';
+    }
+    if (errorMessage.includes('URL del stream')) {
+      return 'URL de stream inválida';
+    }
+    if (errorMessage.includes('requerido')) {
+      return 'Campos requeridos faltantes';
+    }
+    return 'Otros errores';
+  }
+
+  /**
+   * Registra las estadísticas de entradas inválidas
+   * @private
+   */
+  #logInvalidEntryStats() {
+    if (this.#invalidEntryStats.total === 0) {
+      return;
+    }
+
+    console.warn(`📊 Resumen de entradas inválidas: ${this.#invalidEntryStats.total} entradas ignoradas`);
+    
+    // Log por tipo de error
+    for (const [errorType, count] of this.#invalidEntryStats.byErrorType) {
+      console.warn(`   • ${errorType}: ${count} entradas`);
+    }
+    
+    // Mostrar algunas líneas de ejemplo
+    if (this.#invalidEntryStats.lines.length > 0) {
+      console.warn(`   Ejemplos de líneas afectadas: ${this.#invalidEntryStats.lines.map(item => item.line).join(', ')}`);
+    }
   }
 
   /**

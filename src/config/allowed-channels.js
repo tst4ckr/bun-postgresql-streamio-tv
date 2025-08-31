@@ -181,6 +181,67 @@ function isChannelAllowed(channelName) {
   });
 }
 
+// Estadísticas de filtrado de canales no permitidos
+let filteredChannelStats = {
+  totalChannels: 0,
+  filteredChannels: 0,
+  removedChannels: [],
+  examples: []
+};
+
+/**
+ * Reinicia las estadísticas de filtrado
+ * @private
+ */
+function resetFilteredChannelStats() {
+  filteredChannelStats = {
+    totalChannels: 0,
+    filteredChannels: 0,
+    removedChannels: [],
+    examples: []
+  };
+}
+
+/**
+ * Registra un canal removido por filtro
+ * @private
+ * @param {string} channelName - Nombre del canal removido
+ */
+function trackRemovedChannel(channelName) {
+  filteredChannelStats.removedChannels.push(channelName);
+  
+  // Guardar ejemplos (máximo 10)
+  if (filteredChannelStats.examples.length < 10) {
+    filteredChannelStats.examples.push(channelName);
+  }
+}
+
+/**
+ * Muestra el resumen de canales filtrados
+ * @private
+ */
+function logFilteredChannelStats() {
+  const { totalChannels, filteredChannels, removedChannels, examples } = filteredChannelStats;
+  const removedCount = removedChannels.length;
+  
+  if (removedCount > 0) {
+    console.log(`📊 Resumen de canales no permitidos: ${removedCount} de ${totalChannels} canales removidos`);
+    console.log(`   • Canales filtrados: ${removedCount} canales`);
+    console.log(`   • Canales permitidos: ${filteredChannels} canales`);
+    
+    if (examples.length > 0) {
+      console.log(`   Ejemplos de canales removidos:`);
+      examples.forEach((name, index) => {
+        console.log(`     • ${name}`);
+      });
+      
+      if (removedCount > examples.length) {
+        console.log(`     ... y ${removedCount - examples.length} canales más`);
+      }
+    }
+  }
+}
+
 /**
  * Filtra una lista de canales manteniendo solo los permitidos
  * @param {Array} channels - Lista de canales
@@ -192,16 +253,27 @@ function filterAllowedChannels(channels, threshold = 0.9) {
     return [];
   }
   
-  return channels.filter(channel => {
+  // Reiniciar estadísticas
+  resetFilteredChannelStats();
+  filteredChannelStats.totalChannels = channels.length;
+  
+  const filteredChannels = channels.filter(channel => {
     const channelName = channel?.name || channel?.title || '';
     const isAllowed = isChannelAllowed(channelName, threshold);
     
     if (!isAllowed) {
-      console.log(`[FILTRO] Canal no permitido removido: ${channelName}`);
+      trackRemovedChannel(channelName);
     }
     
     return isAllowed;
   });
+  
+  filteredChannelStats.filteredChannels = filteredChannels.length;
+  
+  // Mostrar resumen si hay canales removidos
+  logFilteredChannelStats();
+  
+  return filteredChannels;
 }
 
 /**
