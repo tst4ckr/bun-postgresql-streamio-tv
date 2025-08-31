@@ -168,9 +168,9 @@ export class HybridChannelRepository extends ChannelRepository {
       const parsedChannels = await this.#m3uParser.parseM3U(m3uContent);
       this.#logger.info(`Canales parseados: ${parsedChannels.length}`);
 
-      // 3. Filtrar URLs que cumplan criterios (con /play/ e IP pública)
+      // 3. Filtrar URLs válidas para procesamiento
       const filteredChannels = this.#filterChannelsByPlayAndPublicIP(parsedChannels);
-      this.#logger.info(`Canales filtrados (con /play/ e IP pública): ${filteredChannels.length}`);
+      this.#logger.info(`Canales filtrados (URLs válidas): ${filteredChannels.length}`);
 
       // 4. Extraer URLs únicas de playlist
       const playlistUrls = this.#generatePlaylistUrls(filteredChannels);
@@ -180,7 +180,11 @@ export class HybridChannelRepository extends ChannelRepository {
       const allChannels = await this.#processPlaylistUrls(playlistUrls);
       this.#logger.info(`📺 Total de canales procesados desde playlists: ${allChannels.length}`);
 
-      return allChannels;
+      // 6. Eliminar duplicados (lógica del modo automático)
+      const uniqueChannels = this.#removeDuplicates(allChannels);
+      this.#logger.info(`🔄 Canales únicos después de deduplicación: ${uniqueChannels.length}`);
+
+      return uniqueChannels;
       
     } catch (error) {
       this.#logger.error(`Error procesando fuente automática: ${error.message}`);
@@ -189,91 +193,149 @@ export class HybridChannelRepository extends ChannelRepository {
   }
 
   /**
-   * Filtra canales que tengan URLs con /play/ y sean IPs públicas
+   * Filtra canales que contengan '/play/' en la URL y tengan IP pública como hostname
+   * Implementa la lógica exacta del modo automático para consistencia funcional
    * @private
    * @param {Array<Channel>} channels - Canales a filtrar
    * @returns {Array<Channel>} Canales filtrados
    */
   #filterChannelsByPlayAndPublicIP(channels) {
     return channels.filter(channel => {
-      if (!channel.url) return false;
-      
-      // Verificar si contiene /play/
-      const hasPlayPath = channel.url.includes('/play/');
-      
-      // Verificar si es IP pública
-      const isPublicIP = this.#isPublicIPUrl(channel.url);
-      
-      return hasPlayPath && isPublicIP;
+      try {
+        const url = new URL(channel.url);
+        
+        // Verificar que la URL sea válida y accesible
+        if (!url.protocol || (!url.protocol.startsWith('http') && !url.protocol.startsWith('https'))) {
+          return false;
+        }
+
+        // Verificar que tenga un hostname válido
+        if (!url.hostname || url.hostname.trim().length === 0) {
+          return false;
+        }
+
+        // Verificar que contenga '/play/' en la ruta (requisito del modo automático)
+        if (!url.pathname.includes('/play/')) {
+          return false;
+        }
+
+        // Verificar que el hostname sea una IP pública (requisito del modo automático)
+        if (!this.#isPublicIP(url.hostname)) {
+          return false;
+        }
+
+        return true;
+      } catch (error) {
+        this.#logger.debug(`URL inválida ignorada: ${channel.url}`);
+        return false;
+      }
     });
   }
 
   /**
-   * Verifica si una URL contiene una IP pública
+   * Verifica si una dirección IP es pública
+   * Implementa la lógica exacta del modo automático para consistencia funcional
    * @private
-   * @param {string} url - URL a verificar
-   * @returns {boolean} true si es IP pública
+   * @param {string} hostname - Hostname a verificar
+   * @returns {boolean} true si es IP pública válida
    */
-  #isPublicIPUrl(url) {
-    try {
-      const urlObj = new URL(url);
-      const hostname = urlObj.hostname;
-      
-      // Verificar si es una IP numérica (no dominio)
-      const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
-      if (!ipRegex.test(hostname)) return false;
-      
-      // Verificar que no sea IP privada
-      const octets = hostname.split('.').map(Number);
-      if (octets.length !== 4) return false;
-      
-      const [a, b] = octets;
-      
-      // IPs privadas
-      if (a === 10) return false; // 10.x.x.x
-      if (a === 172 && b >= 16 && b <= 31) return false; // 172.16.x.x - 172.31.x.x
-      if (a === 192 && b === 168) return false; // 192.168.x.x
-      if (a === 127) return false; // 127.x.x.x (loopback)
-      
-      return true;
-    } catch {
+  #isPublicIP(hostname) {
+    // Verificar que sea una IP válida
+    const ipRegex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+    if (!ipRegex.test(hostname)) {
       return false;
     }
+
+    const parts = hostname.split('.').map(Number);
+    const [a, b, c, d] = parts;
+
+    // Verificar que NO sea IP privada
+    // 10.0.0.0/8
+    if (a === 10) return false;
+    
+    // 172.16.0.0/12
+    if (a === 172 && b >= 16 && b <= 31) return false;
+    
+    // 192.168.0.0/16
+    if (a === 192 && b === 168) return false;
+    
+    // 127.0.0.0/8 (localhost)
+    if (a === 127) return false;
+    
+    // 169.254.0.0/16 (link-local)
+    if (a === 169 && b === 254) return false;
+    
+    // 224.0.0.0/4 (multicast)
+    if (a >= 224 && a <= 239) return false;
+    
+    // 240.0.0.0/4 (reserved)
+    if (a >= 240) return false;
+
+    return true;
   }
 
   /**
-   * Genera URLs de playlist a partir de canales filtrados
+   * Genera URLs únicas de playlist en formato http://IP:PUERTO/playlist.m3u
+   * Implementa la lógica exacta del modo automático para consistencia funcional
    * @private
-   * @param {Array<Channel>} channels - Canales con URLs válidas
-   * @returns {Array<string>} URLs de playlist únicas
+   * @param {Array<Channel>} channels - Canales filtrados con /play/ e IP pública
+   * @returns {string[]} URLs de playlist únicas
    */
   #generatePlaylistUrls(channels) {
     const playlistUrls = new Set();
     
-    channels.forEach(channel => {
-      if (channel.url) {
-        // Generar URL base de playlist
-        const baseUrl = channel.url.replace(/\/[^\/]*$/, '/playlist.m3u8');
-        playlistUrls.add(baseUrl);
+    for (const channel of channels) {
+      try {
+        const url = new URL(channel.url);
+        const ip = url.hostname;
+        const port = url.port || (url.protocol === 'https:' ? '443' : '80');
+        
+        // Generar URL de playlist en formato requerido: http://IP:PUERTO/playlist.m3u
+        const playlistUrl = `http://${ip}:${port}/playlist.m3u`;
+        playlistUrls.add(playlistUrl);
+        
+      } catch (error) {
+        this.#logger.debug(`Error generando playlist URL para: ${channel.url}`);
       }
-    });
+    }
     
     return Array.from(playlistUrls);
   }
 
   /**
+   * Elimina canales duplicados basándose en el ID del canal
+   * Implementa la lógica exacta del modo automático para consistencia funcional
+   * @private
+   * @param {Array<Channel>} channels
+   * @returns {Array<Channel>}
+   */
+  #removeDuplicates(channels) {
+    const uniqueChannels = new Map();
+    
+    for (const channel of channels) {
+      const key = channel.id;
+      if (!uniqueChannels.has(key)) {
+        uniqueChannels.set(key, channel);
+      }
+    }
+    
+    return Array.from(uniqueChannels.values());
+  }
+
+  /**
    * Procesa cada URL de playlist como fuente M3U independiente
+   * Implementa la lógica exacta del modo automático para consistencia funcional
    * @private
    * @param {string[]} playlistUrls - URLs de playlist a procesar
    * @returns {Promise<Array<Channel>>} Todos los canales procesados
    */
   async #processPlaylistUrls(playlistUrls) {
     const allChannels = [];
-    const maxConcurrent = 5; // Limitar concurrencia
+    const maxConcurrent = 5; // Limitar concurrencia para evitar sobrecarga
     
     this.#logger.info(`🔄 Procesando ${playlistUrls.length} playlists con máximo ${maxConcurrent} concurrentes...`);
     
-    // Procesar en lotes
+    // Procesar en lotes para controlar la concurrencia
     for (let i = 0; i < playlistUrls.length; i += maxConcurrent) {
       const batch = playlistUrls.slice(i, i + maxConcurrent);
       const batchPromises = batch.map(async (playlistUrl, index) => {
@@ -297,36 +359,41 @@ export class HybridChannelRepository extends ChannelRepository {
           const m3uContent = await response.text();
           
           if (!m3uContent || m3uContent.trim().length === 0) {
-            throw new Error('Contenido vacío');
+            throw new Error('Contenido M3U vacío');
           }
           
-          // Parsear playlist M3U
+          // Parsear contenido M3U
           const channels = await this.#m3uParser.parseM3U(m3uContent);
           
-          // Agregar metadata sobre la fuente
-          channels.forEach(channel => {
-            channel.source = 'automatic';
-            channel.sourceUrl = playlistUrl;
-          });
-          
-          return channels;
+          if (channels.length > 0) {
+            this.#logger.debug(`✅ Playlist ${globalIndex} procesada: ${channels.length} canales`);
+            return channels;
+          } else {
+            this.#logger.debug(`⚠️ Playlist ${globalIndex} sin canales válidos`);
+            return [];
+          }
           
         } catch (error) {
-          this.#logger.warn(`⚠️ Error procesando playlist ${globalIndex}/${playlistUrls.length}: ${error.message}`);
+          this.#logger.warn(`❌ Error procesando playlist ${globalIndex} (${playlistUrl}): ${error.message}`);
           return [];
         }
       });
       
-      const batchResults = await Promise.allSettled(batchPromises);
+      // Esperar que termine el lote actual
+      const batchResults = await Promise.all(batchPromises);
       
-      // Agregar canales válidos
-      batchResults.forEach(result => {
-        if (result.status === 'fulfilled' && result.value) {
-          allChannels.push(...result.value);
-        }
-      });
+      // Agregar todos los canales del lote
+      for (const channels of batchResults) {
+        allChannels.push(...channels);
+      }
+      
+      // Pequeña pausa entre lotes para no sobrecargar los servidores
+      if (i + maxConcurrent < playlistUrls.length) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
     }
     
+    this.#logger.info(`✅ Procesamiento de playlists completado: ${allChannels.length} canales totales`);
     return allChannels;
   }
 
