@@ -350,9 +350,10 @@ export class HybridChannelRepository extends ChannelRepository {
         try {
           this.#logger.debug(`📋 Procesando playlist ${globalIndex}/${playlistUrls.length}: ${playlistUrl}`);
           
-          // Descargar playlist M3U
+          // Descargar playlist M3U con timeout configurable para servidores lentos
+          const playlistTimeout = this.#config.validation?.playlistFetchTimeout || 180000; // 3 minutos por defecto
           const response = await fetch(playlistUrl, {
-            timeout: 15000,
+            timeout: playlistTimeout,
             headers: {
               'User-Agent': 'TV-IPTV-Addon/1.0.0'
             }

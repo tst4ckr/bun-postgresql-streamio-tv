@@ -181,7 +181,10 @@ export class TVAddonConfig {
       // Validación antes del filtrado
       validateBeforeFiltering: process.env.VALIDATE_BEFORE_FILTERING === 'true',
       validateFilteredChannels: process.env.VALIDATE_FILTERED_CHANNELS === 'true',
-      validateAfterFiltering: process.env.VALIDATE_AFTER_FILTERING === 'true'
+      validateAfterFiltering: process.env.VALIDATE_AFTER_FILTERING === 'true',
+      
+      // Configuración de timeout para descarga de playlists
+      playlistFetchTimeout: parseInt(process.env.PLAYLIST_FETCH_TIMEOUT) || 180000 // 3 minutos por defecto
       },
 
 
