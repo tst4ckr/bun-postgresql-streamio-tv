@@ -4,6 +4,11 @@
  * Si incluyes "HBO", permitirá todo lo que contenga HBO con 90% de similitud
  */
 
+import { config } from 'dotenv';
+
+// Cargar variables de entorno
+config({ path: '.env' });
+
 // Función para cargar canales permitidos desde variables de entorno
 function loadAllowedChannelsFromEnv() {
   const envChannels = process.env.ALLOWED_CHANNELS;
