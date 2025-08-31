@@ -202,7 +202,7 @@ export class HybridChannelRepository extends ChannelRepository {
   #filterChannelsByPlayAndPublicIP(channels) {
     return channels.filter(channel => {
       try {
-        const url = new URL(channel.url);
+        const url = new URL(channel.streamUrl);
         
         // Verificar que la URL sea válida y accesible
         if (!url.protocol || (!url.protocol.startsWith('http') && !url.protocol.startsWith('https'))) {
@@ -226,7 +226,7 @@ export class HybridChannelRepository extends ChannelRepository {
 
         return true;
       } catch (error) {
-        this.#logger.debug(`URL inválida ignorada: ${channel.url}`);
+        this.#logger.debug(`URL inválida ignorada: ${channel.streamUrl}`);
         return false;
       }
     });
@@ -286,7 +286,7 @@ export class HybridChannelRepository extends ChannelRepository {
     
     for (const channel of channels) {
       try {
-        const url = new URL(channel.url);
+        const url = new URL(channel.streamUrl);
         const ip = url.hostname;
         const port = url.port || (url.protocol === 'https:' ? '443' : '80');
         
@@ -295,7 +295,7 @@ export class HybridChannelRepository extends ChannelRepository {
         playlistUrls.add(playlistUrl);
         
       } catch (error) {
-        this.#logger.debug(`Error generando playlist URL para: ${channel.url}`);
+        this.#logger.debug(`Error generando playlist URL para: ${channel.streamUrl}`);
       }
     }
     
