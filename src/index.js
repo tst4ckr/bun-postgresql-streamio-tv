@@ -12,6 +12,7 @@ import { TVAddonConfig } from './infrastructure/config/TVAddonConfig.js';
 import { StreamHealthService } from './infrastructure/services/StreamHealthService.js';
 import { SecurityMiddleware } from './infrastructure/middleware/SecurityMiddleware.js';
 import { ErrorHandler } from './infrastructure/error/ErrorHandler.js';
+import { EnhancedLoggerFactory } from './infrastructure/services/EnhancedLoggerService.js';
 
 // Capa de aplicación
 import { StreamHandler } from './application/handlers/StreamHandler.js';
@@ -96,27 +97,13 @@ class TVIPTVAddon {
   #createLogger() {
     const { logging } = this.#config;
     
-
-    return {
-      info: (message, ...args) => {
-        if (['info', 'debug'].includes(logging.logLevel)) {
-          console.log(`[INFO] ${new Date().toISOString()} - ${message}`, ...args);
-        }
-      },
-      warn: (message, ...args) => {
-        if (['info', 'warn', 'debug'].includes(logging.logLevel)) {
-          console.warn(`[WARN] ${new Date().toISOString()} - ${message}`, ...args);
-        }
-      },
-      error: (message, ...args) => {
-        console.error(`[ERROR] ${new Date().toISOString()} - ${message}`, ...args);
-      },
-      debug: (message, ...args) => {
-        if (logging.logLevel === 'debug') {
-          console.log(`[DEBUG] ${new Date().toISOString()} - ${message}`, ...args);
-        }
-      }
-    };
+    // Crear logger mejorado con información de archivo fuente y línea
+    return EnhancedLoggerFactory.createCompatibleLogger({
+      logLevel: logging.logLevel,
+      enableRequestLogging: logging.enableRequestLogging,
+      enablePerformanceMetrics: logging.enablePerformanceMetrics,
+      logFilePath: logging.logFilePath
+    });
   }
 
 
