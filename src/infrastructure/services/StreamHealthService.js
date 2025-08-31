@@ -18,6 +18,7 @@ export class StreamHealthService {
 
   /**
    * Verifica un stream por URL usando HEAD y fallback GET parcial con retry
+   * Validación específica para streams m3u8: HTTP 200 y content-type correcto
    * @param {string} url
    * @param {string} channelId - ID del canal para procesamiento de BITEL
    * @param {number} retryCount - Número de reintentos (interno)
@@ -33,7 +34,21 @@ export class StreamHealthService {
     const maxRetries = this.#config.validation.maxValidationRetries || 2;
     
     const headers = { 'User-Agent': 'Stremio-TV-IPTV-Addon/1.0.0' };
-    const isValidStatus = status => status >= 200 && status < 400;
+    
+    // Validación específica para streams de video: solo HTTP 200 es válido
+    const isValidStreamStatus = status => status === 200;
+    
+    // Validación de content-type para streams m3u8
+    const isValidM3U8ContentType = (contentType) => {
+      if (!contentType) return false;
+      const normalizedType = contentType.toLowerCase();
+      return normalizedType.includes('application/vnd.apple.mpegurl') ||
+             normalizedType.includes('application/x-mpegurl') ||
+             normalizedType.includes('video/mp2t') ||
+             normalizedType.includes('text/plain') || // Algunos servidores usan text/plain para m3u8
+             normalizedType.includes('application/octet-stream'); // Fallback común
+    };
+    
     const isRetryableError = (error) => {
       const retryableCodes = ['ECONNRESET', 'ETIMEDOUT', 'ENOTFOUND', 'ECONNREFUSED'];
       return retryableCodes.includes(error.code) || 
@@ -41,41 +56,56 @@ export class StreamHealthService {
     };
 
     try {
-      // Intento HEAD primero
-      const head = await axios.head(processedUrl, { timeout: timeoutMs, headers, validateStatus: () => true });
-      if (isValidStatus(head.status)) {
+      // Intento HEAD primero con validación estricta
+      const head = await axios.head(processedUrl, { 
+        timeout: timeoutMs, 
+        headers, 
+        validateStatus: () => true // Permitir todos los códigos para validación manual
+      });
+      
+      if (isValidStreamStatus(head.status)) {
+        const contentType = head.headers['content-type'];
+        const isValidContent = isValidM3U8ContentType(contentType);
+        
         return { 
-          ok: true, 
+          ok: isValidContent, 
           status: head.status, 
-          contentType: head.headers['content-type'],
+          contentType: contentType,
           processedUrl: processedUrl,
-          attempts: retryCount + 1
+          attempts: retryCount + 1,
+          reason: isValidContent ? undefined : `INVALID_CONTENT_TYPE: ${contentType}`
         };
       }
 
-      // Fallback GET de un pequeño rango
+      // Fallback GET de un pequeño rango con validación estricta
       const get = await axios.get(processedUrl, {
         timeout: timeoutMs,
         headers: { ...headers, Range: 'bytes=0-1024' },
         responseType: 'arraybuffer',
-        validateStatus: () => true
+        validateStatus: () => true // Permitir todos los códigos para validación manual
       });
       
-      return isValidStatus(get.status)
-        ? { 
-            ok: true, 
-            status: get.status, 
-            contentType: get.headers['content-type'],
-            processedUrl: processedUrl,
-            attempts: retryCount + 1
-          }
-        : { 
-            ok: false, 
-            status: get.status, 
-            reason: 'HTTP_NOT_OK',
-            processedUrl: processedUrl,
-            attempts: retryCount + 1
-          };
+      if (isValidStreamStatus(get.status)) {
+        const contentType = get.headers['content-type'];
+        const isValidContent = isValidM3U8ContentType(contentType);
+        
+        return { 
+          ok: isValidContent, 
+          status: get.status, 
+          contentType: contentType,
+          processedUrl: processedUrl,
+          attempts: retryCount + 1,
+          reason: isValidContent ? undefined : `INVALID_CONTENT_TYPE: ${contentType}`
+        };
+      } else {
+        return { 
+          ok: false, 
+          status: get.status, 
+          reason: `HTTP_NOT_200: ${get.status}`,
+          processedUrl: processedUrl,
+          attempts: retryCount + 1
+        };
+      }
     } catch (error) {
       // Implementar retry con backoff exponencial para errores temporales
       if (retryCount < maxRetries && isRetryableError(error)) {
