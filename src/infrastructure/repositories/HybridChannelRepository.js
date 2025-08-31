@@ -15,6 +15,8 @@ import { StreamValidationService } from '../services/StreamValidationService.js'
 import { ChannelDeduplicationService, DeduplicationConfig } from '../../domain/services/ChannelDeduplicationService.js';
 import { filterAllowedChannels } from '../../config/allowed-channels.js';
 import { filterBannedChannels } from '../../config/banned-channels.js';
+import fetch from 'node-fetch';
+import { URL } from 'url';
 
 /**
  * Repositorio híbrido que combina múltiples fuentes de canales
@@ -46,6 +48,7 @@ export class HybridChannelRepository extends ChannelRepository {
   #httpsToHttpService; // Servicio de conversión HTTPS a HTTP
   #streamValidationService; // Servicio de validación temprana de streams
   #deduplicationService; // Servicio de deduplicación de canales
+  #m3uParser; // Parser para modo automático
 
   /**
    * @param {string} csvPath - Ruta al archivo CSV local
@@ -72,6 +75,9 @@ export class HybridChannelRepository extends ChannelRepository {
     
     // Inicializar servicio de deduplicación
     this.#deduplicationService = new ChannelDeduplicationService(DeduplicationConfig.fromEnvironment());
+    
+    // Inicializar parser para modo automático
+    this.#m3uParser = new M3UParserService(config.filters);
     
     // Crear repositorio CSV principal
     this.#csvRepository = new CSVChannelRepository(csvPath, config, logger);
@@ -128,6 +134,203 @@ export class HybridChannelRepository extends ChannelRepository {
   }
 
   /**
+   * Procesa la URL de AUTO_M3U_URL en modo automático
+   * Reutiliza la lógica del modo automatic dentro del hybrid
+   * @private
+   * @returns {Promise<Array<Channel>>} Canales procesados desde AUTO_M3U_URL
+   */
+  async #processAutomaticSource() {
+    const { autoM3uUrl } = this.#config.dataSources;
+    
+    if (!autoM3uUrl) {
+      return [];
+    }
+
+    this.#logger.info(`🤖 Procesando fuente automática desde: ${autoM3uUrl}`);
+    
+    try {
+      // 1. Descargar contenido M3U principal
+      const response = await fetch(autoM3uUrl, {
+        timeout: 30000,
+        headers: {
+          'User-Agent': 'TV-IPTV-Addon/1.0.0'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const m3uContent = await response.text();
+      this.#logger.info(`M3U descargado: ${m3uContent.length} caracteres`);
+
+      // 2. Parsear contenido M3U
+      const parsedChannels = await this.#m3uParser.parseM3U(m3uContent);
+      this.#logger.info(`Canales parseados: ${parsedChannels.length}`);
+
+      // 3. Filtrar URLs que cumplan criterios (con /play/ e IP pública)
+      const filteredChannels = this.#filterChannelsByPlayAndPublicIP(parsedChannels);
+      this.#logger.info(`Canales filtrados (con /play/ e IP pública): ${filteredChannels.length}`);
+
+      // 4. Extraer URLs únicas de playlist
+      const playlistUrls = this.#generatePlaylistUrls(filteredChannels);
+      this.#logger.info(`📋 URLs de playlist generadas: ${playlistUrls.length}`);
+
+      // 5. Procesar cada URL de playlist como fuente M3U independiente
+      const allChannels = await this.#processPlaylistUrls(playlistUrls);
+      this.#logger.info(`📺 Total de canales procesados desde playlists: ${allChannels.length}`);
+
+      return allChannels;
+      
+    } catch (error) {
+      this.#logger.error(`Error procesando fuente automática: ${error.message}`);
+      return [];
+    }
+  }
+
+  /**
+   * Filtra canales que tengan URLs con /play/ y sean IPs públicas
+   * @private
+   * @param {Array<Channel>} channels - Canales a filtrar
+   * @returns {Array<Channel>} Canales filtrados
+   */
+  #filterChannelsByPlayAndPublicIP(channels) {
+    return channels.filter(channel => {
+      if (!channel.url) return false;
+      
+      // Verificar si contiene /play/
+      const hasPlayPath = channel.url.includes('/play/');
+      
+      // Verificar si es IP pública
+      const isPublicIP = this.#isPublicIPUrl(channel.url);
+      
+      return hasPlayPath && isPublicIP;
+    });
+  }
+
+  /**
+   * Verifica si una URL contiene una IP pública
+   * @private
+   * @param {string} url - URL a verificar
+   * @returns {boolean} true si es IP pública
+   */
+  #isPublicIPUrl(url) {
+    try {
+      const urlObj = new URL(url);
+      const hostname = urlObj.hostname;
+      
+      // Verificar si es una IP numérica (no dominio)
+      const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
+      if (!ipRegex.test(hostname)) return false;
+      
+      // Verificar que no sea IP privada
+      const octets = hostname.split('.').map(Number);
+      if (octets.length !== 4) return false;
+      
+      const [a, b] = octets;
+      
+      // IPs privadas
+      if (a === 10) return false; // 10.x.x.x
+      if (a === 172 && b >= 16 && b <= 31) return false; // 172.16.x.x - 172.31.x.x
+      if (a === 192 && b === 168) return false; // 192.168.x.x
+      if (a === 127) return false; // 127.x.x.x (loopback)
+      
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Genera URLs de playlist a partir de canales filtrados
+   * @private
+   * @param {Array<Channel>} channels - Canales con URLs válidas
+   * @returns {Array<string>} URLs de playlist únicas
+   */
+  #generatePlaylistUrls(channels) {
+    const playlistUrls = new Set();
+    
+    channels.forEach(channel => {
+      if (channel.url) {
+        // Generar URL base de playlist
+        const baseUrl = channel.url.replace(/\/[^\/]*$/, '/playlist.m3u8');
+        playlistUrls.add(baseUrl);
+      }
+    });
+    
+    return Array.from(playlistUrls);
+  }
+
+  /**
+   * Procesa cada URL de playlist como fuente M3U independiente
+   * @private
+   * @param {string[]} playlistUrls - URLs de playlist a procesar
+   * @returns {Promise<Array<Channel>>} Todos los canales procesados
+   */
+  async #processPlaylistUrls(playlistUrls) {
+    const allChannels = [];
+    const maxConcurrent = 5; // Limitar concurrencia
+    
+    this.#logger.info(`🔄 Procesando ${playlistUrls.length} playlists con máximo ${maxConcurrent} concurrentes...`);
+    
+    // Procesar en lotes
+    for (let i = 0; i < playlistUrls.length; i += maxConcurrent) {
+      const batch = playlistUrls.slice(i, i + maxConcurrent);
+      const batchPromises = batch.map(async (playlistUrl, index) => {
+        const globalIndex = i + index + 1;
+        
+        try {
+          this.#logger.debug(`📋 Procesando playlist ${globalIndex}/${playlistUrls.length}: ${playlistUrl}`);
+          
+          // Descargar playlist M3U
+          const response = await fetch(playlistUrl, {
+            timeout: 15000,
+            headers: {
+              'User-Agent': 'TV-IPTV-Addon/1.0.0'
+            }
+          });
+          
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+          
+          const m3uContent = await response.text();
+          
+          if (!m3uContent || m3uContent.trim().length === 0) {
+            throw new Error('Contenido vacío');
+          }
+          
+          // Parsear playlist M3U
+          const channels = await this.#m3uParser.parseM3U(m3uContent);
+          
+          // Agregar metadata sobre la fuente
+          channels.forEach(channel => {
+            channel.source = 'automatic';
+            channel.sourceUrl = playlistUrl;
+          });
+          
+          return channels;
+          
+        } catch (error) {
+          this.#logger.warn(`⚠️ Error procesando playlist ${globalIndex}/${playlistUrls.length}: ${error.message}`);
+          return [];
+        }
+      });
+      
+      const batchResults = await Promise.allSettled(batchPromises);
+      
+      // Agregar canales válidos
+      batchResults.forEach(result => {
+        if (result.status === 'fulfilled' && result.value) {
+          allChannels.push(...result.value);
+        }
+      });
+    }
+    
+    return allChannels;
+  }
+
+  /**
    * Inicializa el repositorio híbrido
    * @returns {Promise<void>}
    */
@@ -179,10 +382,31 @@ export class HybridChannelRepository extends ChannelRepository {
       this.#channelMap.clear();
       allCsvChannels.forEach(channel => this.#channelMap.set(channel.id, channel));
       
-      // 5. Cargar canales de URLs M3U remotas (sin deduplicación aún)
-      const allM3uChannels = [];
+      // 5. Procesar AUTO_M3U_URL en modo automático si está configurado
+      const { autoM3uUrl } = this.#config.dataSources;
+      let automaticChannels = [];
+      if (autoM3uUrl) {
+        this.#logger.info('🤖 Procesando fuente automática (AUTO_M3U_URL)...');
+        try {
+          automaticChannels = await this.#processAutomaticSource();
+          this.#logger.info(`📺 Canales procesados desde fuente automática: ${automaticChannels.length}`);
+        } catch (error) {
+          this.#logger.error(`Error procesando fuente automática: ${error.message}`);
+        }
+      }
+
+      // 6. Cargar canales de URLs M3U remotas tradicionales (sin deduplicación aún)
+      const allM3uChannels = [...automaticChannels];
       for (let i = 0; i < this.#m3uRepositories.length; i++) {
         const m3uRepo = this.#m3uRepositories[i];
+        const m3uUrl = m3uRepo.url;
+        
+        // Saltar si es la misma URL que AUTO_M3U_URL ya procesada
+        if (autoM3uUrl && m3uUrl === autoM3uUrl) {
+          this.#logger.debug(`M3U ${i + 1}: Saltando URL duplicada con AUTO_M3U_URL`);
+          continue;
+        }
+        
         try {
           await m3uRepo.initialize();
           const m3uChannels = await m3uRepo.getAllChannelsUnfiltered();
@@ -332,10 +556,31 @@ export class HybridChannelRepository extends ChannelRepository {
       this.#channelMap.clear();
       csvChannels.forEach(channel => this.#channelMap.set(channel.id, channel));
       
+      // Procesar AUTO_M3U_URL en modo automático si está configurado
+      const { autoM3uUrl } = this.#config.dataSources;
+      let automaticChannels = [];
+      if (autoM3uUrl) {
+        this.#logger.info('🤖 Refrescando fuente automática (AUTO_M3U_URL)...');
+        try {
+          automaticChannels = await this.#processAutomaticSource();
+          this.#logger.info(`📺 Canales refrescados desde fuente automática: ${automaticChannels.length}`);
+        } catch (error) {
+          this.#logger.error(`Error refrescando fuente automática: ${error.message}`);
+        }
+      }
+
       // Cargar todos los canales M3U para procesamiento
-      const allM3uChannels = [];
+      const allM3uChannels = [...automaticChannels];
       for (let i = 0; i < this.#m3uRepositories.length; i++) {
         const m3uRepo = this.#m3uRepositories[i];
+        const m3uUrl = m3uRepo.url;
+        
+        // Saltar si es la misma URL que AUTO_M3U_URL ya procesada
+        if (autoM3uUrl && m3uUrl === autoM3uUrl) {
+          this.#logger.debug(`Refresco M3U ${i + 1}: Saltando URL duplicada con AUTO_M3U_URL`);
+          continue;
+        }
+        
         try {
           await m3uRepo.refreshFromRemote();
           const m3uChannels = await m3uRepo.getAllChannelsUnfiltered();
