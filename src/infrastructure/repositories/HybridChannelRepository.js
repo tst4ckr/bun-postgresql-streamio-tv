@@ -1030,6 +1030,25 @@ export class HybridChannelRepository extends ChannelRepository {
     const channels = this.#channels.filter(ch => ch.genre.toLowerCase() === genre.toLowerCase());
     let activeChannels = this.#filterActiveChannels(channels);
     
+    // Aplicar conversión HTTPS a HTTP si está habilitada (consistencia con otros métodos)
+    if (this.#httpsToHttpService.isEnabled()) {
+      try {
+        const csvChannelIds = new Set((await this.#csvRepository.getAllChannelsUnfiltered()).map(ch => ch.id));
+        const csvChannels = activeChannels.filter(ch => csvChannelIds.has(ch.id));
+        const m3uChannels = activeChannels.filter(ch => !csvChannelIds.has(ch.id));
+        
+        const conversionResult = await this.#httpsToHttpService.processChannels(m3uChannels, {
+          concurrency: this.#config.validation?.maxValidationConcurrency || 5,
+          showProgress: false,
+          onlyWorkingHttp: true
+        });
+        
+        activeChannels = [...csvChannels, ...conversionResult.processed];
+      } catch (error) {
+        this.#logger.error('Error durante conversión HTTPS a HTTP en filtro por género:', error);
+      }
+    }
+    
     // Aplicar filtros de contenido si están activos
     if (this.#contentFilter.hasActiveFilters()) {
       activeChannels = this.#contentFilter.filterChannels(activeChannels);
@@ -1042,7 +1061,7 @@ export class HybridChannelRepository extends ChannelRepository {
     const bannedRemovedCount = beforeBannedCount - afterBannedCount;
     
     if (bannedRemovedCount > 0) {
-      this.#logger.info(`Filtros de canales prohibidos aplicados: ${bannedRemovedCount} canales removidos de ${beforeBannedCount}`);
+      this.#logger.debug(`Filtros de canales prohibidos aplicados en género: ${bannedRemovedCount} canales removidos de ${beforeBannedCount}`);
     }
     
     return activeChannels;
@@ -1053,6 +1072,25 @@ export class HybridChannelRepository extends ChannelRepository {
     const channels = this.#channels.filter(ch => ch.country.toLowerCase().includes(country.toLowerCase()));
     let activeChannels = this.#filterActiveChannels(channels);
     
+    // Aplicar conversión HTTPS a HTTP si está habilitada (consistencia con otros métodos)
+    if (this.#httpsToHttpService.isEnabled()) {
+      try {
+        const csvChannelIds = new Set((await this.#csvRepository.getAllChannelsUnfiltered()).map(ch => ch.id));
+        const csvChannels = activeChannels.filter(ch => csvChannelIds.has(ch.id));
+        const m3uChannels = activeChannels.filter(ch => !csvChannelIds.has(ch.id));
+        
+        const conversionResult = await this.#httpsToHttpService.processChannels(m3uChannels, {
+          concurrency: this.#config.validation?.maxValidationConcurrency || 5,
+          showProgress: false,
+          onlyWorkingHttp: true
+        });
+        
+        activeChannels = [...csvChannels, ...conversionResult.processed];
+      } catch (error) {
+        this.#logger.error('Error durante conversión HTTPS a HTTP en filtro por país:', error);
+      }
+    }
+    
     // Aplicar filtros de contenido si están activos
     if (this.#contentFilter.hasActiveFilters()) {
       activeChannels = this.#contentFilter.filterChannels(activeChannels);
@@ -1065,7 +1103,7 @@ export class HybridChannelRepository extends ChannelRepository {
     const bannedRemovedCount = beforeBannedCount - afterBannedCount;
     
     if (bannedRemovedCount > 0) {
-      this.#logger.info(`Filtros de canales prohibidos aplicados: ${bannedRemovedCount} canales removidos de ${beforeBannedCount}`);
+      this.#logger.debug(`Filtros de canales prohibidos aplicados en país: ${bannedRemovedCount} canales removidos de ${beforeBannedCount}`);
     }
     
     return activeChannels;
@@ -1074,8 +1112,34 @@ export class HybridChannelRepository extends ChannelRepository {
   async getChannelsByLanguage(language) {
     await this.#refreshIfNeeded();
     const channels = this.#channels.filter(ch => ch.language.toLowerCase() === language.toLowerCase());
-    const activeChannels = this.#filterActiveChannels(channels);
-    return this.#contentFilter.hasActiveFilters() ? this.#contentFilter.filterChannels(activeChannels) : activeChannels;
+    let activeChannels = this.#filterActiveChannels(channels);
+    
+    // Aplicar conversión HTTPS a HTTP si está habilitada (consistencia con otros métodos)
+    if (this.#httpsToHttpService.isEnabled()) {
+      try {
+        const csvChannelIds = new Set((await this.#csvRepository.getAllChannelsUnfiltered()).map(ch => ch.id));
+        const csvChannels = activeChannels.filter(ch => csvChannelIds.has(ch.id));
+        const m3uChannels = activeChannels.filter(ch => !csvChannelIds.has(ch.id));
+        
+        const conversionResult = await this.#httpsToHttpService.processChannels(m3uChannels, {
+          concurrency: this.#config.validation?.maxValidationConcurrency || 5,
+          showProgress: false,
+          onlyWorkingHttp: true
+        });
+        
+        activeChannels = [...csvChannels, ...conversionResult.processed];
+      } catch (error) {
+        this.#logger.error('Error durante conversión HTTPS a HTTP en filtro por idioma:', error);
+      }
+    }
+    
+    // Aplicar filtros de contenido si están activos
+    const filteredChannels = this.#contentFilter.hasActiveFilters() ? this.#contentFilter.filterChannels(activeChannels) : activeChannels;
+    
+    // Aplicar filtrado de canales prohibidos
+    const finalChannels = filterBannedChannels(filteredChannels);
+    
+    return finalChannels;
   }
 
   async searchChannels(searchTerm) {
@@ -1087,6 +1151,25 @@ export class HybridChannelRepository extends ChannelRepository {
     );
     let activeChannels = this.#filterActiveChannels(channels);
     
+    // Aplicar conversión HTTPS a HTTP si está habilitada (consistencia con otros métodos)
+    if (this.#httpsToHttpService.isEnabled()) {
+      try {
+        const csvChannelIds = new Set((await this.#csvRepository.getAllChannelsUnfiltered()).map(ch => ch.id));
+        const csvChannels = activeChannels.filter(ch => csvChannelIds.has(ch.id));
+        const m3uChannels = activeChannels.filter(ch => !csvChannelIds.has(ch.id));
+        
+        const conversionResult = await this.#httpsToHttpService.processChannels(m3uChannels, {
+          concurrency: this.#config.validation?.maxValidationConcurrency || 5,
+          showProgress: false,
+          onlyWorkingHttp: true
+        });
+        
+        activeChannels = [...csvChannels, ...conversionResult.processed];
+      } catch (error) {
+        this.#logger.error('Error durante conversión HTTPS a HTTP en búsqueda:', error);
+      }
+    }
+    
     // Aplicar filtros de contenido si están activos
     if (this.#contentFilter.hasActiveFilters()) {
       activeChannels = this.#contentFilter.filterChannels(activeChannels);
@@ -1099,7 +1182,7 @@ export class HybridChannelRepository extends ChannelRepository {
     const bannedRemovedCount = beforeBannedCount - afterBannedCount;
     
     if (bannedRemovedCount > 0) {
-      this.#logger.info(`Filtros de canales prohibidos aplicados: ${bannedRemovedCount} canales removidos de ${beforeBannedCount}`);
+      this.#logger.debug(`Filtros de canales prohibidos aplicados en búsqueda: ${bannedRemovedCount} canales removidos de ${beforeBannedCount}`);
     }
     
     return activeChannels;
@@ -1130,9 +1213,34 @@ export class HybridChannelRepository extends ChannelRepository {
     await this.#refreshIfNeeded();
     let activeChannels = this.#filterActiveChannels([...this.#channels]);
     
+    // Aplicar conversión HTTPS a HTTP si está habilitada (igual que getAllChannels)
+    if (this.#httpsToHttpService.isEnabled()) {
+      try {
+        // Separar canales CSV de canales M3U para preservar CSV
+        const csvChannelIds = new Set((await this.#csvRepository.getAllChannelsUnfiltered()).map(ch => ch.id));
+        const csvChannels = activeChannels.filter(ch => csvChannelIds.has(ch.id));
+        const m3uChannels = activeChannels.filter(ch => !csvChannelIds.has(ch.id));
+        
+        // Procesar solo canales M3U con validación HTTP
+        const conversionResult = await this.#httpsToHttpService.processChannels(m3uChannels, {
+          concurrency: this.#config.validation?.maxValidationConcurrency || 5,
+          showProgress: false, // No mostrar progreso en paginación
+          onlyWorkingHttp: true
+        });
+        
+        // Combinar canales CSV preservados + canales M3U validados
+        activeChannels = [...csvChannels, ...conversionResult.processed];
+        
+      } catch (error) {
+        this.#logger.error('Error durante conversión HTTPS a HTTP en paginación:', error);
+        // En caso de error, continuar con canales originales
+      }
+    }
+    
     // Aplicar filtros de contenido si están activos
     if (this.#contentFilter.hasActiveFilters()) {
-      activeChannels = this.#contentFilter.filterChannels(activeChannels);
+      const filteredChannels = this.#contentFilter.filterChannels(activeChannels);
+      activeChannels = filteredChannels;
     }
     
     // Aplicar filtrado de canales prohibidos
@@ -1142,7 +1250,7 @@ export class HybridChannelRepository extends ChannelRepository {
     const bannedRemovedCount = beforeBannedCount - afterBannedCount;
     
     if (bannedRemovedCount > 0) {
-      this.#logger.info(`Filtros de canales prohibidos aplicados: ${bannedRemovedCount} canales removidos de ${beforeBannedCount}`);
+      this.#logger.debug(`Filtros de canales prohibidos aplicados en paginación: ${bannedRemovedCount} canales removidos de ${beforeBannedCount}`);
     }
     
     return activeChannels.slice(skip, skip + limit);
@@ -1155,9 +1263,39 @@ export class HybridChannelRepository extends ChannelRepository {
 
   async getChannelsCount() {
     await this.#refreshIfNeeded();
-    const activeChannels = this.#filterActiveChannels([...this.#channels]);
+    let activeChannels = this.#filterActiveChannels([...this.#channels]);
+    
+    // Aplicar conversión HTTPS a HTTP si está habilitada (igual que getAllChannels y getChannelsPaginated)
+    if (this.#httpsToHttpService.isEnabled()) {
+      try {
+        // Separar canales CSV de canales M3U para preservar CSV
+        const csvChannelIds = new Set((await this.#csvRepository.getAllChannelsUnfiltered()).map(ch => ch.id));
+        const csvChannels = activeChannels.filter(ch => csvChannelIds.has(ch.id));
+        const m3uChannels = activeChannels.filter(ch => !csvChannelIds.has(ch.id));
+        
+        // Procesar solo canales M3U con validación HTTP
+        const conversionResult = await this.#httpsToHttpService.processChannels(m3uChannels, {
+          concurrency: this.#config.validation?.maxValidationConcurrency || 5,
+          showProgress: false, // No mostrar progreso en conteo
+          onlyWorkingHttp: true
+        });
+        
+        // Combinar canales CSV preservados + canales M3U validados
+        activeChannels = [...csvChannels, ...conversionResult.processed];
+        
+      } catch (error) {
+        this.#logger.error('Error durante conversión HTTPS a HTTP en conteo:', error);
+        // En caso de error, continuar con canales originales
+      }
+    }
+    
+    // Aplicar filtros de contenido si están activos
     const filteredChannels = this.#contentFilter.hasActiveFilters() ? this.#contentFilter.filterChannels(activeChannels) : activeChannels;
-    return filteredChannels.length;
+    
+    // Aplicar filtrado de canales prohibidos
+    const finalChannels = filterBannedChannels(filteredChannels);
+    
+    return finalChannels.length;
   }
 
   async refreshFromRemote() {
