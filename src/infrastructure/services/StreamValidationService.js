@@ -364,16 +364,6 @@ export class StreamValidationService {
     return results;
   }
 
-
-
-
-
-
-
-
-
-
-
   /**
    * Obtiene estadísticas actuales de validación
    * @returns {Object}

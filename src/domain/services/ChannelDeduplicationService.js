@@ -271,9 +271,13 @@ export class ChannelDeduplicationService {
         if (resolution.shouldReplace) {
           channelMap.set(duplicateKey, resolution.selectedChannel);
           
-          if (resolution.strategy === 'hd_upgrade') {
+          if (resolution.strategy === 'hd_upgrade' || 
+              resolution.strategy === 'upgrade_sd_to_hd' || 
+              resolution.strategy === 'upgrade_generic_to_hd' || 
+              resolution.strategy === 'numbered_hd_upgrade' || 
+              resolution.strategy === 'hd_upgrade_by_object') {
             this.#metrics.addHdUpgrade();
-            this.#logger.info(`🔄 Canal actualizado a HD: ${channel.name} (${existingChannel.quality.value} → ${channel.quality.value})`);
+            this.#logger.info(`🔄 Canal actualizado a HD: ${channel.name} (${existingChannel.quality?.value || 'SD'} → ${channel.quality?.value || 'HD'})`);
           }
         }
       } else {
@@ -327,9 +331,13 @@ export class ChannelDeduplicationService {
           uniqueChannels[duplicateIndex] = resolution.selectedChannel;
           removedChannels.push(existingChannel);
           
-          if (resolution.strategy === 'hd_upgrade') {
+          if (resolution.strategy === 'hd_upgrade' || 
+              resolution.strategy === 'upgrade_sd_to_hd' || 
+              resolution.strategy === 'upgrade_generic_to_hd' || 
+              resolution.strategy === 'numbered_hd_upgrade' || 
+              resolution.strategy === 'hd_upgrade_by_object') {
             this.#metrics.addHdUpgrade();
-            this.#logger.info(`🔄 Canal actualizado a HD: ${channel.name} (${existingChannel.quality.value} → ${channel.quality.value})`);
+            this.#logger.info(`🔄 Canal actualizado a HD: ${channel.name} (${existingChannel.quality?.value || 'SD'} → ${channel.quality?.value || 'HD'})`);
           }
         } else {
           // Mantener el canal existente, ignorar el nuevo
@@ -832,7 +840,11 @@ export class ChannelDeduplicationService {
 
     const hdResolution = this.#resolveByHdPriority(existingChannel, newChannel);
     
-    if (hdResolution.strategy === 'hd_upgrade') {
+    if (hdResolution.strategy === 'hd_upgrade' || 
+        hdResolution.strategy === 'upgrade_sd_to_hd' || 
+        hdResolution.strategy === 'upgrade_generic_to_hd' || 
+        hdResolution.strategy === 'numbered_hd_upgrade' || 
+        hdResolution.strategy === 'hd_upgrade_by_object') {
       return hdResolution;
     }
 

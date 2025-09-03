@@ -4,10 +4,10 @@
  * Si incluyes "HBO", permitirá todo lo que contenga HBO con 90% de similitud
  */
 
-import { config } from 'dotenv';
+import { EnvLoader } from '../infrastructure/config/EnvLoader.js';
 
-// Cargar variables de entorno
-config({ path: '.env' });
+// Asegurar que las variables de entorno estén cargadas
+EnvLoader.getInstance();
 
 // Función para cargar canales permitidos desde variables de entorno
 function loadAllowedChannelsFromEnv() {

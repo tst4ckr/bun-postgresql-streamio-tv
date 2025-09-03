@@ -15,6 +15,7 @@ import { StreamValidationService } from '../services/StreamValidationService.js'
 import { ChannelDeduplicationService, DeduplicationConfig } from '../../domain/services/ChannelDeduplicationService.js';
 import { filterAllowedChannels } from '../../config/allowed-channels.js';
 import { filterBannedChannels } from '../../config/banned-channels.js';
+import { isPublicIP, generatePlaylistUrls, removeDuplicateChannels, filterChannelsByPlayAndPublicIP, processPlaylistUrls, resetPlaylistErrorStats, trackPlaylistError, logPlaylistErrorStats } from './HybridChannelRepository_tools.js';
 import fetch from 'node-fetch';
 import { URL } from 'url';
 
@@ -86,7 +87,7 @@ export class HybridChannelRepository extends ChannelRepository {
     this.#m3uParser = new M3UParserService(config.filters);
     
     // Inicializar estadísticas de errores de playlist
-    this.#resetPlaylistErrorStats();
+    this.#playlistErrorStats = resetPlaylistErrorStats();
     
     // Crear repositorio CSV principal
     this.#csvRepository = new CSVChannelRepository(csvPath, config, logger);
@@ -178,19 +179,19 @@ export class HybridChannelRepository extends ChannelRepository {
       this.#logger.info(`Canales parseados: ${parsedChannels.length}`);
 
       // 3. Filtrar URLs válidas para procesamiento
-      const filteredChannels = this.#filterChannelsByPlayAndPublicIP(parsedChannels);
+      const filteredChannels = filterChannelsByPlayAndPublicIP(parsedChannels, this.#logger);
       this.#logger.info(`Canales filtrados (URLs válidas): ${filteredChannels.length}`);
 
       // 4. Extraer URLs únicas de playlist
-      const playlistUrls = this.#generatePlaylistUrls(filteredChannels);
+      const playlistUrls = generatePlaylistUrls(filteredChannels, this.#logger);
       this.#logger.info(`📋 URLs de playlist generadas: ${playlistUrls.length}`);
 
       // 5. Procesar cada URL de playlist como fuente M3U independiente
-      const allChannels = await this.#processPlaylistUrls(playlistUrls);
+      const allChannels = await processPlaylistUrls(playlistUrls, this.#config, this.#logger, this.#m3uParser, this.#playlistErrorStats, () => { this.#playlistErrorStats = resetPlaylistErrorStats(); }, (index, url, errorMessage) => trackPlaylistError(this.#playlistErrorStats, index, url, errorMessage, this.#logger), () => logPlaylistErrorStats(this.#playlistErrorStats, this.#logger));
       this.#logger.info(`📺 Total de canales procesados desde playlists: ${allChannels.length}`);
 
       // 6. Eliminar duplicados (lógica del modo automático)
-      const uniqueChannels = this.#removeDuplicates(allChannels);
+      const uniqueChannels = removeDuplicateChannels(allChannels, this.#logger);
       this.#logger.info(`🔄 Canales únicos después de deduplicación: ${uniqueChannels.length}`);
 
       return uniqueChannels;
@@ -202,292 +203,10 @@ export class HybridChannelRepository extends ChannelRepository {
   }
 
   /**
-   * Filtra canales que contengan '/play/' en la URL y tengan IP pública como hostname
-   * Implementa la lógica exacta del modo automático para consistencia funcional
-   * @private
-   * @param {Array<Channel>} channels - Canales a filtrar
-   * @returns {Array<Channel>} Canales filtrados
-   */
-  #filterChannelsByPlayAndPublicIP(channels) {
-    return channels.filter(channel => {
-      try {
-        const url = new URL(channel.streamUrl);
-        
-        // Verificar que la URL sea válida y accesible
-        if (!url.protocol || (!url.protocol.startsWith('http') && !url.protocol.startsWith('https'))) {
-          return false;
-        }
-
-        // Verificar que tenga un hostname válido
-        if (!url.hostname || url.hostname.trim().length === 0) {
-          return false;
-        }
-
-        // Verificar que contenga '/play/' en la ruta (requisito del modo automático)
-        if (!url.pathname.includes('/play/')) {
-          return false;
-        }
-
-        // Verificar que el hostname sea una IP pública (requisito del modo automático)
-        if (!this.#isPublicIP(url.hostname)) {
-          return false;
-        }
-
-        return true;
-      } catch (error) {
-        this.#logger.debug(`URL inválida ignorada: ${channel.streamUrl}`);
-        return false;
-      }
-    });
-  }
-
-  /**
-   * Verifica si una dirección IP es pública
-   * Implementa la lógica exacta del modo automático para consistencia funcional
-   * @private
-   * @param {string} hostname - Hostname a verificar
-   * @returns {boolean} true si es IP pública válida
-   */
-  #isPublicIP(hostname) {
-    // Verificar que sea una IP válida
-    const ipRegex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
-    if (!ipRegex.test(hostname)) {
-      return false;
-    }
-
-    const parts = hostname.split('.').map(Number);
-    const [a, b, c, d] = parts;
-
-    // Verificar que NO sea IP privada
-    // 10.0.0.0/8
-    if (a === 10) return false;
-    
-    // 172.16.0.0/12
-    if (a === 172 && b >= 16 && b <= 31) return false;
-    
-    // 192.168.0.0/16
-    if (a === 192 && b === 168) return false;
-    
-    // 127.0.0.0/8 (localhost)
-    if (a === 127) return false;
-    
-    // 169.254.0.0/16 (link-local)
-    if (a === 169 && b === 254) return false;
-    
-    // 224.0.0.0/4 (multicast)
-    if (a >= 224 && a <= 239) return false;
-    
-    // 240.0.0.0/4 (reserved)
-    if (a >= 240) return false;
-
-    return true;
-  }
-
-  /**
-   * Genera URLs únicas de playlist en formato http://IP:PUERTO/playlist.m3u
-   * Implementa la lógica exacta del modo automático para consistencia funcional
-   * @private
-   * @param {Array<Channel>} channels - Canales filtrados con /play/ e IP pública
-   * @returns {string[]} URLs de playlist únicas
-   */
-  #generatePlaylistUrls(channels) {
-    const playlistUrls = new Set();
-    
-    for (const channel of channels) {
-      try {
-        const url = new URL(channel.streamUrl);
-        const ip = url.hostname;
-        const port = url.port || (url.protocol === 'https:' ? '443' : '80');
-        
-        // Generar URL de playlist en formato requerido: http://IP:PUERTO/playlist.m3u
-        const playlistUrl = `http://${ip}:${port}/playlist.m3u`;
-        playlistUrls.add(playlistUrl);
-        
-      } catch (error) {
-        this.#logger.debug(`Error generando playlist URL para: ${channel.streamUrl}`);
-      }
-    }
-    
-    return Array.from(playlistUrls);
-  }
-
-  /**
-   * Elimina canales duplicados basándose en el ID del canal
-   * Implementa la lógica exacta del modo automático para consistencia funcional
-   * @private
-   * @param {Array<Channel>} channels
-   * @returns {Array<Channel>}
-   */
-  #removeDuplicates(channels) {
-    const uniqueChannels = new Map();
-    
-    for (const channel of channels) {
-      const key = channel.id;
-      if (!uniqueChannels.has(key)) {
-        uniqueChannels.set(key, channel);
-      }
-    }
-    
-    return Array.from(uniqueChannels.values());
-  }
-
-  /**
-   * Procesa cada URL de playlist como fuente M3U independiente
-   * Implementa la lógica exacta del modo automático para consistencia funcional
-   * @private
-   * @param {string[]} playlistUrls - URLs de playlist a procesar
-   * @returns {Promise<Array<Channel>>} Todos los canales procesados
-   */
-  async #processPlaylistUrls(playlistUrls) {
-    const allChannels = [];
-    const maxConcurrent = 5; // Limitar concurrencia para evitar sobrecarga
-    
-    this.#resetPlaylistErrorStats();
-    this.#playlistErrorStats.totalPlaylists = playlistUrls.length;
-    this.#logger.info(`🔄 Procesando ${playlistUrls.length} playlists con máximo ${maxConcurrent} concurrentes...`);
-    
-    // Procesar en lotes para controlar la concurrencia
-    for (let i = 0; i < playlistUrls.length; i += maxConcurrent) {
-      const batch = playlistUrls.slice(i, i + maxConcurrent);
-      const batchPromises = batch.map(async (playlistUrl, index) => {
-        const globalIndex = i + index + 1;
-        
-        try {
-          this.#logger.debug(`📋 Procesando playlist ${globalIndex}/${playlistUrls.length}: ${playlistUrl}`);
-          
-          // Descargar playlist M3U con timeout configurable para servidores lentos
-          const playlistTimeout = this.#config.validation?.playlistFetchTimeout || 180000; // 3 minutos por defecto
-          const response = await fetch(playlistUrl, {
-            timeout: playlistTimeout,
-            headers: {
-              'User-Agent': 'TV-IPTV-Addon/1.0.0'
-            }
-          });
-          
-          if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-          }
-          
-          const m3uContent = await response.text();
-          
-          if (!m3uContent || m3uContent.trim().length === 0) {
-            throw new Error('Contenido M3U vacío');
-          }
-          
-          // Parsear contenido M3U
-          const channels = await this.#m3uParser.parseM3U(m3uContent);
-          
-          if (channels.length > 0) {
-            this.#logger.debug(`✅ Playlist ${globalIndex} procesada: ${channels.length} canales`);
-            this.#playlistErrorStats.successfulPlaylists++;
-            return channels;
-          } else {
-            this.#logger.debug(`⚠️ Playlist ${globalIndex} sin canales válidos`);
-            this.#playlistErrorStats.successfulPlaylists++;
-            return [];
-          }
-          
-        } catch (error) {
-          this.#trackPlaylistError(globalIndex, playlistUrl, error.message);
-          return [];
-        }
-      });
-      
-      // Esperar que termine el lote actual
-      const batchResults = await Promise.all(batchPromises);
-      
-      // Agregar todos los canales del lote
-      for (const channels of batchResults) {
-        allChannels.push(...channels);
-      }
-      
-      // Pequeña pausa entre lotes para no sobrecargar los servidores
-      if (i + maxConcurrent < playlistUrls.length) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
-      }
-    }
-    
-    this.#logPlaylistErrorStats();
-    this.#logger.info(`✅ Procesamiento de playlists completado: ${allChannels.length} canales totales`);
-    return allChannels;
-  }
-
-  /**
-   * Reinicia las estadísticas de errores de playlist
-   * @private
-   */
-  #resetPlaylistErrorStats() {
-    this.#playlistErrorStats = {
-      totalPlaylists: 0,
-      successfulPlaylists: 0,
-      failedPlaylists: 0,
-      errors: [],
-      errorsByType: new Map()
-    };
-  }
-
-  /**
-   * Registra un error de playlist
-   * @private
-   * @param {number} index - Índice de la playlist
-   * @param {string} url - URL de la playlist
-   * @param {string} errorMessage - Mensaje de error
-   */
-  #trackPlaylistError(index, url, errorMessage) {
-    this.#playlistErrorStats.failedPlaylists++;
-    this.#playlistErrorStats.errors.push({
-      index,
-      url,
-      error: errorMessage,
-      timestamp: new Date()
-    });
-    
-    // Categorizar errores por tipo
-    let errorType = 'unknown';
-    if (errorMessage.includes('HTTP')) {
-      errorType = 'http_error';
-    } else if (errorMessage.includes('timeout') || errorMessage.includes('ETIMEDOUT')) {
-      errorType = 'timeout';
-    } else if (errorMessage.includes('ENOTFOUND') || errorMessage.includes('ECONNREFUSED')) {
-      errorType = 'connection';
-    } else if (errorMessage.includes('vacío')) {
-      errorType = 'empty_content';
-    }
-    
-    const currentCount = this.#playlistErrorStats.errorsByType.get(errorType) || 0;
-    this.#playlistErrorStats.errorsByType.set(errorType, currentCount + 1);
-    
-    this.#logger.warn(`❌ Error procesando playlist ${index} (${url}): ${errorMessage}`);
-  }
-
-  /**
    * Registra las estadísticas de errores de playlist
    * @private
    */
-  #logPlaylistErrorStats() {
-    const stats = this.#playlistErrorStats;
-    
-    if (stats.failedPlaylists > 0) {
-      this.#logger.warn(`📊 Resumen de errores de playlist: ${stats.failedPlaylists} de ${stats.totalPlaylists} playlists fallaron`);
-      
-      // Log errores por tipo
-      for (const [type, count] of stats.errorsByType) {
-        this.#logger.warn(`   - ${type}: ${count} errores`);
-      }
-      
-      // Log algunos ejemplos de errores
-      const maxExamples = 3;
-      const examples = stats.errors.slice(0, maxExamples);
-      this.#logger.warn(`   Ejemplos de errores:`);
-      examples.forEach(error => {
-        this.#logger.warn(`     • Playlist ${error.index}: ${error.error}`);
-      });
-      
-      if (stats.errors.length > maxExamples) {
-        this.#logger.warn(`     ... y ${stats.errors.length - maxExamples} errores más`);
-      }
-    }
-  }
+
 
   /**
    * Inicializa el repositorio híbrido
