@@ -1,31 +1,28 @@
 /**
  * @fileoverview BitelUidService - Servicio para generar UIDs dinámicos para canales TV360.BITEL
- * Servicio principal que orquesta la generación de UIDs usando herramientas auxiliares
+ * 
+ * RESPONSABILIDAD PRINCIPAL: Orquestar la generación de UIDs para canales BITEL
+ * 
+ * Arquitectura Clara:
+ * - ESTE ARCHIVO: Contiene toda la lógica de negocio y orquestación
+ * - _tools.js: Contiene SOLO funciones puras y simples (sin lógica compleja)
  * 
  * Flujo de datos:
- * 1. Recibe URLs de canales y las valida usando tools
- * 2. Gestiona cache de UIDs usando herramientas de cache
- * 3. Genera UIDs dinámicos usando generadores de tools
- * 4. Construye URLs finales usando builders de tools
- * 5. Delega operaciones auxiliares a BitelUidService_tools
- * 
- * Arquitectura:
- * - Lógica principal: orquestación de generación de UIDs
- * - Herramientas: funciones puras en _tools.js
- * - Dependency Injection: inyección de herramientas para testing
+ * 1. Recibe URLs y valida si son BITEL usando herramientas puras
+ * 2. Gestiona cache de UIDs con lógica propia del servicio
+ * 3. Decide cuándo regenerar UIDs basado en reglas de negocio
+ * 4. Construye URLs finales usando herramientas de formateo
  */
 
 import {
   isBitelChannel,
   generateDynamicUid,
   buildUrlWithUid,
-  needsUidRegeneration,
-  generateCacheStats,
-  clearUidCache,
+  isTimestampExpired,
   validateBitelConfig,
-  processChannelUrl,
-  incrementStats,
   createUidLogMessage,
+  createCacheStats,
+  incrementCounter,
   DEFAULT_BITEL_CONFIG
 } from './BitelUidService_tools.js';
 
@@ -51,22 +48,20 @@ export class BitelUidService {
    * @param {Object} tools - Herramientas inyectadas (para testing)
    */
   constructor(config = {}, logger = console, tools = null) {
-    // Inyección de dependencias para herramientas
+    // Inyección de dependencias para herramientas PURAS
     this.#tools = tools || {
       isBitelChannel,
       generateDynamicUid,
       buildUrlWithUid,
-      needsUidRegeneration,
-      generateCacheStats,
-      clearUidCache,
+      isTimestampExpired,
       validateBitelConfig,
-      processChannelUrl,
-      incrementStats,
       createUidLogMessage,
+      createCacheStats,
+      incrementCounter,
       DEFAULT_BITEL_CONFIG
     };
     
-    // Validación de configuración usando herramientas
+    // Validación de configuración usando herramienta pura
     this.#config = this.#tools.validateBitelConfig(config);
     this.#logger = logger;
     this.#uidCache = new Map();
@@ -80,88 +75,120 @@ export class BitelUidService {
   }
 
   /**
-   * Procesa una URL de canal y genera UID dinámico si es necesario
+   * LÓGICA PRINCIPAL: Procesa una URL de canal y genera UID dinámico si es necesario
+   * Esta es la lógica de negocio central del servicio
    * @param {string} streamUrl - URL original del stream
    * @param {string} channelId - ID del canal para cache
    * @returns {string} URL procesada con UID dinámico
    */
   processStreamUrl(streamUrl, channelId) {
     try {
-      const result = this.#tools.processChannelUrl(
-        streamUrl,
-        channelId,
-        this.#uidCache,
-        this.#lastGenerationTime,
-        this.#config
-      );
-      
-      if (!result.processed) {
-        return streamUrl;
+      // 1. Verificar si es canal BITEL usando herramienta pura
+      if (!this.#tools.isBitelChannel(streamUrl, this.#config.domain)) {
+        return streamUrl; // No es BITEL, devolver URL original
       }
       
-      // Actualizar estadísticas
-      if (result.regenerated) {
-        this.#stats = this.#tools.incrementStats(this.#stats, 'totalGenerations');
-        this.#stats = this.#tools.incrementStats(this.#stats, 'cacheMisses');
+      // 2. LÓGICA DE NEGOCIO: Determinar si necesita nuevo UID
+      const lastGeneration = this.#lastGenerationTime.get(channelId) || 0;
+      let uid;
+      let regenerated = false;
+      
+      // 3. LÓGICA DE NEGOCIO: Verificar expiración usando herramienta pura
+      if (this.#tools.isTimestampExpired(lastGeneration, this.#config.cacheExpiry)) {
+        // Generar nuevo UID usando herramienta pura
+        uid = this.#tools.generateDynamicUid(this.#config.uidPrefix);
+        this.#uidCache.set(channelId, uid);
+        this.#lastGenerationTime.set(channelId, Date.now());
+        regenerated = true;
+      } else {
+        // Usar UID existente o generar si no existe
+        uid = this.#uidCache.get(channelId);
+        if (!uid) {
+          uid = this.#tools.generateDynamicUid(this.#config.uidPrefix);
+          this.#uidCache.set(channelId, uid);
+          this.#lastGenerationTime.set(channelId, Date.now());
+          regenerated = true;
+        }
+      }
+      
+      // 4. LÓGICA DE NEGOCIO: Actualizar estadísticas
+      if (regenerated) {
+        this.#stats = this.#tools.incrementCounter(this.#stats, 'totalGenerations');
+        this.#stats = this.#tools.incrementCounter(this.#stats, 'cacheMisses');
         
         if (this.#logger.debug) {
-          const logMessage = this.#tools.createUidLogMessage(
-            'Nuevo',
-            channelId,
-            result.uid
-          );
+          const logMessage = this.#tools.createUidLogMessage('Nuevo', channelId, uid);
           this.#logger.debug(logMessage);
         }
       } else {
-        this.#stats = this.#tools.incrementStats(this.#stats, 'cacheHits');
+        this.#stats = this.#tools.incrementCounter(this.#stats, 'cacheHits');
       }
+      
+      // 5. Construir URL final usando herramienta pura
+      const processedUrl = this.#tools.buildUrlWithUid(streamUrl, uid);
       
       if (this.#logger.debug) {
-        this.#logger.debug(`URL BITEL procesada para ${channelId}: ${result.url}`);
+        this.#logger.debug(`URL BITEL procesada para ${channelId}: ${processedUrl}`);
       }
       
-      return result.url;
+      return processedUrl;
+      
     } catch (error) {
-      // Manejo robusto de errores para evitar promesas rechazadas no manejadas
+      // LÓGICA DE NEGOCIO: Manejo robusto de errores
       this.#logger.warn(`Error procesando URL Bitel ${streamUrl}: ${error.message}. Usando URL original.`);
-      
-      // Incrementar contador de errores para monitoreo
-      this.#stats = this.#tools.incrementStats(this.#stats, 'errors');
-      
+      this.#stats = this.#tools.incrementCounter(this.#stats, 'errors');
       return streamUrl; // Fallback a URL original
     }
   }
 
   /**
-   * Limpia el cache de UIDs (útil para mantenimiento) usando herramientas
+   * LÓGICA DE NEGOCIO: Limpia el cache de UIDs
    * @param {string} channelId - ID específico del canal (opcional)
    */
   clearCache(channelId = null) {
-    const result = this.#tools.clearUidCache(
-      this.#uidCache,
-      this.#lastGenerationTime,
-      channelId
-    );
-    
-    if (this.#logger.debug) {
-      if (result.action === 'single_channel') {
+    if (channelId) {
+      // Limpiar canal específico
+      const hadChannel = this.#uidCache.has(channelId);
+      this.#uidCache.delete(channelId);
+      this.#lastGenerationTime.delete(channelId);
+      
+      if (this.#logger.debug) {
         this.#logger.debug(`Cache limpiado para canal ${channelId}`);
-      } else {
-        this.#logger.debug(`Cache de UIDs completamente limpiado (${result.clearedCount} canales)`);
       }
+      
+      return {
+        success: true,
+        action: 'single_channel',
+        channelId,
+        wasPresent: hadChannel
+      };
+    } else {
+      // Limpiar todo el cache
+      const channelCount = this.#uidCache.size;
+      this.#uidCache.clear();
+      this.#lastGenerationTime.clear();
+      
+      if (this.#logger.debug) {
+        this.#logger.debug(`Cache de UIDs completamente limpiado (${channelCount} canales)`);
+      }
+      
+      return {
+        success: true,
+        action: 'all_channels',
+        clearedCount: channelCount
+      };
     }
-    
-    return result;
   }
 
   /**
-   * Obtiene estadísticas del servicio usando herramientas
+   * Obtiene estadísticas del servicio usando herramienta pura
    * @returns {Object} Estadísticas de uso
    */
   getStats() {
-    return this.#tools.generateCacheStats(
-      this.#uidCache,
-      this.#lastGenerationTime,
+    const timestamps = Array.from(this.#lastGenerationTime.values());
+    return this.#tools.createCacheStats(
+      this.#uidCache.size,
+      timestamps,
       this.#stats
     );
   }
@@ -184,7 +211,7 @@ export class BitelUidService {
   }
 
   /**
-   * Actualiza la configuración del servicio usando herramientas
+   * Actualiza la configuración del servicio usando herramienta pura
    * @param {Object} newConfig - Nueva configuración
    */
   updateConfig(newConfig) {
@@ -195,7 +222,7 @@ export class BitelUidService {
   }
 
   /**
-   * Fuerza la regeneración de UID para un canal específico
+   * LÓGICA DE NEGOCIO: Fuerza la regeneración de UID para un canal específico
    * @param {string} channelId - ID del canal
    * @returns {string|null} Nuevo UID generado o null si no existe
    */
@@ -204,18 +231,16 @@ export class BitelUidService {
       return null;
     }
     
+    // Generar nuevo UID usando herramienta pura
     const newUid = this.#tools.generateDynamicUid(this.#config.uidPrefix);
     this.#uidCache.set(channelId, newUid);
     this.#lastGenerationTime.set(channelId, Date.now());
     
-    this.#stats = this.#tools.incrementStats(this.#stats, 'totalGenerations');
+    // Actualizar estadísticas
+    this.#stats = this.#tools.incrementCounter(this.#stats, 'totalGenerations');
     
     if (this.#logger.debug) {
-      const logMessage = this.#tools.createUidLogMessage(
-        'Regenerado forzado',
-        channelId,
-        newUid
-      );
+      const logMessage = this.#tools.createUidLogMessage('Regenerado forzado', channelId, newUid);
       this.#logger.debug(logMessage);
     }
     

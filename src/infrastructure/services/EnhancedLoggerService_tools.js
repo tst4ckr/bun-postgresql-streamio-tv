@@ -1,13 +1,13 @@
 /**
- * @fileoverview Herramientas auxiliares para EnhancedLoggerService
- * Contiene funciones puras y utilitarias para el procesamiento de logs
+ * @fileoverview Herramientas auxiliares PURAS para EnhancedLoggerService
  * 
- * Flujo de datos:
- * 1. getSourceInfo() -> extrae información del stack trace
- * 2. formatMessage() -> formatea mensaje con timestamp y fuente
- * 3. isLevelEnabled() -> valida si el nivel de log está habilitado
- * 4. createChildLoggerMethods() -> genera métodos para logger hijo
- * 5. validateConfig() -> valida configuración del logger
+ * RESPONSABILIDAD: Contiene SOLO funciones puras y simples (sin lógica compleja)
+ * 
+ * Principios:
+ * - Funciones puras: sin efectos secundarios ni estado
+ * - Simples: una responsabilidad por función
+ * - Reutilizables: pueden usarse en otros contextos
+ * - Deterministas: mismo input = mismo output
  */
 
 /**
@@ -33,17 +33,12 @@ export const DEFAULT_CONFIG = {
 };
 
 /**
- * Extrae información del archivo fuente y línea desde el stack trace
- * Función pura que analiza el stack trace para obtener contexto del log
- * 
+ * FUNCIÓN PURA: Extrae información del archivo fuente desde stack trace
  * @param {string} stack - Stack trace completo
- * @param {string} excludeFileName - Nombre del archivo a excluir del análisis
+ * @param {string} excludeFileName - Archivo a excluir del análisis
  * @returns {Object} Información del archivo fuente
- * @returns {string} returns.fileName - Nombre del archivo
- * @returns {number} returns.lineNumber - Número de línea
- * @returns {string} returns.fullPath - Ruta completa del archivo
  */
-export function getSourceInfo(stack, excludeFileName = 'EnhancedLoggerService.js') {
+export function extractSourceInfo(stack, excludeFileName = 'EnhancedLoggerService.js') {
   if (!stack || typeof stack !== 'string') {
     return {
       fileName: 'unknown',
@@ -54,12 +49,12 @@ export function getSourceInfo(stack, excludeFileName = 'EnhancedLoggerService.js
 
   const stackLines = stack.split('\n');
   
-  // Buscar la línea que no sea del logger (saltamos las primeras líneas internas)
+  // Buscar la línea que no sea del logger
   for (let i = 3; i < stackLines.length; i++) {
     const line = stackLines[i];
     if (line && !line.includes(excludeFileName)) {
       const match = line.match(/at\s+(.*)\s+\((.*):(\d+):(\d+)\)/) || 
-                   line.match(/at\s+(.*):(\d+):(\d+)/);
+                   line.match(/at\s+(.*):(.*):(\d+)/);
       
       if (match) {
         const filePath = match[2] || match[1];
@@ -83,18 +78,16 @@ export function getSourceInfo(stack, excludeFileName = 'EnhancedLoggerService.js
 }
 
 /**
- * Formatea un mensaje de log con timestamp y información de fuente
- * Función pura que genera el formato estándar de mensajes
- * 
- * @param {string} level - Nivel del log (INFO, WARN, ERROR, DEBUG, etc.)
- * @param {string} message - Mensaje original del log
+ * FUNCIÓN PURA: Formatea mensaje con timestamp y fuente
+ * @param {string} level - Nivel del log
+ * @param {string} message - Mensaje original
  * @param {Object} sourceInfo - Información del archivo fuente
- * @param {Date} [timestamp] - Timestamp personalizado (opcional)
+ * @param {Date} timestamp - Timestamp del mensaje
  * @returns {string} Mensaje formateado
  */
-export function formatMessage(level, message, sourceInfo, timestamp = new Date()) {
+export function formatLogMessage(level, message, sourceInfo, timestamp = new Date()) {
   if (!level || !message || !sourceInfo) {
-    throw new Error('formatMessage requiere level, message y sourceInfo');
+    throw new Error('formatLogMessage requiere level, message y sourceInfo');
   }
 
   const isoTimestamp = timestamp.toISOString();
@@ -103,14 +96,12 @@ export function formatMessage(level, message, sourceInfo, timestamp = new Date()
 }
 
 /**
- * Verifica si un nivel de log específico está habilitado
- * Función pura que compara niveles de logging
- * 
- * @param {string} messageLevel - Nivel del mensaje a verificar
- * @param {string} currentLogLevel - Nivel actual configurado
- * @returns {boolean} True si el nivel está habilitado
+ * FUNCIÓN PURA: Verifica si un nivel de log está habilitado
+ * @param {string} messageLevel - Nivel del mensaje
+ * @param {string} currentLogLevel - Nivel configurado
+ * @returns {boolean} True si está habilitado
  */
-export function isLevelEnabled(messageLevel, currentLogLevel) {
+export function isLogLevelEnabled(messageLevel, currentLogLevel) {
   if (!messageLevel || !currentLogLevel) {
     return false;
   }
@@ -122,38 +113,11 @@ export function isLevelEnabled(messageLevel, currentLogLevel) {
 }
 
 /**
- * Crea los métodos para un logger hijo con contexto específico
- * Función pura que genera métodos de logging con contexto
- * 
- * @param {string} context - Contexto del logger hijo
- * @param {Object} parentMethods - Métodos del logger padre
- * @returns {Object} Métodos del logger hijo
- */
-export function createChildLoggerMethods(context, parentMethods) {
-  if (!context || !parentMethods) {
-    throw new Error('createChildLoggerMethods requiere context y parentMethods');
-  }
-
-  return {
-    info: (message, ...args) => parentMethods.info(`[${context}] ${message}`, ...args),
-    warn: (message, ...args) => parentMethods.warn(`[${context}] ${message}`, ...args),
-    error: (message, ...args) => parentMethods.error(`[${context}] ${message}`, ...args),
-    debug: (message, ...args) => parentMethods.debug(`[${context}] ${message}`, ...args),
-    performance: (operation, duration, metadata) => 
-      parentMethods.performance(`[${context}] ${operation}`, duration, metadata),
-    request: (method, url, statusCode, duration) => 
-      parentMethods.request(method, url, statusCode, duration)
-  };
-}
-
-/**
- * Valida y normaliza la configuración del logger
- * Función pura que asegura configuración válida
- * 
+ * FUNCIÓN PURA: Valida configuración del logger
  * @param {Object} config - Configuración a validar
- * @returns {Object} Configuración validada y normalizada
+ * @returns {Object} Configuración validada
  */
-export function validateConfig(config = {}) {
+export function validateLoggerConfig(config = {}) {
   const validatedConfig = { ...DEFAULT_CONFIG };
 
   // Validar logLevel
@@ -179,12 +143,10 @@ export function validateConfig(config = {}) {
 }
 
 /**
- * Crea un mensaje de performance formateado
- * Función pura para formatear métricas de rendimiento
- * 
+ * FUNCIÓN PURA: Crea mensaje de performance
  * @param {string} operation - Nombre de la operación
  * @param {number} duration - Duración en milisegundos
- * @returns {string} Mensaje de performance formateado
+ * @returns {string} Mensaje formateado
  */
 export function createPerformanceMessage(operation, duration) {
   if (!operation || typeof duration !== 'number') {
@@ -195,14 +157,12 @@ export function createPerformanceMessage(operation, duration) {
 }
 
 /**
- * Crea un mensaje de request HTTP formateado
- * Función pura para formatear información de requests
- * 
+ * FUNCIÓN PURA: Crea mensaje de request HTTP
  * @param {string} method - Método HTTP
  * @param {string} url - URL del request
- * @param {number} statusCode - Código de estado HTTP
+ * @param {number} statusCode - Código de estado
  * @param {number} duration - Duración en milisegundos
- * @returns {string} Mensaje de request formateado
+ * @returns {string} Mensaje formateado
  */
 export function createRequestMessage(method, url, statusCode, duration) {
   if (!method || !url || typeof statusCode !== 'number' || typeof duration !== 'number') {
@@ -213,14 +173,12 @@ export function createRequestMessage(method, url, statusCode, duration) {
 }
 
 /**
- * Actualiza configuración existente con nuevos valores
- * Función pura que merge configuraciones de forma segura
- * 
+ * FUNCIÓN PURA: Actualiza configuración de forma inmutable
  * @param {Object} currentConfig - Configuración actual
  * @param {Object} newConfig - Nueva configuración
  * @returns {Object} Configuración actualizada
  */
-export function updateConfig(currentConfig, newConfig) {
+export function mergeLoggerConfig(currentConfig, newConfig) {
   if (!currentConfig || !newConfig) {
     return currentConfig || {};
   }
@@ -244,4 +202,18 @@ export function updateConfig(currentConfig, newConfig) {
   }
 
   return updatedConfig;
+}
+
+/**
+ * FUNCIÓN PURA: Crea métodos de logger hijo con contexto
+ * @param {string} context - Contexto del logger hijo
+ * @param {Function} logFunction - Función de logging padre
+ * @returns {Function} Función de logging con contexto
+ */
+export function createContextualLogFunction(context, logFunction) {
+  if (!context || !logFunction) {
+    throw new Error('createContextualLogFunction requiere context y logFunction');
+  }
+
+  return (message, ...args) => logFunction(`[${context}] ${message}`, ...args);
 }

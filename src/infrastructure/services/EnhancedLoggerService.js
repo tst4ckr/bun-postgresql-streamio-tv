@@ -15,16 +15,16 @@
  */
 
 import {
-  getSourceInfo,
-  formatMessage,
-  isLevelEnabled,
-  createChildLoggerMethods,
-  validateConfig,
+  LOG_LEVELS,
+  DEFAULT_CONFIG,
+  extractSourceInfo,
+  formatLogMessage,
+  isLogLevelEnabled,
+  validateLoggerConfig,
   createPerformanceMessage,
   createRequestMessage,
-  updateConfig,
-  LOG_LEVELS,
-  DEFAULT_CONFIG
+  mergeLoggerConfig,
+  createContextualLogFunction
 } from './EnhancedLoggerService_tools.js';
 
 /**
@@ -38,6 +38,7 @@ export class EnhancedLoggerService {
   #enablePerformanceMetrics;
   #logFilePath;
   #tools;
+  #stats;
 
   /**
    * Constructor con dependency injection para herramientas
@@ -49,58 +50,114 @@ export class EnhancedLoggerService {
    * @param {Object} tools - Herramientas inyectadas (para testing)
    */
   constructor(config = {}, tools = null) {
-    // Inyección de dependencias para herramientas
+    // Inyección de dependencias para testing
     this.#tools = tools || {
-      getSourceInfo,
-      formatMessage,
-      isLevelEnabled,
-      createChildLoggerMethods,
-      validateConfig,
+      extractSourceInfo,
+      formatLogMessage,
+      isLogLevelEnabled,
+      validateLoggerConfig,
       createPerformanceMessage,
       createRequestMessage,
-      updateConfig,
+      mergeLoggerConfig,
+      createContextualLogFunction,
       LOG_LEVELS,
       DEFAULT_CONFIG
     };
     
     // Validación de configuración usando herramientas
-    this.#config = this.#tools.validateConfig(config);
+    this.#config = this.#tools.validateLoggerConfig(config);
     this.#logLevel = this.#config.logLevel;
     this.#enableRequestLogging = this.#config.enableRequestLogging;
     this.#enablePerformanceMetrics = this.#config.enablePerformanceMetrics;
     this.#logFilePath = this.#config.logFilePath;
+    
+    // Estadísticas de logging
+    this.#stats = {
+      totalLogs: 0,
+      errorCount: 0,
+      warnCount: 0,
+      infoCount: 0,
+      debugCount: 0
+    };
   }
 
   /**
-   * Obtiene información del archivo fuente usando herramientas
-   * @private
-   * @returns {Object} Información del archivo fuente
-   */
-  #getSourceInfo() {
-    const stack = new Error().stack;
-    return this.#tools.getSourceInfo(stack);
-  }
-
-  /**
-   * Formatea el mensaje de log usando herramientas
+   * LÓGICA DE NEGOCIO: Procesa y registra un mensaje de log
    * @private
    * @param {string} level - Nivel del log
-   * @param {string} message - Mensaje del log
-   * @returns {string} Mensaje formateado
+   * @param {string} message - Mensaje a registrar
+   * @param {...any} args - Argumentos adicionales
    */
-  #formatMessage(level, message) {
-    const sourceInfo = this.#getSourceInfo();
-    return this.#tools.formatMessage(level, message, sourceInfo);
+  #processLogMessage(level, message, ...args) {
+    // Verificar si el nivel está habilitado
+    if (!this.#tools.isLogLevelEnabled(level, this.#logLevel)) {
+      return;
+    }
+
+    try {
+      // Obtener información del stack trace
+      const stack = new Error().stack;
+      const sourceInfo = this.#tools.extractSourceInfo(stack);
+      
+      // Formatear el mensaje completo
+      const formattedMessage = this.#tools.formatLogMessage(level, message, sourceInfo);
+      
+      // Registrar en consola
+      this.#writeToConsole(level, formattedMessage, ...args);
+      
+      // Actualizar estadísticas
+      this.#updateStats(level);
+      
+    } catch (error) {
+      console.error('Error en EnhancedLoggerService:', error.message);
+    }
   }
 
   /**
-   * Verifica si el nivel de log está habilitado usando herramientas
+   * LÓGICA DE NEGOCIO: Escribe mensaje en consola según el nivel
    * @private
-   * @param {string} level - Nivel a verificar
-   * @returns {boolean} True si está habilitado
+   * @param {string} level - Nivel del log
+   * @param {string} message - Mensaje formateado
+   * @param {...any} args - Argumentos adicionales
    */
-  #isLevelEnabled(level) {
-    return this.#tools.isLevelEnabled(level, this.#logLevel);
+  #writeToConsole(level, message, ...args) {
+    switch (level) {
+      case 'error':
+        console.error(message, ...args);
+        break;
+      case 'warn':
+        console.warn(message, ...args);
+        break;
+      case 'debug':
+        console.debug(message, ...args);
+        break;
+      default:
+        console.log(message, ...args);
+    }
+  }
+
+  /**
+   * LÓGICA DE NEGOCIO: Actualiza estadísticas de logging
+   * @private
+   * @param {string} level - Nivel del log
+   */
+  #updateStats(level) {
+    this.#stats.totalLogs++;
+    
+    switch (level) {
+      case 'error':
+        this.#stats.errorCount++;
+        break;
+      case 'warn':
+        this.#stats.warnCount++;
+        break;
+      case 'info':
+        this.#stats.infoCount++;
+        break;
+      case 'debug':
+        this.#stats.debugCount++;
+        break;
+    }
   }
 
   /**
@@ -109,10 +166,7 @@ export class EnhancedLoggerService {
    * @param {...any} args - Argumentos adicionales
    */
   info(message, ...args) {
-    if (this.#isLevelEnabled('info')) {
-      const formattedMessage = this.#formatMessage('INFO', message);
-      console.log(formattedMessage, ...args);
-    }
+    this.#processLogMessage('info', message, ...args);
   }
 
   /**
@@ -121,10 +175,7 @@ export class EnhancedLoggerService {
    * @param {...any} args - Argumentos adicionales
    */
   warn(message, ...args) {
-    if (this.#isLevelEnabled('warn')) {
-      const formattedMessage = this.#formatMessage('WARN', message);
-      console.warn(formattedMessage, ...args);
-    }
+    this.#processLogMessage('warn', message, ...args);
   }
 
   /**
@@ -133,10 +184,7 @@ export class EnhancedLoggerService {
    * @param {...any} args - Argumentos adicionales
    */
   error(message, ...args) {
-    if (this.#isLevelEnabled('error')) {
-      const formattedMessage = this.#formatMessage('ERROR', message);
-      console.error(formattedMessage, ...args);
-    }
+    this.#processLogMessage('error', message, ...args);
   }
 
   /**
@@ -145,14 +193,11 @@ export class EnhancedLoggerService {
    * @param {...any} args - Argumentos adicionales
    */
   debug(message, ...args) {
-    if (this.#isLevelEnabled('debug')) {
-      const formattedMessage = this.#formatMessage('DEBUG', message);
-      console.log(formattedMessage, ...args);
-    }
+    this.#processLogMessage('debug', message, ...args);
   }
 
   /**
-   * Registra métricas de rendimiento si están habilitadas usando herramientas
+   * LÓGICA DE NEGOCIO: Registra métricas de rendimiento
    * @param {string} operation - Nombre de la operación
    * @param {number} duration - Duración en milisegundos
    * @param {Object} metadata - Metadatos adicionales
@@ -160,13 +205,12 @@ export class EnhancedLoggerService {
   performance(operation, duration, metadata = {}) {
     if (this.#enablePerformanceMetrics) {
       const message = this.#tools.createPerformanceMessage(operation, duration);
-      const formattedMessage = this.#formatMessage('PERF', message);
-      console.log(formattedMessage, metadata);
+      this.info(message, metadata);
     }
   }
 
   /**
-   * Registra información de requests HTTP si está habilitado usando herramientas
+   * LÓGICA DE NEGOCIO: Registra información de requests HTTP
    * @param {string} method - Método HTTP
    * @param {string} url - URL del request
    * @param {number} statusCode - Código de estado
@@ -175,27 +219,35 @@ export class EnhancedLoggerService {
   request(method, url, statusCode, duration) {
     if (this.#enableRequestLogging) {
       const message = this.#tools.createRequestMessage(method, url, statusCode, duration);
-      const formattedMessage = this.#formatMessage('REQ', message);
-      console.log(formattedMessage);
+      this.info(message);
     }
   }
 
   /**
-   * Crea un logger hijo con contexto específico usando herramientas
+   * LÓGICA DE NEGOCIO: Crea un logger hijo con contexto específico
    * @param {string} context - Contexto del logger hijo
-   * @returns {Object} Logger hijo con contexto
+   * @returns {Object} Logger hijo con métodos contextualizados
    */
   createChildLogger(context) {
-    const parentMethods = {
-      info: this.info.bind(this),
-      warn: this.warn.bind(this),
-      error: this.error.bind(this),
-      debug: this.debug.bind(this),
-      performance: this.performance.bind(this),
-      request: this.request.bind(this)
-    };
+    if (!context || typeof context !== 'string') {
+      throw new Error('El contexto del logger hijo debe ser un string válido');
+    }
     
-    return this.#tools.createChildLoggerMethods(context, parentMethods);
+    try {
+      return {
+        info: this.#tools.createContextualLogFunction(context, this.info.bind(this)),
+        warn: this.#tools.createContextualLogFunction(context, this.warn.bind(this)),
+        error: this.#tools.createContextualLogFunction(context, this.error.bind(this)),
+        debug: this.#tools.createContextualLogFunction(context, this.debug.bind(this)),
+        performance: (operation, duration, metadata) => 
+          this.performance(`[${context}] ${operation}`, duration, metadata),
+        request: (method, url, statusCode, duration) => 
+          this.request(method, url, statusCode, duration)
+      };
+    } catch (error) {
+      console.error('Error creando logger hijo:', error.message);
+      return this;
+    }
   }
 
   /**
@@ -212,16 +264,28 @@ export class EnhancedLoggerService {
   }
 
   /**
-   * Actualiza la configuración del logger usando herramientas
+   * Obtiene las estadísticas de logging
+   * @returns {Object} Estadísticas del logger
+   */
+  getStats() {
+    return { ...this.#stats };
+  }
+
+  /**
+   * LÓGICA DE NEGOCIO: Actualiza la configuración del logger
    * @param {Object} newConfig - Nueva configuración
    */
   updateConfig(newConfig) {
-    const updatedConfig = this.#tools.updateConfig(this.#config, newConfig);
-    this.#config = updatedConfig;
-    this.#logLevel = updatedConfig.logLevel;
-    this.#enableRequestLogging = updatedConfig.enableRequestLogging;
-    this.#enablePerformanceMetrics = updatedConfig.enablePerformanceMetrics;
-    this.#logFilePath = updatedConfig.logFilePath;
+    try {
+      const updatedConfig = this.#tools.mergeLoggerConfig(this.#config, newConfig);
+      this.#config = updatedConfig;
+      this.#logLevel = updatedConfig.logLevel;
+      this.#enableRequestLogging = updatedConfig.enableRequestLogging;
+      this.#enablePerformanceMetrics = updatedConfig.enablePerformanceMetrics;
+      this.#logFilePath = updatedConfig.logFilePath;
+    } catch (error) {
+      console.error('Error actualizando configuración del logger:', error.message);
+    }
   }
 }
 
