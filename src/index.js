@@ -136,7 +136,11 @@ class TVIPTVAddon {
       this.#config,
       this.#logger
     );
-    this.#catalogHandler = new CatalogHandler(this.#logger);
+    this.#catalogHandler = new CatalogHandler(
+      this.#channelRepository,
+      this.#config,
+      this.#logger
+    );
 
     this.#logger.info('Servicios de aplicación inicializados');
   }

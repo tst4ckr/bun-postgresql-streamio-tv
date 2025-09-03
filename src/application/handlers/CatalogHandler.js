@@ -21,16 +21,15 @@ export class CatalogHandler {
   #errorHandler;
 
   /**
+   * @param {CSVChannelRepository} csvRepository - Repositorio de canales CSV
+   * @param {Object} config - Configuración del addon
    * @param {Object} logger - Logger para trazabilidad
    */
-  constructor(logger = console) {
-    this.#config = TVAddonConfig.getInstance();
+  constructor(csvRepository, config, logger = console) {
+    this.#csvRepository = csvRepository;
+    this.#config = config;
     this.#logger = logger;
-    this.#errorHandler = new ErrorHandler(logger);
-    
-    // Inicializar repositorio CSV con tv.csv
-    const csvPath = this.#config.getValidatedChannelsCsvPath();
-    this.#csvRepository = new CSVChannelRepository(csvPath, this.#config.getConfig(), logger);
+    this.#errorHandler = new ErrorHandler(logger, config);
   }
 
   /**
