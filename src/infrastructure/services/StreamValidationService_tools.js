@@ -91,3 +91,67 @@ export function updateChannelValidationStatus(channel, isValid) {
     lastValidated: new Date().toISOString()
   };
 }
+
+/**
+ * Resetea estadísticas de validación
+ * @param {Object} stats - Objeto de estadísticas a resetear
+ */
+export function resetStats(stats) {
+  stats.totalProcessed = 0;
+  stats.validChannels = 0;
+  stats.invalidChannels = 0;
+  stats.httpsConverted = 0;
+  stats.httpWorking = 0;
+  stats.cacheHits = 0;
+  stats.processingTime = 0;
+}
+
+/**
+ * Obtiene estadísticas vacías para un total dado
+ * @param {number} total - Total de canales
+ * @returns {Object} Objeto de estadísticas inicializado
+ */
+export function getEmptyStats(total) {
+  return {
+    totalProcessed: total,
+    validChannels: total,
+    invalidChannels: 0,
+    httpsConverted: 0,
+    httpWorking: 0,
+    cacheHits: 0,
+    processingTime: 0
+  };
+}
+
+/**
+ * Obtiene información detallada del cache de validación
+ * @param {Map} validationCache - Cache de validación
+ * @param {number} cacheTimeout - Tiempo de vida del cache en ms
+ * @returns {Object} Información del cache
+ */
+export function getCacheInfo(validationCache, cacheTimeout) {
+  const entries = Array.from(validationCache.entries());
+  const now = Date.now();
+  
+  const valid = entries.filter(([, data]) => (now - data.timestamp) <= cacheTimeout);
+  const expired = entries.length - valid.length;
+  
+  return {
+    totalEntries: entries.length,
+    validEntries: valid.length,
+    expiredEntries: expired,
+    cacheTimeout: cacheTimeout,
+    oldestEntry: entries.length > 0 ? Math.min(...entries.map(([, data]) => data.timestamp)) : null,
+    newestEntry: entries.length > 0 ? Math.max(...entries.map(([, data]) => data.timestamp)) : null
+  };
+}
+
+/**
+ * Limpia el cache de validación
+ * @param {Map} validationCache - Cache de validación
+ * @param {Object} logger - Logger para trazabilidad
+ */
+export function clearCache(validationCache, logger) {
+  validationCache.clear();
+  logger.info('🗑️ Cache de validación limpiado');
+}

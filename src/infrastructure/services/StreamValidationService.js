@@ -5,7 +5,7 @@
 
 import { HttpsToHttpConversionService } from './HttpsToHttpConversionService.js';
 import { StreamHealthService } from './StreamHealthService.js';
-import { getCachedResult, setCachedResult, updateStats, updateChannelValidationStatus } from './StreamValidationService_tools.js';
+import { getCachedResult, setCachedResult, updateStats, updateChannelValidationStatus, resetStats, getEmptyStats, getCacheInfo, clearCache } from './StreamValidationService_tools.js';
 
 /**
  * Servicio de validación temprana de streams
@@ -246,7 +246,7 @@ export class StreamValidationService {
       return {
         validChannels: channels,
         invalidChannels: [],
-        stats: this.#getEmptyStats(channels.length)
+        stats: getEmptyStats(channels.length)
       };
     }
 
@@ -265,7 +265,7 @@ export class StreamValidationService {
     }
 
     // Resetear estadísticas para este lote
-    this.#resetStats();
+    resetStats(this.#stats);
 
     // Procesar en lotes para optimizar memoria
     const results = [];
@@ -371,39 +371,7 @@ export class StreamValidationService {
 
 
 
-  /**
-   * Resetea estadísticas
-   * @private
-   */
-  #resetStats() {
-    this.#stats = {
-      totalProcessed: 0,
-      validChannels: 0,
-      invalidChannels: 0,
-      httpsConverted: 0,
-      httpWorking: 0,
-      cacheHits: 0,
-      processingTime: 0
-    };
-  }
 
-  /**
-   * Obtiene estadísticas vacías
-   * @private
-   * @param {number} total - Total de canales
-   * @returns {Object}
-   */
-  #getEmptyStats(total) {
-    return {
-      totalProcessed: total,
-      validChannels: total,
-      invalidChannels: 0,
-      httpsConverted: 0,
-      httpWorking: 0,
-      cacheHits: 0,
-      processingTime: 0
-    };
-  }
 
   /**
    * Obtiene estadísticas actuales de validación
@@ -422,8 +390,7 @@ export class StreamValidationService {
    * Limpia el cache de validación
    */
   clearCache() {
-    this.#validationCache.clear();
-    this.#logger.info('🗑️ Cache de validación limpiado');
+    clearCache(this.#validationCache, this.#logger);
   }
 
   /**
@@ -431,21 +398,8 @@ export class StreamValidationService {
    * @returns {Object}
    */
   getCacheInfo() {
-    const entries = Array.from(this.#validationCache.entries());
-    const now = Date.now();
     const config = this.#getValidationConfig();
-    
-    const valid = entries.filter(([, data]) => (now - data.timestamp) <= config.cacheTimeout);
-    const expired = entries.length - valid.length;
-    
-    return {
-      totalEntries: entries.length,
-      validEntries: valid.length,
-      expiredEntries: expired,
-      cacheTimeout: config.cacheTimeout,
-      oldestEntry: entries.length > 0 ? Math.min(...entries.map(([, data]) => data.timestamp)) : null,
-      newestEntry: entries.length > 0 ? Math.max(...entries.map(([, data]) => data.timestamp)) : null
-    };
+    return getCacheInfo(this.#validationCache, config.cacheTimeout);
   }
 }
 
