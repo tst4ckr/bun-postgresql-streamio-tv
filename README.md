@@ -93,7 +93,7 @@ ENABLE_ADULT_CHANNELS=false
 #### Configuración de Cache
 ```bash
 STREAM_CACHE_MAX_AGE=300     # Cache de streams (5 min)
-CATALOG_CACHE_MAX_AGE=3600   # Cache de catálogos (1 hora)
+# CATALOG_CACHE_MAX_AGE removed - catalog functionality disabled
 ```
 
 #### 🔊 Validación Avanzada de Audio/Video

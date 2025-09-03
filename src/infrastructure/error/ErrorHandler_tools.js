@@ -207,12 +207,12 @@ export function convertStatsMapToObject(errorStatsMap) {
 export function createSafeStremioResponse(handlerType, cacheConfig) {
   switch (handlerType) {
     case 'catalog': {
-      const catalogCacheMaxAge = Math.min(cacheConfig.catalogCacheMaxAge, 300);
+      // Catalog functionality disabled - return empty response
       return {
         metas: [],
-        cacheMaxAge: catalogCacheMaxAge,
-        staleRevalidate: catalogCacheMaxAge * 2,
-        staleError: catalogCacheMaxAge * 4
+        cacheMaxAge: 300,
+        staleRevalidate: 600,
+        staleError: 1200
       };
     }
     case 'meta': {

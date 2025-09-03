@@ -148,12 +148,7 @@ class TVIPTVAddon {
   #configureHandlers() {
     this.#logger.info('Configurando handlers...');
 
-    this.#addonBuilder.defineCatalogHandler(
-      this.#errorHandler.wrapAddonHandler(
-        this.#handleCatalogRequest.bind(this),
-        'catalog'
-      )
-    );
+    // Catalog handler removed - only stream functionality available
 
     this.#addonBuilder.defineMetaHandler(
       this.#errorHandler.wrapAddonHandler(
@@ -174,45 +169,7 @@ class TVIPTVAddon {
   }
 
 
-  async #handleCatalogRequest(args) {
-    const { type, id, extra = {} } = args;
-
-
-    if (type !== 'tv') {
-      return { metas: [] };
-    }
-
-    let channels = [];
-
-    if (extra.search) {
-      channels = await this.#channelService.searchChannels(extra.search);
-    }
-
-    else if (extra.genre) {
-      channels = await this.#channelService.getChannelsByGenre(extra.genre);
-    }
-
-    else if (extra.country) {
-      channels = await this.#channelService.getChannelsByCountry(extra.country);
-    }
-
-    else {
-      const skip = parseInt(extra.skip) || 0;
-      const limit = 20;
-      channels = await this.#channelService.getChannelsPaginated(skip, limit);
-    }
-
-    channels = channels.filter(channel => channel.type === type);
-
-    const metas = channels.map(channel => channel.toMetaPreview());
-
-    return {
-      metas,
-      cacheMaxAge: this.#config.cache.catalogCacheMaxAge,
-      staleRevalidate: this.#config.cache.catalogCacheMaxAge * 2,
-      staleError: this.#config.cache.catalogCacheMaxAge * 4
-    };
-  }
+  // #handleCatalogRequest method removed - catalog functionality disabled
 
   async #handleMetaRequest(args) {
     const { type, id } = args;

@@ -356,12 +356,12 @@ export class ErrorHandler {
     // Respuestas seguras según especificaciones del SDK de Stremio con cache optimizado
     switch (handlerType) {
       case 'catalog':
-        const catalogCacheMaxAge = Math.min(this.#config.cache.catalogCacheMaxAge, 300);
+        // Catalog functionality disabled - return empty response
         return {
           metas: [],
-          cacheMaxAge: catalogCacheMaxAge,
-          staleRevalidate: catalogCacheMaxAge * 2,
-          staleError: catalogCacheMaxAge * 4
+          cacheMaxAge: 300,
+          staleRevalidate: 600,
+          staleError: 1200
         };
       case 'meta':
         const metaCacheMaxAge = Math.min(this.#config.cache.metaCacheMaxAge, 300);

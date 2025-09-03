@@ -253,7 +253,7 @@ const JERARQUIA_GEOGRAFICA = {
 #### C. Fase 3: Generación Dinámica de Catálogos
 1. **Motor de catálogos**: Sistema que genera catálogos basado en reglas
 2. **Configuración flexible**: Permitir activar/desactivar catálogos
-3. **Actualización automática**: Regeneración periódica de catálogos
+3. **FUNCIONALIDAD DESHABILITADA**: La generación automática de catálogos ha sido eliminada del sistema
 4. **Métricas de uso**: Tracking de popularidad de catálogos
 
 ### 5. Consideraciones Técnicas

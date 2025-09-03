@@ -138,8 +138,7 @@ export class TVAddonConfig {
         streamStaleRevalidate: parseInt(process.env.STREAM_STALE_REVALIDATE) || 300, // 5 minutos
         streamStaleError: parseInt(process.env.STREAM_STALE_ERROR) || 900, // 15 minutos
         
-        // Cache medio para catálogos (recomendación SDK: 1800-7200 segundos)
-        catalogCacheMaxAge: parseInt(process.env.CATALOG_CACHE_MAX_AGE) || 1800, // 30 minutos
+        // catalogCacheMaxAge removed - catalog functionality disabled
         
         // Cache medio para metadatos (recomendación SDK: 3600-86400 segundos)
         metaCacheMaxAge: parseInt(process.env.META_CACHE_MAX_AGE) || 3600, // 1 hora
@@ -370,11 +369,11 @@ export class TVAddonConfig {
       // Tipos de contenido soportados - usar 'tv' para canales en vivo
       types: ['tv'],
       
-      // Recursos que el addon puede manejar
-      resources: ['catalog', 'meta', 'stream'],
+      // Recursos que el addon puede manejar (catalog removed)
+      resources: ['meta', 'stream'],
       
-      // Catálogos disponibles
-      catalogs: this.#generateTVCatalogs(),
+      // Catálogos eliminados - solo funcionalidad de streams disponible
+      catalogs: [],
       
       // Prefijos de ID para identificar contenido del addon
       idPrefixes: ['tv_'],
@@ -432,56 +431,7 @@ export class TVAddonConfig {
     return crypto.createHash('sha256').update(json).digest('hex');
   }
 
-  /**
-   * Genera catálogos optimizados para TV
-   * @private
-   * @returns {Array}
-   */
-  /**
-   * Genera catálogos según especificaciones del SDK de Stremio
-   * @private
-   * @returns {Array}
-   */
-  #generateTVCatalogs() {
-    return [
-      // Catálogo principal de canales TV
-      {
-        type: 'tv',
-        id: 'tv_channels',
-        name: 'Canales de TV',
-        extra: [
-          {
-            name: 'search',
-            isRequired: false
-          },
-          {
-            name: 'genre',
-            isRequired: false
-          },
-          {
-            name: 'skip',
-            isRequired: false
-          }
-        ]
-      },
-      // Catálogo de canales por país
-      {
-        type: 'tv',
-        id: 'tv_by_country',
-        name: 'Canales por País',
-        extra: [
-          {
-            name: 'search',
-            isRequired: false
-          },
-          {
-            name: 'skip',
-            isRequired: false
-          }
-        ]
-      }
-    ];
-  }
+  // #generateTVCatalogs method removed - catalog functionality disabled
 
   /**
    * Genera la configuración de usuario
