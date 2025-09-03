@@ -9,6 +9,7 @@ import { ChannelRepository, RepositoryError, ChannelNotFoundError } from '../../
 import { Channel } from '../../domain/entities/Channel.js';
 import ContentFilterService from '../../domain/services/ContentFilterService.js';
 import { filterBannedChannels } from '../../config/banned-channels.js';
+import { StreamHealthService } from '../services/StreamHealthService.js';
 
 /**
  * Repositorio de canales basado en archivo CSV
@@ -29,6 +30,7 @@ export class CSVChannelRepository extends ChannelRepository {
   #validatedChannels = new Map(); // channelId -> timestamp
   #contentFilter; // Servicio de filtrado de contenido
   #urlAvailabilityCache = new Map(); // streamUrl -> {available: boolean, timestamp: Date}
+  #streamHealthService; // Servicio de validación de streams con soporte para Bitel UIDs
 
   /**
    * @param {string} filePath - Ruta al archivo CSV
@@ -43,6 +45,9 @@ export class CSVChannelRepository extends ChannelRepository {
     
     // Inicializar servicio de filtrado de contenido
     this.#contentFilter = new ContentFilterService(config.filters);
+    
+    // Inicializar servicio de validación de streams con soporte para Bitel UIDs
+    this.#streamHealthService = new StreamHealthService(config, logger);
   }
 
   /**
@@ -158,7 +163,8 @@ export class CSVChannelRepository extends ChannelRepository {
   }
 
   /**
-   * Verifica rápidamente la disponibilidad de un stream mediante HTTP HEAD
+   * Verifica la disponibilidad de un stream usando StreamHealthService
+   * Incluye soporte para procesamiento de UIDs dinámicos de Bitel
    * @private
    * @param {Channel} channel - Canal a verificar
    * @returns {Promise<boolean>} - true si el stream está disponible
@@ -175,68 +181,30 @@ export class CSVChannelRepository extends ChannelRepository {
     }
 
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 2000); // 2 segundos timeout
-
-      const response = await fetch(channel.streamUrl, {
-        method: 'HEAD',
-        signal: controller.signal,
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-        }
-      });
-
-      clearTimeout(timeoutId);
-      
-      const isAvailable = response.ok || (response.status >= 300 && response.status < 400);
+      // Usar StreamHealthService que incluye procesamiento de Bitel UIDs
+      const result = await this.#streamHealthService.checkStream(channel.streamUrl, channel.id);
       
       // Cachear resultado
       this.#urlAvailabilityCache.set(channel.streamUrl, {
-        available: isAvailable,
+        available: result.ok,
         timestamp: new Date()
       });
       
-      return isAvailable;
+      if (!result.ok && result.reason) {
+        this.#logger.debug(`Stream no disponible ${channel.streamUrl}: ${result.reason}`);
+      }
+      
+      return result.ok;
     } catch (error) {
-      // Si HEAD falla, intentar con GET pero más eficiente
-      if (error.name === 'AbortError') {
-        this.#logger.debug(`Timeout verificando ${channel.streamUrl}`);
-        this.#urlAvailabilityCache.set(channel.streamUrl, {
-          available: false,
-          timestamp: new Date()
-        });
-        return false;
-      }
-
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 1500); // 1.5 segundos para GET
-
-        const response = await fetch(channel.streamUrl, {
-          method: 'GET',
-          signal: controller.signal,
-          headers: {
-            'Range': 'bytes=0-0', // Solo headers
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-          }
-        });
-
-        clearTimeout(timeoutId);
-        const isAvailable = response.ok;
-        
-        this.#urlAvailabilityCache.set(channel.streamUrl, {
-          available: isAvailable,
-          timestamp: new Date()
-        });
-        
-        return isAvailable;
-      } catch {
-        this.#urlAvailabilityCache.set(channel.streamUrl, {
-          available: false,
-          timestamp: new Date()
-        });
-        return false;
-      }
+      this.#logger.debug(`Error verificando disponibilidad de ${channel.streamUrl}: ${error.message}`);
+      
+      // Cachear resultado negativo
+      this.#urlAvailabilityCache.set(channel.streamUrl, {
+        available: false,
+        timestamp: new Date()
+      });
+      
+      return false;
     }
   }
 

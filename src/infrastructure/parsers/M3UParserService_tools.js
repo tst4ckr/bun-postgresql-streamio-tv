@@ -432,7 +432,7 @@ export const EntryProcessor = {
       id,
       name: metadata.name,
       logo,
-      url: entry.url,
+      streamUrl: entry.url,
       group: GenreNormalizer.normalize(metadata.group, config.defaultGenre),
       country,
       language,
