@@ -72,7 +72,7 @@ CHANNELS_FILE=data/mi_lista.m3u8  # Archivo M3U local
 
 **¿Qué hace?**
 - Descarga una lista M3U desde una **URL de internet**
-- Se actualiza automáticamente según `UPDATE_INTERVAL_HOURS`
+
 - Usa `BACKUP_M3U_URL` si la principal falla
 
 **Configuración:**

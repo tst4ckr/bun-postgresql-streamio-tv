@@ -96,9 +96,7 @@ export class TVAddonConfig {
         // Archivo CSV local adicional
         localChannelsCsv: process.env.LOCAL_CHANNELS_CSV || '',
         // Configuración del modo automático
-        autoM3uUrl: process.env.AUTO_M3U_URL || null,
-        enableAutoUpdate: process.env.ENABLE_AUTO_UPDATE === 'true',
-        updateIntervalHours: parseFloat(process.env.UPDATE_INTERVAL_HOURS) || 4
+        autoM3uUrl: process.env.AUTO_M3U_URL || null
       },
 
       // Configuración de TV en vivo

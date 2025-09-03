@@ -94,7 +94,7 @@ class TVIPTVAddon {
     this.#logger.info(`🔗 Instalar addon: ${this.#config.getBaseUrl()}/manifest.json`);
     
 
-    this.#scheduleMaintenanceTasks();
+
   }
 
 
@@ -259,29 +259,7 @@ class TVIPTVAddon {
     }
   }
 
-  #scheduleMaintenanceTasks() {
-    const { dataSources, validation } = this.#config;
 
-    if (dataSources.enableAutoUpdate && dataSources.updateIntervalHours > 0) {
-      const intervalMs = dataSources.updateIntervalHours * 60 * 60 * 1000;
-      
-      setInterval(async () => {
-        this.#logger.info('Ejecutando auto-actualización de canales...');
-        
-        try {
-          await this.#channelRepository.refreshFromRemote?.();
-          this.#logger.info('Auto-actualización completada');
-        } catch (error) {
-          this.#logger.error('Error en auto-actualización:', error);
-        }
-      }, intervalMs);
-
-      this.#logger.info(`Auto-actualización programada cada ${dataSources.updateIntervalHours} horas`);
-    }
-
-    // Validación periódica automática removida por solicitud del usuario
-    // La validación manual sigue disponible a través de validateStreamsOnStartup
-  }
 
 
 }

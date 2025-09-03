@@ -10,7 +10,7 @@ Un addon profesional de Stremio para canales de TV en vivo usando streams IPTV, 
 - ✅ **Búsqueda inteligente** de canales
 - ✅ **Filtros avanzados** por calidad, idioma y región
 - ✅ **Configuración de usuario** personalizable
-- ✅ **Auto-actualización** de listas de canales
+
 - ✅ **Validación automática** de streams
 
 ### 🔊 **Validación Avanzada de Audio/Video**
@@ -80,7 +80,7 @@ CHANNELS_SOURCE=hybrid       # Fuente: csv, m3u, remote_m3u, hybrid
 CHANNELS_FILE=data/channels.csv
 M3U_URL=https://iptv-org.github.io/iptv/countries/mx.m3u8
 BACKUP_M3U_URL=https://iptv-org.github.io/iptv/countries/pe.m3u8
-UPDATE_INTERVAL_HOURS=4      # Auto-actualización cada X horas
+
 ```
 
 #### Filtros y Restricciones

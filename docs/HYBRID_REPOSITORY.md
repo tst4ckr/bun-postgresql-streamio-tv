@@ -45,9 +45,8 @@ LOCAL_M3U_LATAM4=data/latam/chile.m3u8
 LOCAL_M3U_INDEX=data/index/premium.m3u
 LOCAL_CHANNELS_CSV=data/premium/vip_channels.csv
 
-# Configuración de cache y actualización
+# Configuración de cache
 CACHE_CHANNELS_HOURS=6
-UPDATE_INTERVAL_HOURS=4
 
 # Configuración de validación
 REMOVE_INVALID_STREAMS=true

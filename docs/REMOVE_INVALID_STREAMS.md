@@ -113,8 +113,6 @@ async getChannelsPaginatedUnfiltered(skip, limit)
 
 #### 3. Integración en Validación Manual
 
-**Ubicación**: `src/index.js` - método `#scheduleMaintenanceTasks`
-
 **NOTA**: La validación periódica automática ha sido removida. La validación solo se ejecuta:
 - Al inicio del sistema (si `VALIDATE_STREAMS_ON_STARTUP=true`)
 - Manualmente a través de endpoints de la API
