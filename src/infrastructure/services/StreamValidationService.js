@@ -5,6 +5,7 @@
 
 import { HttpsToHttpConversionService } from './HttpsToHttpConversionService.js';
 import { StreamHealthService } from './StreamHealthService.js';
+import { convertToHttp } from './HttpsToHttpConversionService_tools.js';
 import { getCachedResult, setCachedResult, updateStats, updateChannelValidationStatus, resetStats, getEmptyStats, getCacheInfo, clearCache } from './StreamValidationService_tools.js';
 
 /**
@@ -157,7 +158,7 @@ export class StreamValidationService {
    */
   async #quickValidation(url, config) {
     const originalUrl = url;
-    const httpUrl = this.#httpsToHttpService.convertToHttp(url);
+    const httpUrl = convertToHttp(url);
     const converted = originalUrl !== httpUrl;
 
     try {

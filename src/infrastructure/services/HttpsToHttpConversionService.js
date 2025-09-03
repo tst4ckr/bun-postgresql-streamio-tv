@@ -1,7 +1,29 @@
 /**
  * @fileoverview HttpsToHttpConversionService - Servicio para conversión automática de HTTPS a HTTP
- * Convierte URLs de canales de HTTPS a HTTP y valida su funcionalidad
+ * 
+ * Flujo de datos principal:
+ * 1. Config + Dependencies → Service Instance
+ * 2. Channel Input → processChannel() → Validated Channel Result
+ * 3. Channels Array → processChannels() → Processed Channels + Stats
+ * 4. Paginated Function → processChannelsBatched() → Batched Results + Global Stats
+ * 
+ * Arquitectura:
+ * - Lógica principal: Orquestación y flujo de negocio
+ * - Tools: Funciones puras y utilitarias reutilizables
+ * - Dependencies: StreamHealthService para validación de streams
  */
+
+import {
+  convertToHttp,
+  validateConversionEnabled,
+  updateProcessingStats,
+  formatProgressMessage,
+  calculateOptimalConcurrency,
+  filterWorkingChannels,
+  calculateBatchDelay,
+  createInitialStats,
+  calculateSuccessRate
+} from './HttpsToHttpConversionService_tools.js';
 
 export class HttpsToHttpConversionService {
   #config;
@@ -19,26 +41,10 @@ export class HttpsToHttpConversionService {
    * @returns {boolean}
    */
   isEnabled() {
-    return this.#config.validation?.convertHttpsToHttp === true;
+    return validateConversionEnabled(this.#config);
   }
 
-  /**
-   * Convierte una URL de HTTPS a HTTP
-   * @param {string} url - URL original
-   * @returns {string} URL convertida a HTTP
-   */
-  convertToHttp(url) {
-    if (!url || typeof url !== 'string') {
-      return url;
-    }
 
-    // Solo convertir si la URL es HTTPS
-    if (url.startsWith('https://')) {
-      return url.replace('https://', 'http://');
-    }
-
-    return url;
-  }
 
   /**
    * Valida si una URL HTTP funciona correctamente
@@ -68,7 +74,7 @@ export class HttpsToHttpConversionService {
    */
   async processChannel(channel) {
     const originalUrl = channel.streamUrl;
-    const httpUrl = this.convertToHttp(originalUrl);
+    const httpUrl = convertToHttp(originalUrl);
     const converted = originalUrl !== httpUrl;
 
     // Si no se convirtió (ya era HTTP), validar directamente
@@ -129,29 +135,17 @@ export class HttpsToHttpConversionService {
       this.#logger.info('🔄 Conversión HTTPS a HTTP deshabilitada');
       return {
         processed: channels,
-        stats: {
-          total: channels.length,
-          converted: 0,
-          httpWorking: 0,
-          originalWorking: 0,
-          failed: 0
-        }
+        stats: createInitialStats(channels.length)
       };
     }
 
-    const limit = Math.max(1, Math.min(concurrency, 20));
+    const limit = calculateOptimalConcurrency(concurrency);
     const queue = [...channels];
     const results = [];
     const total = channels.length;
     let completed = 0;
 
-    const stats = {
-      total,
-      converted: 0,
-      httpWorking: 0,
-      originalWorking: 0,
-      failed: 0
-    };
+    const stats = createInitialStats(total);
 
     if (showProgress) {
       this.#logger.info(`🔄 Iniciando conversión HTTPS→HTTP de ${total} canales con ${limit} workers...`);
@@ -166,21 +160,13 @@ export class HttpsToHttpConversionService {
           const result = await this.processChannel(channel);
           results.push(result);
 
-          // Actualizar estadísticas
-          if (result.converted) stats.converted++;
-          if (result.httpWorks) stats.httpWorking++;
-          if (result.originalWorks) stats.originalWorking++;
-          if (!result.httpWorks && !result.originalWorks) stats.failed++;
-
+          // Actualizar estadísticas usando función utilitaria
+          Object.assign(stats, updateProcessingStats(stats, result));
           completed++;
 
           // Mostrar progreso cada 50 canales o al final
           if (showProgress && (completed % 50 === 0 || completed === total)) {
-            const percentage = ((completed / total) * 100).toFixed(1);
-            const httpSuccessRate = stats.httpWorking > 0 ? ((stats.httpWorking / completed) * 100).toFixed(1) : '0.0';
-            this.#logger.info(
-              `📊 Progreso: ${completed}/${total} (${percentage}%) - HTTP funcional: ${stats.httpWorking} (${httpSuccessRate}%)`
-            );
+            this.#logger.info(formatProgressMessage(completed, total, stats.httpWorking));
           }
         } catch (error) {
           completed++;
@@ -202,13 +188,11 @@ export class HttpsToHttpConversionService {
     const workers = Array.from({ length: limit }, () => worker());
     await Promise.all(workers);
 
-    // Filtrar resultados según configuración
-    const processed = onlyWorkingHttp
-      ? results.filter(r => r.httpWorks).map(r => r.channel)
-      : results.map(r => r.channel);
+    // Filtrar resultados según configuración usando función utilitaria
+    const processed = filterWorkingChannels(results, onlyWorkingHttp);
 
     if (showProgress) {
-      const httpSuccessRate = stats.total > 0 ? ((stats.httpWorking / stats.total) * 100).toFixed(1) : '0.0';
+      const httpSuccessRate = calculateSuccessRate(stats.httpWorking, stats.total);
       this.#logger.info(
         `✅ Conversión completada: ${stats.converted} convertidos, ${stats.httpWorking}/${stats.total} (${httpSuccessRate}%) HTTP funcionales`
       );
@@ -233,19 +217,13 @@ export class HttpsToHttpConversionService {
 
     if (!this.isEnabled()) {
       this.#logger.info('🔄 Conversión HTTPS a HTTP deshabilitada');
-      return { processed: [], stats: { total: 0, converted: 0, httpWorking: 0, originalWorking: 0, failed: 0 } };
+      return { processed: [], stats: createInitialStats(0) };
     }
 
     let offset = 0;
     let batchCount = 0;
     const allProcessed = [];
-    const globalStats = {
-      total: 0,
-      converted: 0,
-      httpWorking: 0,
-      originalWorking: 0,
-      failed: 0
-    };
+    const globalStats = createInitialStats(0);
 
     if (showProgress) {
       this.#logger.info(`🔄 Iniciando conversión HTTPS→HTTP por lotes (tamaño: ${batchSize})...`);
@@ -281,9 +259,7 @@ export class HttpsToHttpConversionService {
       globalStats.failed += batchResult.stats.failed;
 
       if (showProgress) {
-        const batchHttpRate = batchResult.stats.total > 0 
-          ? ((batchResult.stats.httpWorking / batchResult.stats.total) * 100).toFixed(1) 
-          : '0.0';
+        const batchHttpRate = calculateSuccessRate(batchResult.stats.httpWorking, batchResult.stats.total);
         this.#logger.info(
           `✅ Lote ${batchCount}: ${batchResult.stats.httpWorking}/${batchResult.stats.total} (${batchHttpRate}%) HTTP funcionales`
         );
@@ -291,16 +267,15 @@ export class HttpsToHttpConversionService {
 
       offset += batchSize;
 
-      // Pausa entre lotes
-      if (channels.length === batchSize) {
-        await new Promise(resolve => setTimeout(resolve, 100));
+      // Pausa entre lotes usando función utilitaria
+      const delay = calculateBatchDelay(batchSize, channels.length);
+      if (delay > 0) {
+        await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
 
     if (showProgress) {
-      const overallHttpRate = globalStats.total > 0 
-        ? ((globalStats.httpWorking / globalStats.total) * 100).toFixed(1) 
-        : '0.0';
+      const overallHttpRate = calculateSuccessRate(globalStats.httpWorking, globalStats.total);
       this.#logger.info(
         `🎯 Conversión completa: ${globalStats.httpWorking}/${globalStats.total} (${overallHttpRate}%) HTTP funcionales en ${batchCount} lotes`
       );
