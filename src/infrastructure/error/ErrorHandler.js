@@ -1,87 +1,120 @@
 /**
  * @fileoverview Manejo centralizado de errores para el addon
- * Implementa patrones robustos de manejo de errores
+ * Implementa patrones robustos de manejo de errores siguiendo principios SOLID
+ * 
+ * Principios aplicados:
+ * - Single Responsibility: Cada clase tiene una responsabilidad específica
+ * - Open/Closed: Extensible para nuevos tipos de error sin modificar código existente
+ * - Liskov Substitution: Las clases de error son intercambiables
+ * - Interface Segregation: Interfaces específicas para cada tipo de operación
+ * - Dependency Inversion: Depende de abstracciones, no de implementaciones concretas
+ * 
+ * @author Sistema de Manejo de Errores
+ * @version 2.0.0
+ * @since 1.0.0
  */
 
-/**
- * Tipos de errores personalizados
- */
-export class AddonError extends Error {
-  constructor(message, code = 'ADDON_ERROR', statusCode = 500) {
-    super(message);
-    this.name = 'AddonError';
-    this.code = code;
-    this.statusCode = statusCode;
-    this.timestamp = new Date().toISOString();
-  }
-}
+import {
+  AddonError,
+  ConfigurationError,
+  StreamError,
+  ValidationError,
+  MonitoringError,
+  FallbackError,
+  M3UParseError,
+  RepositoryError,
+  formatError,
+  createErrorResponse,
+  validateAddonResponse,
+  generateErrorTrackingKey,
+  convertStatsMapToObject,
+  createSafeStremioResponse,
+  createValidationErrorResponse,
+  createConfigurationErrorResponse,
+  normalizeRejectionReason,
+  validateHandlerArgs,
+  calculateDuration,
+  fallbackErrorLogging
+} from './ErrorHandler_tools.js';
 
-export class ConfigurationError extends AddonError {
-  constructor(message, field = null) {
-    super(message, 'CONFIGURATION_ERROR', 500);
-    this.name = 'ConfigurationError';
-    this.field = field;
-  }
-}
-
-export class StreamError extends AddonError {
-  constructor(message, streamId = null) {
-    super(message, 'STREAM_ERROR', 404);
-    this.name = 'StreamError';
-    this.streamId = streamId;
-  }
-}
-
-export class ValidationError extends AddonError {
-  constructor(message, validationErrors = []) {
-    super(message, 'VALIDATION_ERROR', 400);
-    this.name = 'ValidationError';
-    this.validationErrors = validationErrors;
-  }
-}
-
-export class MonitoringError extends AddonError {
-  constructor(message, monitoringId = null) {
-    super(message, 'MONITORING_ERROR', 500);
-    this.name = 'MonitoringError';
-    this.monitoringId = monitoringId;
-  }
-}
-
-export class FallbackError extends AddonError {
-  constructor(message, channelId = null) {
-    super(message, 'FALLBACK_ERROR', 503);
-    this.name = 'FallbackError';
-    this.channelId = channelId;
-  }
-}
-
-export class M3UParseError extends AddonError {
-  constructor(message, lineNumber = null) {
-    super(message, 'M3U_PARSE_ERROR', 422);
-    this.name = 'M3UParseError';
-    this.lineNumber = lineNumber;
-  }
-}
-
-export class RepositoryError extends AddonError {
-  constructor(message, operation = null) {
-    super(message, 'REPOSITORY_ERROR', 500);
-    this.name = 'RepositoryError';
-    this.operation = operation;
-  }
-}
+// Re-exportar las clases de error para mantener compatibilidad
+export {
+  AddonError,
+  ConfigurationError,
+  StreamError,
+  ValidationError,
+  MonitoringError,
+  FallbackError,
+  M3UParseError,
+  RepositoryError
+};
 
 /**
- * Clase responsable del manejo centralizado de errores
+ * Manejador centralizado de errores para el addon
+ * Implementa el patrón Singleton para manejo global de errores
+ * 
+ * @class ErrorHandler
+ * @implements {IErrorHandler}
+ * @example
+ * ```javascript
+ * const errorHandler = new ErrorHandler(logger, config);
+ * const response = errorHandler.handleValidationError(new ValidationError('Invalid input'));
+ * ```
+ * 
+ * @since 1.0.0
+ * @version 2.0.0
  */
 export class ErrorHandler {
+  /**
+   * Logger para registrar errores
+   * @private
+   * @type {import('../../interfaces/ILogger.js').ILogger}
+   * @readonly
+   */
   #logger;
+
+  /**
+   * Configuración del sistema
+   * @private
+   * @type {import('../../interfaces/IConfig.js').IConfig}
+   * @readonly
+   */
   #config;
+
+  /**
+   * Estadísticas de errores por contexto
+   * @private
+   * @type {Map<string, number>}
+   * @readonly
+   */
   #errorStats;
+
+  /**
+   * Instancia singleton del manejador de errores
+   * @private
+   * @static
+   * @type {ErrorHandler|null}
+   */
   static #instance = null;
 
+  /**
+   * Constructor del manejador de errores
+   * 
+   * @param {import('../../interfaces/ILogger.js').ILogger} logger - Logger para registrar errores
+   * @param {import('../../interfaces/IConfig.js').IConfig} config - Configuración del sistema
+   * @throws {TypeError} Si logger o config son null/undefined
+   * @throws {ValidationError} Si logger o config no implementan las interfaces requeridas
+   * 
+   * @example
+   * ```javascript
+   * const errorHandler = new ErrorHandler(logger, config);
+   * ```
+   */
   constructor(logger, config) {
+    if (!logger || !config) {
+      throw new TypeError('Logger y config son requeridos');
+    }
+    
     this.#logger = logger;
     this.#config = config;
     this.#errorStats = new Map();
@@ -111,14 +144,29 @@ export class ErrorHandler {
    * @private
    */
   #setupGlobalHandlers() {
-    // Manejar promesas rechazadas no capturadas
+    // Handler para rechazos no manejados
     process.on('unhandledRejection', (reason, promise) => {
-      this.handleUnhandledRejection(reason, promise);
+      const error = normalizeRejectionReason(reason);
+      const errorInfo = formatError(error, 'unhandledRejection', { 
+        promise: promise.toString()
+      });
+      
+      this.#logger.error('Rechazo no manejado:', errorInfo);
+      this.#trackError('unhandledRejection', error);
+      
+      if (this.#config.shouldExitOnUnhandledRejection()) {
+        this.#gracefulShutdown('unhandledRejection');
+      }
     });
 
-    // Manejar excepciones no capturadas
+    // Handler para excepciones no capturadas
     process.on('uncaughtException', (error) => {
-      this.handleUncaughtException(error);
+      const errorInfo = formatError(error, 'uncaughtException');
+      
+      this.#logger.fatal('Excepción no capturada:', errorInfo);
+      this.#trackError('uncaughtException', error);
+      
+      this.#gracefulShutdown('uncaughtException');
     });
 
     // Manejar señales de terminación
@@ -127,118 +175,163 @@ export class ErrorHandler {
   }
 
   /**
-   * Maneja errores de promesas no capturadas
-   * @param {*} reason - Razón del rechazo
-   * @param {Promise} promise - Promesa rechazada
+   * Maneja el cierre graceful del proceso
+   * 
+   * @param {string} signal - Señal del sistema recibida (SIGTERM, SIGINT, etc.)
+   * 
+   * @throws {TypeError} Si signal no es string
+   * 
+   * @example
+   * ```javascript
+   * process.on('SIGTERM', () => {
+   *   errorHandler.handleGracefulShutdown('SIGTERM');
+   * });
+   * ```
+   * 
+   * @since 1.0.0
    */
-  handleUnhandledRejection(reason, promise) {
-    const error = reason instanceof Error ? reason : new Error(String(reason));
+  handleGracefulShutdown(signal) {
+    if (typeof signal !== 'string') {
+      throw new TypeError('Signal debe ser string');
+    }
     
-    this.#logger.error('Promesa rechazada no manejada:', {
-      error: error.message,
-      stack: error.stack,
-      promise: promise.toString()
-    });
+    this.#gracefulShutdown(signal);
+  }
 
-    this.#trackError('unhandledRejection', error);
-
-    // En producción, no terminar el proceso inmediatamente
-    if (this.#config.isProduction()) {
-      this.#logger.warn('Continuando ejecución en producción después de promesa rechazada');
-    } else {
-      this.#logger.error('Terminando proceso debido a promesa rechazada en desarrollo');
+  /**
+   * Implementa el cierre graceful del proceso
+   * @private
+   * @param {string} reason - Razón del cierre
+   */
+  #gracefulShutdown(reason) {
+    try {
+      this.#logger.info(`Iniciando cierre graceful por: ${reason}`);
+      
+      // Dar tiempo para que las operaciones en curso terminen
+      setTimeout(() => {
+        this.#logger.info('Addon cerrado correctamente');
+        process.exit(reason === 'uncaughtException' ? 1 : 0);
+      }, 5000);
+    } catch (shutdownError) {
+      // Usar logging de fallback si el logger principal falla
+      fallbackErrorLogging(`Error durante cierre graceful: ${shutdownError.message}`);
       process.exit(1);
     }
   }
 
   /**
-   * Maneja excepciones no capturadas
-   * @param {Error} error - Error no capturado
-   */
-  handleUncaughtException(error) {
-    this.#logger.error('Excepción no capturada:', {
-      error: error.message,
-      stack: error.stack,
-      type: error.constructor.name
-    });
-
-    this.#trackError('uncaughtException', error);
-
-    // Intentar cerrar gracefully
-    this.#logger.error('Terminando proceso debido a excepción no capturada');
-    process.exit(1);
-  }
-
-  /**
-   * Maneja cierre graceful del proceso
-   * @param {string} signal - Señal recibida
-   */
-  handleGracefulShutdown(signal) {
-    this.#logger.info(`Señal ${signal} recibida. Cerrando addon...`);
-    
-    // Dar tiempo para que las operaciones en curso terminen
-    setTimeout(() => {
-      this.#logger.info('Addon cerrado correctamente');
-      process.exit(0);
-    }, 5000);
-  }
-
-  /**
-   * Maneja errores de operaciones asíncronas
-   * @param {Error} error - Error a manejar
-   * @param {string} context - Contexto donde ocurrió el error
-   * @param {Object} metadata - Metadatos adicionales
-   * @returns {Object} Respuesta de error formateada
+   * Maneja errores asíncronos y operaciones no bloqueantes
+   * 
+   * @param {Error} error - Error asíncrono capturado
+   * @param {string} [context='unknown'] - Contexto donde ocurrió el error
+   * @param {Object} [metadata={}] - Metadatos adicionales del error
+   * @param {string} [metadata.operation] - Operación específica que falló
+   * @param {number} [metadata.duration] - Duración de la operación en ms
+   * @param {string} [metadata.requestId] - ID de la petición relacionada
+   * 
+   * @returns {import('./types/ErrorResponse.js').AsyncErrorResponse} Respuesta estandarizada de error asíncrono
+   * 
+   * @throws {TypeError} Si error no es instancia de Error
+   * 
+   * @example
+   * ```javascript
+   * try {
+   *   await someAsyncOperation();
+   * } catch (error) {
+   *   const response = errorHandler.handleAsyncError(error, 'database-query', {
+   *     operation: 'user-fetch',
+   *     duration: 1500,
+   *     requestId: 'req-123'
+   *   });
+   * }
+   * ```
+   * 
+   * @since 1.0.0
    */
   handleAsyncError(error, context = 'unknown', metadata = {}) {
-    const errorInfo = this.#formatError(error, context, metadata);
+    if (!(error instanceof Error)) {
+      throw new TypeError('Error debe ser instancia de Error');
+    }
+    
+    const errorInfo = formatError(error, context, metadata);
     
     this.#logger.error(`Error en ${context}:`, errorInfo);
     this.#trackError(context, error);
 
-    return this.#createErrorResponse(error, context);
+    return createErrorResponse(error, context);
   }
 
   /**
-   * Maneja errores de validación
-   * @param {ValidationError} error - Error de validación
-   * @returns {Object} Respuesta de error de validación
+   * Maneja errores de validación de entrada
+   * 
+   * @param {ValidationError} error - Error de validación específico
+   * @param {Object} [context={}] - Contexto adicional del error
+   * @param {string} [context.operation] - Operación que causó el error
+   * @param {string} [context.userId] - ID del usuario relacionado
+   * @param {Object} [context.metadata] - Metadatos adicionales
+   * 
+   * @returns {import('./types/ErrorResponse.js').ValidationErrorResponse} Respuesta estandarizada de error de validación
+   * 
+   * @throws {TypeError} Si error no es instancia de ValidationError
+   * 
+   * @example
+   * ```javascript
+   * const validationError = new ValidationError('Campo requerido', ['email']);
+   * const response = errorHandler.handleValidationError(validationError, {
+   *   operation: 'user-registration',
+   *   userId: 'user123'
+   * });
+   * ```
+   * 
+   * @since 1.0.0
    */
-  handleValidationError(error) {
-    this.#logger.warn('Error de validación:', {
-      message: error.message,
-      validationErrors: error.validationErrors,
-      timestamp: error.timestamp
-    });
-
-    return {
-      error: 'Validation Error',
-      message: error.message,
-      details: error.validationErrors,
-      code: error.code,
-      timestamp: error.timestamp
-    };
+  handleValidationError(error, context = {}) {
+    if (!(error instanceof ValidationError)) {
+      throw new TypeError('Error debe ser instancia de ValidationError');
+    }
+    
+    this.#trackError('validation', error);
+    
+    const errorInfo = formatError(error, context);
+    this.#logger.warn('Error de validación', errorInfo);
+    
+    return createValidationErrorResponse(error);
   }
 
   /**
-   * Maneja errores de configuración
-   * @param {ConfigurationError} error - Error de configuración
-   * @returns {Object} Respuesta de error de configuración
+   * Maneja errores de configuración del sistema
+   * 
+   * @param {ConfigurationError} error - Error de configuración específico
+   * @param {Object} [context={}] - Contexto adicional del error
+   * @param {string} [context.configFile] - Archivo de configuración afectado
+   * @param {string} [context.environment] - Entorno donde ocurrió el error
+   * 
+   * @returns {import('./types/ErrorResponse.js').ConfigurationErrorResponse} Respuesta estandarizada de error de configuración
+   * 
+   * @throws {TypeError} Si error no es instancia de ConfigurationError
+   * 
+   * @example
+   * ```javascript
+   * const configError = new ConfigurationError('Variable de entorno faltante', 'DATABASE_URL');
+   * const response = errorHandler.handleConfigurationError(configError, {
+   *   configFile: '.env',
+   *   environment: 'production'
+   * });
+   * ```
+   * 
+   * @since 1.0.0
    */
-  handleConfigurationError(error) {
-    this.#logger.error('Error de configuración:', {
-      message: error.message,
-      field: error.field,
-      timestamp: error.timestamp
-    });
-
-    return {
-      error: 'Configuration Error',
-      message: error.message,
-      field: error.field,
-      code: error.code,
-      timestamp: error.timestamp
-    };
+  handleConfigurationError(error, context = {}) {
+    if (!(error instanceof ConfigurationError)) {
+      throw new TypeError('Error debe ser instancia de ConfigurationError');
+    }
+    
+    this.#trackError('configuration', error);
+    
+    const errorInfo = formatError(error, context);
+    this.#logger.error('Error de configuración', errorInfo);
+    
+    return createConfigurationErrorResponse(error);
   }
 
   /**
@@ -326,15 +419,34 @@ export class ErrorHandler {
   }
 
   /**
-   * Obtiene estadísticas de errores
-   * @returns {Object} Estadísticas de errores
+   * Obtiene estadísticas detalladas de errores del sistema
+   * 
+   * @returns {import('./types/ErrorStats.js').ErrorStatsReport} Reporte completo de estadísticas de errores
+   * 
+   * @example
+   * ```javascript
+   * const stats = errorHandler.getErrorStats();
+   * console.log(`Total de errores: ${Object.keys(stats).length}`);
+   * ```
+   * 
+   * @since 1.0.0
    */
   getErrorStats() {
-    const stats = {};
-    for (const [context, count] of this.#errorStats.entries()) {
-      stats[context] = count;
-    }
-    return stats;
+    return convertStatsMapToObject(this.#errorStats);
+  }
+
+
+
+  /**
+   * Rastrea estadísticas de errores
+   * @private
+   * @param {string} context - Contexto del error
+   * @param {Error} error - Error ocurrido
+   */
+  #trackError(context, error) {
+    const key = generateErrorTrackingKey(error, context);
+    const current = this.#errorStats.get(key) || 0;
+    this.#errorStats.set(key, current + 1);
   }
 
   /**
@@ -346,77 +458,27 @@ export class ErrorHandler {
    * @returns {Object} Información formateada del error
    */
   #formatError(error, context, metadata) {
-    return {
-      message: error.message,
-      name: error.name,
-      code: error.code || 'UNKNOWN_ERROR',
-      stack: this.#config.isDevelopment() ? error.stack : undefined,
-      context,
-      metadata,
-      timestamp: new Date().toISOString()
-    };
+    return formatError(error, context, metadata);
   }
 
   /**
-   * Crea respuesta de error estandarizada
+   * Crea respuesta de error
    * @private
-   * @param {Error} error - Error original
+   * @param {Error} error - Error a procesar
    * @param {string} context - Contexto del error
    * @returns {Object} Respuesta de error
    */
   #createErrorResponse(error, context) {
-    const isAddonError = error instanceof AddonError;
-    
-    return {
-      error: isAddonError ? error.name : 'Internal Server Error',
-      message: isAddonError ? error.message : 'Ha ocurrido un error interno',
-      code: error.code || 'INTERNAL_ERROR',
-      context,
-      timestamp: new Date().toISOString(),
-      ...(this.#config.isDevelopment() && { stack: error.stack })
-    };
+    return createErrorResponse(error, context);
   }
 
   /**
-   * Valida respuestas del addon según especificaciones del SDK
+   * Valida respuesta del addon
    * @private
-   * @param {Object} result - Resultado a validar
+   * @param {*} result - Resultado a validar
    * @param {string} handlerType - Tipo de handler
-   * @throws {ValidationError} Si la respuesta es inválida
    */
   #validateAddonResponse(result, handlerType) {
-    if (!result || typeof result !== 'object') {
-      throw new ValidationError(`Respuesta de ${handlerType} inválida: debe ser un objeto`);
-    }
-
-    switch (handlerType) {
-      case 'catalog':
-        if (!Array.isArray(result.metas)) {
-          throw new ValidationError('Respuesta de catálogo inválida: metas debe ser un array');
-        }
-        break;
-      case 'meta':
-        if (result.meta !== null && typeof result.meta !== 'object') {
-          throw new ValidationError('Respuesta de metadatos inválida: meta debe ser objeto o null');
-        }
-        break;
-      case 'stream':
-        if (!Array.isArray(result.streams)) {
-          throw new ValidationError('Respuesta de stream inválida: streams debe ser un array');
-        }
-        break;
-    }
-  }
-
-  /**
-   * Rastrea estadísticas de errores
-   * @private
-   * @param {string} context - Contexto del error
-   * @param {Error} error - Error ocurrido
-   */
-  #trackError(context, error) {
-    const key = `${context}:${error.name || 'Unknown'}`;
-    const current = this.#errorStats.get(key) || 0;
-    this.#errorStats.set(key, current + 1);
+    return validateAddonResponse(result, handlerType);
   }
 }
