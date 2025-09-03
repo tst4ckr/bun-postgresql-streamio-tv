@@ -5,6 +5,7 @@
 
 import { HttpsToHttpConversionService } from './HttpsToHttpConversionService.js';
 import { StreamHealthService } from './StreamHealthService.js';
+import { getCachedResult } from './StreamValidationService_tools.js';
 
 /**
  * Servicio de validación temprana de streams
@@ -85,7 +86,7 @@ export class StreamValidationService {
     try {
       // Verificar cache primero
       const cacheKey = channel.streamUrl;
-      const cached = this.#getCachedResult(cacheKey, config.cacheTimeout);
+      const cached = getCachedResult(this.#validationCache, cacheKey, config.cacheTimeout);
       if (cached) {
         this.#stats.cacheHits++;
         return {
@@ -362,25 +363,7 @@ export class StreamValidationService {
     return results;
   }
 
-  /**
-   * Obtiene resultado del cache
-   * @private
-   * @param {string} key - Clave del cache
-   * @param {number} timeout - Timeout del cache en ms
-   * @returns {Object|null}
-   */
-  #getCachedResult(key, timeout) {
-    const cached = this.#validationCache.get(key);
-    if (!cached) return null;
 
-    const age = Date.now() - cached.timestamp;
-    if (age > timeout) {
-      this.#validationCache.delete(key);
-      return null;
-    }
-
-    return cached.result;
-  }
 
   /**
    * Guarda resultado en cache
