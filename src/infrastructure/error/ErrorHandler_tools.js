@@ -207,7 +207,7 @@ export function convertStatsMapToObject(errorStatsMap) {
 export function createSafeStremioResponse(handlerType, cacheConfig) {
   switch (handlerType) {
     case 'catalog': {
-      // Catalog functionality disabled - return empty response
+      // Return safe empty catalog response
       return {
         metas: [],
         cacheMaxAge: 300,

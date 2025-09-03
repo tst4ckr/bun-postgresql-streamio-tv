@@ -95,6 +95,8 @@ export class TVAddonConfig {
         localM3uIndex: process.env.LOCAL_M3U_INDEX || '',
         // Archivo CSV local adicional
         localChannelsCsv: process.env.LOCAL_CHANNELS_CSV || '',
+        // Archivo CSV de canales validados
+        validatedChannelsCsv: process.env.VALIDATED_CHANNELS_CSV || 'tv.csv',
         // Configuración del modo automático
         autoM3uUrl: process.env.AUTO_M3U_URL || null
       },
@@ -369,11 +371,11 @@ export class TVAddonConfig {
       // Tipos de contenido soportados - usar 'tv' para canales en vivo
       types: ['tv'],
       
-      // Recursos que el addon puede manejar (catalog removed)
-      resources: ['meta', 'stream'],
+      // Recursos que el addon puede manejar
+      resources: ['catalog', 'meta', 'stream'],
       
-      // Catálogos eliminados - solo funcionalidad de streams disponible
-      catalogs: [],
+      // Catálogos disponibles desde tv.csv
+      catalogs: this.#generateTVCatalogs(),
       
       // Prefijos de ID para identificar contenido del addon
       idPrefixes: ['tv_'],
@@ -431,7 +433,79 @@ export class TVAddonConfig {
     return crypto.createHash('sha256').update(json).digest('hex');
   }
 
-  // #generateTVCatalogs method removed - catalog functionality disabled
+  /**
+   * Genera catálogos de TV desde tv.csv
+   * @private
+   * @returns {Array} Lista de catálogos configurados
+   */
+  #generateTVCatalogs() {
+    return [
+      {
+        type: 'tv',
+        id: 'tv_all',
+        name: 'Todos los Canales',
+        extra: [
+          { name: 'search', isRequired: false },
+          { name: 'skip', isRequired: false }
+        ]
+      },
+      {
+        type: 'tv',
+        id: 'tv_peru',
+        name: 'Canales de Perú',
+        extra: [
+          { name: 'search', isRequired: false },
+          { name: 'skip', isRequired: false }
+        ]
+      },
+      {
+        type: 'tv',
+        id: 'tv_hd',
+        name: 'Canales HD',
+        extra: [
+          { name: 'search', isRequired: false },
+          { name: 'skip', isRequired: false }
+        ]
+      },
+      {
+        type: 'tv',
+        id: 'tv_news',
+        name: 'Noticias',
+        extra: [
+          { name: 'search', isRequired: false },
+          { name: 'skip', isRequired: false }
+        ]
+      },
+      {
+        type: 'tv',
+        id: 'tv_sports',
+        name: 'Deportes',
+        extra: [
+          { name: 'search', isRequired: false },
+          { name: 'skip', isRequired: false }
+        ]
+      },
+      {
+        type: 'tv',
+        id: 'tv_entertainment',
+        name: 'Entretenimiento',
+        extra: [
+          { name: 'search', isRequired: false },
+          { name: 'skip', isRequired: false }
+        ]
+      },
+      {
+        type: 'tv',
+        id: 'tv_by_genre',
+        name: 'Por Género',
+        extra: [
+          { name: 'genre', isRequired: false },
+          { name: 'search', isRequired: false },
+          { name: 'skip', isRequired: false }
+        ]
+      }
+    ];
+  }
 
   /**
    * Genera la configuración de usuario

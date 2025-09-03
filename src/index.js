@@ -20,8 +20,10 @@ import { EnhancedLoggerFactory } from './infrastructure/services/EnhancedLoggerS
 
 // Capa de aplicación
 import { StreamHandler } from './application/handlers/StreamHandler.js';
+import { CatalogHandler } from './application/handlers/CatalogHandler.js';
 import { ChannelRepositoryFactory } from './infrastructure/factories/ChannelRepositoryFactory.js';
 import { InvalidChannelManagementService } from './application/services/InvalidChannelManagementService.js';
+import { ValidatedChannelsCsvService } from './application/services/ValidatedChannelsCsvService.js';
 
 /**
  * Clase principal del addon TV IPTV para Stremio
@@ -35,6 +37,7 @@ class TVIPTVAddon {
   #channelService;
   #healthService;
   #invalidChannelService;
+  #catalogHandler;
   #addonBuilder;
   #securityMiddleware;
   #errorHandler;
@@ -60,6 +63,10 @@ class TVIPTVAddon {
 
       await this.#initializeChannelRepository();
       await this.#initializeServices();
+      
+      // Generar archivo CSV con canales validados antes de inicializar el addon
+      await this.#generateValidatedChannelsCsv();
+      
       this.#createAddonBuilder();
       this.#configureHandlers();
       if (this.#config.validation.validateStreamsOnStartup) {
@@ -129,8 +136,25 @@ class TVIPTVAddon {
       this.#config,
       this.#logger
     );
+    this.#catalogHandler = new CatalogHandler(this.#logger);
 
     this.#logger.info('Servicios de aplicación inicializados');
+  }
+
+  async #generateValidatedChannelsCsv() {
+    try {
+      this.#logger.info('Generando archivo CSV con canales validados...');
+      
+      const csvService = new ValidatedChannelsCsvService(this.#config, this.#logger);
+      const channels = await this.#channelRepository.getAllChannels();
+      
+      await csvService.writeValidatedChannels(channels);
+      
+      this.#logger.info(`Archivo CSV generado exitosamente: ${this.#config.dataSources.validatedChannelsCsv}`);
+    } catch (error) {
+      this.#logger.error('Error generando archivo CSV de canales validados:', error);
+      throw error;
+    }
   }
 
 
@@ -148,7 +172,13 @@ class TVIPTVAddon {
   #configureHandlers() {
     this.#logger.info('Configurando handlers...');
 
-    // Catalog handler removed - only stream functionality available
+    // Configurar catalog handler
+    this.#addonBuilder.defineCatalogHandler(
+      this.#errorHandler.wrapAddonHandler(
+        this.#handleCatalogRequest.bind(this),
+        'catalog'
+      )
+    );
 
     this.#addonBuilder.defineMetaHandler(
       this.#errorHandler.wrapAddonHandler(
@@ -169,7 +199,9 @@ class TVIPTVAddon {
   }
 
 
-  // #handleCatalogRequest method removed - catalog functionality disabled
+  async #handleCatalogRequest(args) {
+    return await this.#catalogHandler.handleCatalogRequest(args);
+  }
 
   async #handleMetaRequest(args) {
     const { type, id } = args;
