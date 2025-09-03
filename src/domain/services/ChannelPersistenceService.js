@@ -1,10 +1,22 @@
 /**
  * @fileoverview ChannelPersistenceService - Servicio para persistir cambios en canales
  * Responsabilidad única: gestión de persistencia de canales actualizados
+ * Arquitectura: Lógica de negocio separada de herramientas auxiliares
  */
 
-import { createObjectCsvWriter } from 'csv-writer';
 import { RepositoryError } from '../repositories/ChannelRepository.js';
+import {
+  createChannelCSVWriter,
+  channelsToCSVRecords,
+  separateValidChannels,
+  calculateChannelStatistics,
+  generateBackupTimestamp,
+  generateBackupPath,
+  fileExists,
+  copyFile,
+  writeCSVRecords,
+  createRepositoryError
+} from './ChannelPersistenceService_tools.js';
 
 /**
  * Servicio para persistir cambios en canales
@@ -37,36 +49,21 @@ export class ChannelPersistenceService {
     try {
       this.#logger.info(`Persistiendo ${channels.length} canales al archivo CSV: ${filePath}`);
 
-      // Configurar el escritor CSV
-      const csvWriter = createObjectCsvWriter({
-        path: filePath,
-        header: [
-          { id: 'id', title: 'id' },
-          { id: 'name', title: 'name' },
-          { id: 'stream_url', title: 'stream_url' },
-          { id: 'logo', title: 'logo' },
-          { id: 'genre', title: 'genre' },
-          { id: 'country', title: 'country' },
-          { id: 'language', title: 'language' },
-          { id: 'quality', title: 'quality' },
-          { id: 'type', title: 'type' },
-          { id: 'is_active', title: 'is_active' }
-        ],
-        encoding: 'utf8'
-      });
+      // Configurar el escritor CSV usando herramientas auxiliares
+      const csvWriter = createChannelCSVWriter(filePath);
 
-      // Convertir canales al formato CSV
-      const csvRecords = channels.map(channel => this.#channelToCSVRecord(channel));
+      // Convertir canales al formato CSV usando herramientas auxiliares
+      const csvRecords = channelsToCSVRecords(channels);
 
-      // Escribir al archivo
-      await csvWriter.writeRecords(csvRecords);
+      // Escribir al archivo usando herramientas auxiliares
+      await writeCSVRecords(csvWriter, csvRecords);
 
       this.#logger.info(`✅ ${channels.length} canales persistidos exitosamente en ${filePath}`);
 
     } catch (error) {
       const errorMsg = `Error persistiendo canales al CSV: ${error.message}`;
       this.#logger.error(errorMsg, error);
-      throw new RepositoryError(errorMsg, error);
+      throw createRepositoryError(errorMsg, error);
     }
   }
 
@@ -78,13 +75,13 @@ export class ChannelPersistenceService {
    */
   async createBackup(filePath) {
     try {
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      const backupPath = `${filePath}.backup-${timestamp}`;
+      // Generar timestamp y ruta de respaldo usando herramientas auxiliares
+      const timestamp = generateBackupTimestamp();
+      const backupPath = generateBackupPath(filePath, timestamp);
       
-      // Verificar si el archivo original existe
-      const fs = await import('fs');
-      if (fs.existsSync(filePath)) {
-        await fs.promises.copyFile(filePath, backupPath);
+      // Verificar si el archivo original existe usando herramientas auxiliares
+      if (await fileExists(filePath)) {
+        await copyFile(filePath, backupPath);
         this.#logger.info(`📋 Respaldo creado: ${backupPath}`);
         return backupPath;
       } else {
@@ -94,7 +91,7 @@ export class ChannelPersistenceService {
     } catch (error) {
       const errorMsg = `Error creando respaldo del CSV: ${error.message}`;
       this.#logger.error(errorMsg, error);
-      throw new RepositoryError(errorMsg, error);
+      throw createRepositoryError(errorMsg, error);
     }
   }
 
@@ -124,11 +121,10 @@ export class ChannelPersistenceService {
       };
 
     } catch (error) {
-      // Si hay error y se creó respaldo, intentar restaurar
+      // Si hay error y se creó respaldo, intentar restaurar usando herramientas auxiliares
       if (backupPath) {
         try {
-          const fs = await import('fs');
-          await fs.promises.copyFile(backupPath, filePath);
+          await copyFile(backupPath, filePath);
           this.#logger.warn(`🔄 Archivo restaurado desde respaldo debido a error`);
         } catch (restoreError) {
           this.#logger.error(`❌ Error restaurando respaldo: ${restoreError.message}`);
@@ -139,44 +135,16 @@ export class ChannelPersistenceService {
   }
 
   /**
-   * Convierte un canal al formato de registro CSV
-   * @private
-   * @param {Channel} channel - Canal a convertir
-   * @returns {Object} - Registro CSV
-   */
-  #channelToCSVRecord(channel) {
-    return {
-      id: channel.id || '',
-      name: channel.name || '',
-      stream_url: channel.streamUrl || '',
-      logo: channel.logo || '',
-      genre: channel.genre || 'General',
-      country: channel.country || 'Internacional',
-      language: channel.language || 'es',
-      quality: channel.quality || 'AUTO',
-      type: channel.type || 'TV',
-      is_active: channel.isActive !== false ? 'true' : 'false'
-    };
-  }
-
-  /**
    * Valida que los canales tengan los campos mínimos requeridos
    * @param {Array<Channel>} channels - Canales a validar
    * @returns {Array<Channel>} - Canales válidos
    * @throws {RepositoryError}
    */
   validateChannelsForPersistence(channels) {
-    const validChannels = [];
-    const invalidChannels = [];
+    // Separar canales válidos e inválidos usando herramientas auxiliares
+    const { validChannels, invalidChannels } = separateValidChannels(channels);
 
-    channels.forEach((channel, index) => {
-      if (!channel.name || !channel.streamUrl) {
-        invalidChannels.push({ index, channel, reason: 'Faltan campos requeridos (name, streamUrl)' });
-      } else {
-        validChannels.push(channel);
-      }
-    });
-
+    // Reportar canales inválidos si los hay
     if (invalidChannels.length > 0) {
       this.#logger.warn(`⚠️  ${invalidChannels.length} canales inválidos omitidos:`);
       invalidChannels.forEach(({ index, reason }) => {
@@ -184,8 +152,9 @@ export class ChannelPersistenceService {
       });
     }
 
+    // Validar que hay canales válidos para procesar
     if (validChannels.length === 0) {
-      throw new RepositoryError('No hay canales válidos para persistir');
+      throw createRepositoryError('No hay canales válidos para persistir');
     }
 
     this.#logger.info(`✅ ${validChannels.length} canales válidos para persistencia`);
@@ -198,44 +167,8 @@ export class ChannelPersistenceService {
    * @returns {Object} - Estadísticas
    */
   getChannelStatistics(channels) {
-    const stats = {
-      total: channels.length,
-      byProtocol: { http: 0, https: 0, other: 0 },
-      byCountry: {},
-      byGenre: {},
-      active: 0,
-      inactive: 0
-    };
-
-    channels.forEach(channel => {
-      // Protocolo
-      if (channel.streamUrl) {
-        if (channel.streamUrl.startsWith('http://')) {
-          stats.byProtocol.http++;
-        } else if (channel.streamUrl.startsWith('https://')) {
-          stats.byProtocol.https++;
-        } else {
-          stats.byProtocol.other++;
-        }
-      }
-
-      // País
-      const country = channel.country || 'Desconocido';
-      stats.byCountry[country] = (stats.byCountry[country] || 0) + 1;
-
-      // Género
-      const genre = channel.genre || 'General';
-      stats.byGenre[genre] = (stats.byGenre[genre] || 0) + 1;
-
-      // Estado
-      if (channel.isActive !== false) {
-        stats.active++;
-      } else {
-        stats.inactive++;
-      }
-    });
-
-    return stats;
+    // Delegar el cálculo de estadísticas a las herramientas auxiliares
+    return calculateChannelStatistics(channels);
   }
 }
 
