@@ -176,6 +176,13 @@ export class TVAddonConfig {
       deduplicationStrategy: process.env.DEDUPLICATION_STRATEGY || 'prioritize_working',
       // Archivos CSV que deben ignorarse en la deduplicación
       deduplicationIgnoreFiles: this.#parseFileList(process.env.DEDUPLICATION_IGNORE_FILES),
+      // Umbrales de similitud para deduplicación
+      nameSimilarityThreshold: parseFloat(process.env.NAME_SIMILARITY_THRESHOLD || '0.95'),
+      urlSimilarityThreshold: parseFloat(process.env.URL_SIMILARITY_THRESHOLD || '0.98'),
+      // Configuración adicional de deduplicación
+      enableHdUpgrade: process.env.ENABLE_HD_UPGRADE !== 'false',
+      preserveSourcePriority: process.env.PRESERVE_SOURCE_PRIORITY !== 'false',
+      enableMetrics: process.env.ENABLE_DEDUPLICATION_METRICS !== 'false',
       
       // Validación antes del filtrado
       validateBeforeFiltering: process.env.VALIDATE_BEFORE_FILTERING === 'true',

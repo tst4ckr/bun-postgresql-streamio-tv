@@ -75,11 +75,16 @@ export class HybridChannelRepository extends ChannelRepository {
     // Inicializar servicio de validación temprana de streams
     this.#streamValidationService = new StreamValidationService(config, logger);
     
-    // Inicializar servicio de deduplicación con configuración personalizada
+    // Inicializar servicio de deduplicación con configuración completa
     const deduplicationConfig = new DeduplicationConfig({
       enableIntelligentDeduplication: config.enableIntelligentDeduplication,
       strategy: config.deduplicationStrategy,
-      ignoreFiles: config.deduplicationIgnoreFiles || []
+      ignoreFiles: config.deduplicationIgnoreFiles || [],
+      nameSimilarityThreshold: config.nameSimilarityThreshold || 0.95,
+      urlSimilarityThreshold: config.urlSimilarityThreshold || 0.98,
+      enableHdUpgrade: config.enableHdUpgrade !== false,
+      preserveSourcePriority: config.preserveSourcePriority !== false,
+      enableMetrics: config.enableMetrics !== false
     });
     this.#deduplicationService = new ChannelDeduplicationService(deduplicationConfig);
     
