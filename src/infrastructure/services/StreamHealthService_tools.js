@@ -165,7 +165,7 @@ export function createChannelWorker(checkChannelFn, logger, incrementCompleted, 
       const result = await checkChannelFn(channel);
       const completed = incrementCompleted();
       
-      if (onProgress) {
+      if (onProgress && typeof onProgress === 'function') {
         onProgress({
           completed,
           total: totalChannels,
@@ -189,7 +189,7 @@ export function createChannelWorker(checkChannelFn, logger, incrementCompleted, 
         finalError: true
       };
       
-      if (onProgress) {
+      if (onProgress && typeof onProgress === 'function') {
         onProgress({
           completed,
           total: totalChannels,

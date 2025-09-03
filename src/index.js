@@ -241,7 +241,10 @@ class TVIPTVAddon {
         return;
       }
       
-      const { ok, fail, total } = await this.#healthService.checkChannels(channels, 10, true);
+      const results = await this.#healthService.checkChannels(channels);
+      const ok = results.filter(r => r.ok).length;
+      const fail = results.filter(r => !r.ok).length;
+      const total = results.length;
       const successRate = total > 0 ? ((ok / total) * 100).toFixed(1) : '0.0';
       const duration = ((Date.now() - startTime) / 1000).toFixed(1);
       
