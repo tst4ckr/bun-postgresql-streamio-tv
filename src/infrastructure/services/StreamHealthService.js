@@ -2,8 +2,23 @@
  * @fileoverview StreamHealthService - Verificación no intrusiva de salud de streams
  */
 
-import axios from 'axios';
 import { BitelUidService } from './BitelUidService.js';
+import {
+  calculateProgressiveTimeout,
+  isValidStreamStatus,
+  isValidM3U8ContentType,
+  isRetryableError,
+  calculateBackoffTime,
+  createStreamValidationHeaders,
+  performHeadRequest,
+  performPartialGetRequest,
+  createStreamValidationResult,
+  createErrorResult,
+  createDelay,
+  calculateConcurrencyLimit,
+  createChannelWorker,
+  createValidationReport
+} from './StreamHealthService_tools.js';
 
 export class StreamHealthService {
   #config;
@@ -28,101 +43,70 @@ export class StreamHealthService {
     // Procesar URL con BitelUidService si es necesario
     const processedUrl = channelId ? this.#bitelUidService.processStreamUrl(url, channelId) : url;
     
-    // Timeout progresivo optimizado para alta latencia: 45s, 60s, 75s para servidores internacionales
+    // Configuración de validación
     const baseTimeout = this.#config.validation.streamValidationTimeout || 45;
-    const timeoutMs = (baseTimeout + (retryCount * 15)) * 1000;
+    const timeoutMs = calculateProgressiveTimeout(baseTimeout, retryCount);
     const maxRetries = this.#config.validation.maxValidationRetries || 3;
-    
-    const headers = { 'User-Agent': 'Stremio-TV-IPTV-Addon/1.0.0' };
-    
-    // Validación específica para streams de video: solo HTTP 200 es válido
-    const isValidStreamStatus = status => status === 200;
-    
-    // Validación de content-type para streams m3u8
-    const isValidM3U8ContentType = (contentType) => {
-      if (!contentType) return false;
-      const normalizedType = contentType.toLowerCase();
-      return normalizedType.includes('application/vnd.apple.mpegurl') ||
-             normalizedType.includes('application/x-mpegurl') ||
-             normalizedType.includes('video/mp2t') ||
-             normalizedType.includes('text/plain') || // Algunos servidores usan text/plain para m3u8
-             normalizedType.includes('application/octet-stream'); // Fallback común
-    };
-    
-    const isRetryableError = (error) => {
-      const retryableCodes = ['ECONNRESET', 'ETIMEDOUT', 'ENOTFOUND', 'ECONNREFUSED'];
-      return retryableCodes.includes(error.code) || 
-             (error.response && [502, 503, 504, 408, 429].includes(error.response.status));
-    };
+    const headers = createStreamValidationHeaders();
 
     try {
       // Intento HEAD primero con validación estricta
-      const head = await axios.head(processedUrl, { 
-        timeout: timeoutMs, 
-        headers, 
-        validateStatus: () => true // Permitir todos los códigos para validación manual
-      });
+      const head = await performHeadRequest(processedUrl, timeoutMs, headers);
       
       if (isValidStreamStatus(head.status)) {
         const contentType = head.headers['content-type'];
         const isValidContent = isValidM3U8ContentType(contentType);
+        const reason = isValidContent ? undefined : `INVALID_CONTENT_TYPE: ${contentType}`;
         
-        return { 
-          ok: isValidContent, 
-          status: head.status, 
-          contentType: contentType,
-          processedUrl: processedUrl,
-          attempts: retryCount + 1,
-          reason: isValidContent ? undefined : `INVALID_CONTENT_TYPE: ${contentType}`
-        };
+        return createStreamValidationResult(
+          isValidContent, 
+          head.status, 
+          contentType, 
+          processedUrl, 
+          retryCount + 1, 
+          reason
+        );
       }
 
       // Fallback GET de un pequeño rango con validación estricta
-      const get = await axios.get(processedUrl, {
-        timeout: timeoutMs,
-        headers: { ...headers, Range: 'bytes=0-1024' },
-        responseType: 'arraybuffer',
-        validateStatus: () => true // Permitir todos los códigos para validación manual
-      });
+      const get = await performPartialGetRequest(processedUrl, timeoutMs, headers);
       
       if (isValidStreamStatus(get.status)) {
         const contentType = get.headers['content-type'];
         const isValidContent = isValidM3U8ContentType(contentType);
+        const reason = isValidContent ? undefined : `INVALID_CONTENT_TYPE: ${contentType}`;
         
-        return { 
-          ok: isValidContent, 
-          status: get.status, 
-          contentType: contentType,
-          processedUrl: processedUrl,
-          attempts: retryCount + 1,
-          reason: isValidContent ? undefined : `INVALID_CONTENT_TYPE: ${contentType}`
-        };
+        return createStreamValidationResult(
+          isValidContent, 
+          get.status, 
+          contentType, 
+          processedUrl, 
+          retryCount + 1, 
+          reason
+        );
       } else {
-        return { 
-          ok: false, 
-          status: get.status, 
-          reason: `HTTP_NOT_200: ${get.status}`,
-          processedUrl: processedUrl,
-          attempts: retryCount + 1
-        };
+        return createErrorResult(
+          `HTTP_NOT_200: ${get.status}`, 
+          processedUrl, 
+          retryCount + 1
+        );
       }
     } catch (error) {
       // Implementar retry con backoff exponencial optimizado para alta latencia
       if (retryCount < maxRetries && isRetryableError(error)) {
-        const backoffMs = Math.min(2000 * Math.pow(2, retryCount), 10000); // Backoff más largo para conexiones lentas
+        const backoffMs = calculateBackoffTime(retryCount);
         this.#logger.debug(`Reintentando validación de ${channelId || 'stream'} en ${backoffMs}ms (intento ${retryCount + 1}/${maxRetries + 1}) - Optimizado para alta latencia`);
         
-        await new Promise(resolve => setTimeout(resolve, backoffMs));
+        await createDelay(backoffMs);
         return this.checkStream(url, channelId, retryCount + 1);
       }
       
-      return { 
-        ok: false, 
-        reason: error.code || error.message,
-        processedUrl: processedUrl,
-        attempts: retryCount + 1,
-        finalError: true
-      };
+      return createErrorResult(
+        error.code || error.message, 
+        processedUrl, 
+        retryCount + 1, 
+        true
+      );
     }
   }
 
@@ -157,153 +141,132 @@ export class StreamHealthService {
   }
 
   /**
-   * Verifica múltiples canales con límite de concurrencia
-   * @param {Array<import('../../domain/entities/Channel.js').Channel>} channels
-   * @param {number} concurrency
-   * @param {boolean} showProgress - Mostrar progreso en tiempo real
-   * @returns {Promise<{ok:number,fail:number,total:number,results:Array}>}
+   * Verifica múltiples canales con límite de concurrencia y reporte de progreso
+   * Optimizado para alta latencia con concurrencia adaptativa
+   * @param {Array} channels - Array de objetos con {id, url}
+   * @param {Function} onProgress - Callback para reporte de progreso
+   * @returns {Promise<Array>} Array de resultados de validación
    */
-  async checkChannels(channels, concurrency = null, showProgress = true) {
-    // Usar concurrencia optimizada para alta latencia desde configuración
-    const defaultConcurrency = this.#config.validation?.maxValidationConcurrency || 5;
-    const actualConcurrency = concurrency || defaultConcurrency;
-    const limit = Math.max(1, Math.min(actualConcurrency, this.#config.streaming.maxConcurrentStreams || 20));
-    const queue = [...channels];
-    const results = [];
-    const total = channels.length;
-    let completed = 0;
-    let ok = 0;
-    let fail = 0;
-
-    if (showProgress) {
-      this.#logger.info(`🔍 Iniciando validación de ${total} canales con ${limit} workers concurrentes (optimizado para alta latencia)...`);
+  async checkChannels(channels, onProgress = null) {
+    if (!Array.isArray(channels) || channels.length === 0) {
+      return [];
     }
 
-    const worker = async () => {
-      while (queue.length > 0) {
-        const channel = queue.shift();
-        if (!channel) break;
-        
-        try {
-          // checkChannel ya maneja errores internamente, pero agregamos protección adicional
-          const res = await this.checkChannel(channel);
-          results.push(res);
-          
-          completed++;
-          res.ok ? ok++ : fail++;
+    // Configuración de concurrencia adaptativa
+    const baseConcurrency = this.#config.validation.concurrency || 5;
+    const concurrency = calculateConcurrencyLimit(baseConcurrency, channels.length);
+    
+    this.#logger.info(`Iniciando validación de ${channels.length} canales con concurrencia ${concurrency} - Optimizado para alta latencia`);
+    
+    const results = [];
+    let completed = 0;
+    
+    // Worker para procesar canales con manejo de errores robusto
+    const worker = createChannelWorker(
+      this.checkChannel.bind(this),
+      this.#logger,
+      () => ++completed,
+      channels.length,
+      onProgress
+    );
 
-          // Show progress every 100 channels or at the end
-          if (showProgress && (completed % 100 === 0 || completed === total)) {            
-            const percentage = ((completed / total) * 100).toFixed(1);
-            const successRate = ((ok / completed) * 100).toFixed(1);
-            this.#logger.info(`📊 Progreso: ${completed}/${total} (${percentage}%) - Éxito: ${ok} (${successRate}%) - Fallos: ${fail}`);
-          }
-          
-        } catch (error) {
-          // Doble protección: este catch no debería ejecutarse ya que checkChannel maneja errores
-          this.#logger.error(`Error crítico validando canal ${channel.id}: ${error.message}`);
-          completed++;
-          fail++;
-          results.push({ 
-            id: channel.id, 
-            name: channel.name, 
-            ok: false, 
-            meta: { 
-              reason: `Error crítico: ${error.message}`, 
-              error: true,
-              criticalError: true
-            } 
-          });
-          
-          if (showProgress && (completed % 100 === 0 || completed === total)) {
-            this.#logger.info(`❌ [${completed}/${total}] ${channel.name} - ERROR CRÍTICO: ${error.message}`);
-          }
-        }
-      }
-    };
+    // Procesar en lotes con concurrencia limitada
+    for (let i = 0; i < channels.length; i += concurrency) {
+      const batch = channels.slice(i, i + concurrency);
+      const batchResults = await Promise.all(batch.map(worker));
+      results.push(...batchResults);
+    }
 
-    const workers = Array.from({ length: limit }, () => worker());
-    await Promise.all(workers);
-
-    return { ok, fail, total: results.length, results };
+    this.#logger.info(`Validación completada: ${results.filter(r => r.ok).length}/${channels.length} canales válidos`);
+    return results;
   }
 
   /**
-   * Valida todos los canales disponibles procesándolos por lotes
-   * @param {Function} getChannelsFunction - Función para obtener canales paginados
-   * @param {Object} options - Opciones de validación
-   * @param {number} options.batchSize - Tamaño del lote
-   * @param {number} options.concurrency - Concurrencia por lote
-   * @param {boolean} options.showProgress - Mostrar progreso
-   * @returns {Promise<{ok:number,fail:number,total:number,results:Array,batches:number}>}
+   * Valida todos los canales en lotes con configuración optimizada para alta latencia
+   * @param {Array} channels - Array de canales a validar
+   * @param {Object} options - Opciones de configuración
+   * @param {number} options.batchSize - Tamaño del lote (default: 50)
+   * @param {number} options.concurrency - Concurrencia por lote (default: 5)
+   * @param {number} options.pauseBetweenBatches - Pausa entre lotes en ms (default: 2000)
+   * @param {Function} options.onProgress - Callback de progreso
+   * @returns {Promise<Object>} Resultado de la validación
    */
-  async validateAllChannelsBatched(getChannelsFunction, options = {}) {
+  async validateAllChannelsBatched(channels, options = {}) {
     const {
-      batchSize = this.#config.validation?.validationBatchSize || 25, // Reducido para alta latencia
-      concurrency = this.#config.validation?.maxValidationConcurrency || 5, // Reducido para alta latencia
-      showProgress = true
+      batchSize = 50,
+      concurrency = 5,
+      pauseBetweenBatches = 2000,
+      onProgress = null
     } = options;
 
-    let offset = 0;
-    let totalProcessed = 0;
+    if (!Array.isArray(channels) || channels.length === 0) {
+      return createValidationReport([], 0, 0);
+    }
+
+    this.#logger.info(`🚀 Iniciando validación por lotes: ${channels.length} canales, lotes de ${batchSize}, concurrencia ${concurrency}`);
+    
+    const allResults = [];
     let totalOk = 0;
     let totalFail = 0;
-    let batchCount = 0;
-    const allResults = [];
+    const totalBatches = Math.ceil(channels.length / batchSize);
 
-    if (showProgress) {
-      this.#logger.info(`🔍 Iniciando validación completa por lotes optimizada para alta latencia (tamaño: ${batchSize}, concurrencia: ${concurrency})...`);
+    for (let i = 0; i < channels.length; i += batchSize) {
+      const currentBatch = i / batchSize + 1;
+      const batch = channels.slice(i, i + batchSize);
+      
+      this.#logger.info(`📦 Procesando lote ${currentBatch}/${totalBatches} (${batch.length} canales)`);
+      
+      try {
+        const batchResults = await this.checkChannels(batch, (progress) => {
+          if (onProgress) {
+            onProgress({
+              currentBatch,
+              totalBatches,
+              batchProgress: progress,
+              totalProcessed: allResults.length + progress.completed,
+              totalChannels: channels.length,
+              totalOk,
+              totalFail,
+              percentage: Math.round(((allResults.length + progress.completed) / channels.length) * 100)
+            });
+          }
+        });
+        
+        allResults.push(...batchResults);
+        const batchOk = batchResults.filter(r => r.ok).length;
+        const batchFail = batchResults.length - batchOk;
+        totalOk += batchOk;
+        totalFail += batchFail;
+        
+        this.#logger.info(`✅ Lote ${currentBatch} completado: ${batchOk}/${batch.length} válidos`);
+        
+        // Pausa entre lotes para evitar sobrecarga del sistema
+        if (currentBatch < totalBatches && pauseBetweenBatches > 0) {
+          this.#logger.debug(`⏸️ Pausa de ${pauseBetweenBatches}ms antes del siguiente lote`);
+          await createDelay(pauseBetweenBatches);
+        }
+        
+      } catch (error) {
+        this.#logger.error(`❌ Error en lote ${currentBatch}: ${error.message}`);
+        
+        // Marcar todos los canales del lote como fallidos
+        const failedBatchResults = batch.map(channel => ({
+          id: channel.id,
+          name: channel.name,
+          ok: false,
+          reason: `Batch error: ${error.message}`,
+          batchError: true
+        }));
+        
+        allResults.push(...failedBatchResults);
+        totalFail += batch.length;
+      }
     }
 
-    while (true) {
-      // Obtener el siguiente lote de canales
-      const channels = await getChannelsFunction(offset, batchSize);
-      
-      if (!channels || channels.length === 0) {
-        break; // No hay más canales
-      }
-
-      batchCount++;
-      
-      if (showProgress) {
-        this.#logger.info(`📦 Procesando lote ${batchCount}: ${channels.length} canales (offset: ${offset})`);
-      }
-
-      // Validar el lote actual
-      const batchReport = await this.checkChannels(channels, concurrency, false);
-      
-      // Acumular resultados
-      totalProcessed += batchReport.total;
-      totalOk += batchReport.ok;
-      totalFail += batchReport.fail;
-      allResults.push(...batchReport.results);
-
-      if (showProgress) {
-        const batchSuccessRate = ((batchReport.ok / batchReport.total) * 100).toFixed(1);
-        this.#logger.info(`✅ Lote ${batchCount} completado: ${batchReport.ok}/${batchReport.total} (${batchSuccessRate}%) válidos`);
-      }
-
-      // Preparar para el siguiente lote
-      offset += batchSize;
-
-      // Pausa entre lotes para no sobrecargar el sistema
-      if (channels.length === batchSize) {
-        await new Promise(resolve => setTimeout(resolve, 100));
-      }
-    }
-
-    if (showProgress) {
-      const overallSuccessRate = totalProcessed > 0 ? ((totalOk / totalProcessed) * 100).toFixed(1) : '0.0';
-      this.#logger.info(`🎯 Validación completa finalizada: ${totalOk}/${totalProcessed} (${overallSuccessRate}%) válidos en ${batchCount} lotes`);
-    }
-
-    return {
-      ok: totalOk,
-      fail: totalFail,
-      total: totalProcessed,
-      results: allResults,
-      batches: batchCount
-    };
+    const finalResult = createValidationReport(allResults, totalOk, totalFail, totalBatches);
+    this.#logger.info(`🎯 Validación por lotes completada: ${totalOk}/${allResults.length} canales válidos (${finalResult.successRate}%)`);
+    
+    return finalResult;
   }
 }
 export default StreamHealthService;
