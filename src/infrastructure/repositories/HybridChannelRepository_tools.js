@@ -294,38 +294,7 @@ export function logPlaylistErrorStats(playlistErrorStats, logger) {
 
 
 
-/**
- * Registra las estadísticas de errores de playlist en el logger
- * 
- * @param {Object} stats - Estadísticas de errores
- * @param {Object} logger - Logger para registrar las estadísticas
- * 
- * @example
- * const stats = { failedPlaylists: 2, totalPlaylists: 10, errorsByType: new Map([['timeout', 1], ['http_error', 1]]), errors: [...] };
- * logPlaylistErrorStats(stats, logger);
- */
-export function logPlaylistErrorStats(stats, logger) {
-  if (stats.failedPlaylists > 0) {
-    logger.warn(`📊 Resumen de errores de playlist: ${stats.failedPlaylists} de ${stats.totalPlaylists} playlists fallaron`);
-    
-    // Log errores por tipo
-    for (const [type, count] of stats.errorsByType) {
-      logger.warn(`   - ${type}: ${count} errores`);
-    }
-    
-    // Log algunos ejemplos de errores
-    const maxExamples = 3;
-    const examples = stats.errors.slice(0, maxExamples);
-    logger.warn(`   Ejemplos de errores:`);
-    examples.forEach(error => {
-      logger.warn(`     • Playlist ${error.index}: ${error.error}`);
-    });
-    
-    if (stats.errors.length > maxExamples) {
-      logger.warn(`     ... y ${stats.errors.length - maxExamples} errores más`);
-    }
-  }
-}
+
 
 /**
  * Filtra canales activos excluyendo los desactivados

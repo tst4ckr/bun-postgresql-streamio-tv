@@ -25,15 +25,36 @@ import {
   calculateSuccessRate
 } from './HttpsToHttpConversionService_tools.js';
 
+import ProcessFlowControlService from './ProcessFlowControlService.js';
+
 export class HttpsToHttpConversionService {
   #config;
   #logger;
   #streamHealthService;
+  #flowControlService;
 
   constructor(config, streamHealthService, logger = console) {
     this.#config = config;
     this.#streamHealthService = streamHealthService;
     this.#logger = logger;
+    
+    // Inicializar servicio de control de flujo
+    this.#flowControlService = new ProcessFlowControlService(logger, {
+      memoryThreshold: config.MEMORY_USAGE_THRESHOLD || 70,
+      cpuThreshold: 80,
+      checkInterval: 3000,
+      minConcurrency: 1,
+      maxConcurrency: config.HTTPS_TO_HTTP_CONCURRENCY || 3
+    });
+    
+    // Escuchar eventos de throttling
+    this.#flowControlService.on('throttlingStarted', (data) => {
+      this.#logger.warn(`[HttpsToHttpConversionService] 🚨 Throttling activado - Reduciendo concurrencia a ${data.newConcurrency}`);
+    });
+    
+    this.#flowControlService.on('throttlingStopped', (data) => {
+      this.#logger.info(`[HttpsToHttpConversionService] ✅ Throttling desactivado - Concurrencia restaurada a ${data.newConcurrency}`);
+    });
   }
 
   /**
@@ -139,7 +160,7 @@ export class HttpsToHttpConversionService {
       };
     }
 
-    const limit = calculateOptimalConcurrency(concurrency);
+    const initialLimit = calculateOptimalConcurrency(concurrency);
     const queue = [...channels];
     const results = [];
     const total = channels.length;
@@ -148,13 +169,19 @@ export class HttpsToHttpConversionService {
     const stats = createInitialStats(total);
 
     if (showProgress) {
-      this.#logger.info(`🔄 Iniciando conversión HTTPS→HTTP de ${total} canales con ${limit} workers...`);
+      this.#logger.info(`🔄 Iniciando conversión HTTPS→HTTP de ${total} canales con control de flujo dinámico...`);
     }
 
-    const worker = async () => {
+    const worker = async (workerId) => {
       while (queue.length > 0) {
+        // Solicitar permiso para procesar
+        await this.#flowControlService.requestOperation(`worker-${workerId}`);
+        
         const channel = queue.shift();
-        if (!channel) break;
+        if (!channel) {
+          this.#flowControlService.releaseOperation(`worker-${workerId}`);
+          break;
+        }
 
         try {
           const result = await this.processChannel(channel);
@@ -166,7 +193,11 @@ export class HttpsToHttpConversionService {
 
           // Mostrar progreso cada 50 canales o al final
           if (showProgress && (completed % 50 === 0 || completed === total)) {
-            this.#logger.info(formatProgressMessage(completed, total, stats.httpWorking));
+            const flowStats = this.#flowControlService.getStats();
+            this.#logger.info(
+              formatProgressMessage(completed, total, stats.httpWorking) + 
+              ` [Concurrencia: ${flowStats.currentConcurrency}, Memoria: ${flowStats.memoryUsage.toFixed(1)}%]`
+            );
           }
         } catch (error) {
           completed++;
@@ -180,12 +211,15 @@ export class HttpsToHttpConversionService {
           });
 
           this.#logger.warn(`❌ Error procesando canal ${channel.id}: ${error.message}`);
+        } finally {
+          // Liberar operación
+          this.#flowControlService.releaseOperation(`worker-${workerId}`);
         }
       }
     };
 
-    // Ejecutar workers en paralelo
-    const workers = Array.from({ length: limit }, () => worker());
+    // Ejecutar workers en paralelo con control de flujo
+    const workers = Array.from({ length: initialLimit }, (_, i) => worker(i));
     await Promise.all(workers);
 
     // Filtrar resultados según configuración usando función utilitaria

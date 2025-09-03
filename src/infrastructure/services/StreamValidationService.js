@@ -8,6 +8,8 @@ import { StreamHealthService } from './StreamHealthService.js';
 import { convertToHttp } from './HttpsToHttpConversionService_tools.js';
 import { getCachedResult, setCachedResult, updateStats, updateChannelValidationStatus, resetStats, getEmptyStats, getCacheInfo, clearCache } from './StreamValidationService_tools.js';
 
+import ProcessFlowControlService from './ProcessFlowControlService.js';
+
 /**
  * Servicio de validación temprana de streams
  * Responsabilidad: Validar funcionamiento de canales antes de deduplicación
@@ -24,6 +26,7 @@ export class StreamValidationService {
   #logger;
   #httpsToHttpService;
   #streamHealthService;
+  #flowControlService;
   #validationCache = new Map(); // URL -> {result, timestamp}
   #stats = {
     totalProcessed: 0,
@@ -46,6 +49,24 @@ export class StreamValidationService {
     // Inicializar servicios dependientes
     this.#streamHealthService = new StreamHealthService(config, logger);
     this.#httpsToHttpService = new HttpsToHttpConversionService(config, this.#streamHealthService, logger);
+    
+    // Inicializar servicio de control de flujo
+    this.#flowControlService = new ProcessFlowControlService(logger, {
+      memoryThreshold: config.MEMORY_USAGE_THRESHOLD || 70,
+      cpuThreshold: 80,
+      checkInterval: 2000,
+      minConcurrency: 1,
+      maxConcurrency: config.STREAM_VALIDATION_GENERAL_CONCURRENCY || 5
+    });
+    
+    // Escuchar eventos de throttling
+    this.#flowControlService.on('throttlingStarted', (data) => {
+      this.#logger.warn(`[StreamValidationService] 🚨 Throttling activado - Reduciendo concurrencia a ${data.newConcurrency}`);
+    });
+    
+    this.#flowControlService.on('throttlingStopped', (data) => {
+      this.#logger.info(`[StreamValidationService] ✅ Throttling desactivado - Concurrencia restaurada a ${data.newConcurrency}`);
+    });
   }
 
   /**
@@ -332,14 +353,20 @@ export class StreamValidationService {
    * @returns {Promise<Array>}
    */
   async #processBatch(batch, concurrency) {
-    const limit = Math.max(1, Math.min(concurrency, 20));
+    const initialLimit = Math.max(1, Math.min(concurrency, 20));
     const queue = [...batch];
     const results = [];
 
-    const worker = async () => {
+    const worker = async (workerId) => {
       while (queue.length > 0) {
+        // Solicitar permiso para procesar
+        await this.#flowControlService.requestOperation(`validation-worker-${workerId}`);
+        
         const channel = queue.shift();
-        if (!channel) break;
+        if (!channel) {
+          this.#flowControlService.releaseOperation(`validation-worker-${workerId}`);
+          break;
+        }
 
         try {
           const result = await this.validateChannel(channel);
@@ -353,12 +380,15 @@ export class StreamValidationService {
             source: channel.source || 'unknown',
             meta: { error: error.message }
           });
+        } finally {
+          // Liberar operación
+          this.#flowControlService.releaseOperation(`validation-worker-${workerId}`);
         }
       }
     };
 
-    // Ejecutar workers en paralelo
-    const workers = Array.from({ length: limit }, () => worker());
+    // Ejecutar workers en paralelo con control de flujo
+    const workers = Array.from({ length: initialLimit }, (_, i) => worker(i));
     await Promise.all(workers);
 
     return results;
