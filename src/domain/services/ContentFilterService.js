@@ -1,340 +1,263 @@
+import {
+  createPatterns,
+  matchesPatterns,
+  extractChannelText,
+  checkReligiousContent,
+  containsAdultContent,
+  containsPoliticalContent,
+  countRemovedByCategory,
+  calculateFilterStats,
+  getDefaultReligiousPatterns,
+  getDefaultAdultPatterns,
+  getDefaultPoliticalPatterns,
+  validateFilterConfig,
+  hasActiveFilters,
+  createFilterConfiguration
+} from './ContentFilterService_tools.js';
+
 /**
- * Servicio para filtrar contenido de canales según palabras clave y patrones
- * Implementa filtros para contenido religioso, adulto y político
+ * @fileoverview Servicio para filtrar contenido de canales de TV
+ * Refactorizado siguiendo principios SOLID y separación de responsabilidades
+ * 
+ * @description
+ * Responsabilidades principales:
+ * - Gestión de configuración de filtros (Single Responsibility)
+ * - Orquestación del proceso de filtrado (Open/Closed)
+ * - Coordinación entre filtros específicos (Dependency Inversion)
+ * - Generación de estadísticas de filtrado
+ * 
+ * Las funciones auxiliares y herramientas están separadas en ContentFilterService_tools.js
+ * siguiendo el principio de separación de responsabilidades.
+ * 
+ * @author Sistema de Filtrado de Contenido
+ * @version 2.0.0
+ * @since 1.0.0
  */
+/**
+ * @typedef {Object} FilterConfig
+ * @property {boolean} [filterReligiousContent=false] - Filtrar contenido religioso
+ * @property {boolean} [filterAdultContent=false] - Filtrar contenido adulto
+ * @property {boolean} [filterPoliticalContent=false] - Filtrar contenido político
+ * @property {string[]} [religiousKeywords=[]] - Palabras clave religiosas personalizadas
+ * @property {string[]} [adultKeywords=[]] - Palabras clave adultas personalizadas
+ * @property {string[]} [politicalKeywords=[]] - Palabras clave políticas personalizadas
+ */
+
+/**
+ * @typedef {Object} Channel
+ * @property {string} [id] - Identificador único del canal
+ * @property {string} [name] - Nombre del canal
+ * @property {string} [title] - Título del canal
+ * @property {string} [description] - Descripción del canal
+ * @property {string} [category] - Categoría del canal
+ * @property {string} [group] - Grupo del canal
+ * @property {string[]} [genres] - Géneros del canal
+ * @property {string} [url] - URL del canal
+ * @property {string} [stream] - URL de stream del canal
+ */
+
+/**
+ * @typedef {Object} FilterStats
+ * @property {number} total - Total de canales originales
+ * @property {number} filtered - Canales después del filtrado
+ * @property {number} removed - Canales removidos
+ * @property {Object} removedByCategory - Canales removidos por categoría
+ * @property {number} removedByCategory.religious - Canales religiosos removidos
+ * @property {number} removedByCategory.adult - Canales adultos removidos
+ * @property {number} removedByCategory.political - Canales políticos removidos
+ * @property {FilterConfig} filterConfig - Configuración de filtros utilizada
+ */
+
 class ContentFilterService {
+  /** @type {FilterConfig} */
+  #filterConfig;
+  
+  /** @type {RegExp[]} */
+  #religiousPatterns = [];
+  
+  /** @type {RegExp[]} */
+  #adultPatterns = [];
+  
+  /** @type {RegExp[]} */
+  #politicalPatterns = [];
+
   /**
-   * @param {Object} filterConfig - Configuración de filtros desde TVAddonConfig
+   * Crea una nueva instancia del servicio de filtrado de contenido
+   * @param {FilterConfig} filterConfig - Configuración de filtros desde TVAddonConfig
+   * @throws {Error} Si la configuración es inválida
    */
   constructor(filterConfig) {
-    this.#filterConfig = filterConfig;
-    
-    // Patrones religiosos mejorados con alta precisión
-    this.#religiousPatterns = [
-      // Palabras específicamente religiosas (alta precisión)
-      /\b(iglesia|pastor|predicador|sermon|biblia|evangelio)\b/i,
-      /\b(cristiano|catolico|protestante|pentecostal|bautista|metodista)\b/i,
-      /\b(adventista|testigo|jehova|mormon|mision|ministerio)\b/i,
-      /\b(apostol|profeta|sacerdote|obispo|papa|vaticano)\b/i,
-      /\b(templo|catedral|capilla|santuario|altar|cruz|crucifijo)\b/i,
-      /\b(rosario|oracion|rezo|bendicion|milagro|santo|santa)\b/i,
-      /\b(virgen|maria|jesus|cristo|dios|señor|espiritu|trinidad)\b/i,
-      /\b(salvacion|pecado|perdon|gracia|gloria|aleluya|amen|hosanna)\b/i,
-      /\b(gospel|church|christian|catholic|protestant|baptist)\b/i,
-      /\b(methodist|pentecostal|evangelical|apostolic|ministry)\b/i,
-      /\b(priest|bishop|pope|temple|cathedral|chapel|sanctuary)\b/i,
-      /\b(prayer|blessing|miracle|saint|virgin|mary|jesus|christ)\b/i,
-      /\b(god|lord|spirit|trinity|salvation|sin|forgiveness)\b/i,
-      /\b(grace|glory|hallelujah|amen|hosanna)\b/i
-    ];
-    
-    this.#initializeFilters();
+    try {
+      this.#filterConfig = validateFilterConfig(filterConfig);
+      this.#initializeFilters();
+    } catch (error) {
+      throw new Error(`Error al inicializar ContentFilterService: ${error.message}`);
+    }
   }
-
-  #filterConfig;
-  #religiousPatterns = [];
-  #adultPatterns = [];
-  #politicalPatterns = [];
 
   /**
    * Inicializa los patrones de filtrado
    * @private
    */
   #initializeFilters() {
-    // Convertir palabras clave a patrones de expresiones regulares
-    this.#religiousPatterns = this.#createPatterns(this.#filterConfig.religiousKeywords);
-    this.#adultPatterns = this.#createPatterns(this.#filterConfig.adultKeywords);
-    this.#politicalPatterns = this.#createPatterns(this.#filterConfig.politicalKeywords);
+    try {
+      // Combinar patrones predefinidos con los configurados
+      const defaultReligious = getDefaultReligiousPatterns();
+      const customReligious = createPatterns(this.#filterConfig.religiousKeywords);
+      this.#religiousPatterns = [...defaultReligious, ...customReligious];
+      
+      const defaultAdult = getDefaultAdultPatterns();
+      const customAdult = createPatterns(this.#filterConfig.adultKeywords);
+      this.#adultPatterns = [...defaultAdult, ...customAdult];
+      
+      const defaultPolitical = getDefaultPoliticalPatterns();
+      const customPolitical = createPatterns(this.#filterConfig.politicalKeywords);
+      this.#politicalPatterns = [...defaultPolitical, ...customPolitical];
+    } catch (error) {
+      throw new Error(`Error al inicializar patrones de filtrado: ${error.message}`);
+    }
   }
 
-  /**
-   * Crea patrones de expresiones regulares desde palabras clave
-   * @private
-   * @param {string[]} keywords
-   * @returns {RegExp[]}
-   */
-  #createPatterns(keywords) {
-    if (!Array.isArray(keywords)) return [];
-    
-    return keywords.map(keyword => {
-      // Escapar caracteres especiales y crear patrón que busque la palabra completa
-      const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      return new RegExp(`\\b${escapedKeyword}\\b`, 'i');
-    });
-  }
+
 
   /**
    * Filtra un array de canales según los filtros configurados
-   * @param {Array} channels - Array de canales a filtrar
-   * @returns {Array} Array de canales filtrados
+   * Aplica el principio de responsabilidad única: solo orquesta el filtrado
+   * @param {Channel[]} channels - Array de canales a filtrar
+   * @returns {Channel[]} Array de canales filtrados
+   * @throws {Error} Si los canales no son un array válido o ocurre un error durante el filtrado
+   * @example
+   * const service = new ContentFilterService({ filterReligiousContent: true });
+   * const filtered = service.filterChannels(channels);
    */
   filterChannels(channels) {
     if (!Array.isArray(channels)) {
-      return [];
+      throw new Error('Los canales deben ser un array válido');
     }
 
-    return channels.filter(channel => this.#shouldKeepChannel(channel));
+    try {
+      return channels.filter(channel => this.#shouldKeepChannel(channel));
+    } catch (error) {
+      throw new Error(`Error al filtrar canales: ${error.message}`);
+    }
   }
 
   /**
    * Determina si un canal debe mantenerse según los filtros
+   * Implementa el patrón Strategy para diferentes tipos de filtros
    * @private
-   * @param {Object} channel - Canal a evaluar
-   * @returns {boolean}
+   * @param {Channel} channel - Canal a evaluar
+   * @returns {boolean} true si el canal debe mantenerse, false si debe ser filtrado
+   * @throws {Error} Si ocurre un error durante la evaluación (se registra y retorna true por seguridad)
    */
   #shouldKeepChannel(channel) {
     if (!channel) return false;
 
-    // Obtener texto combinado del canal para análisis
-    const channelText = this.#getChannelText(channel);
-    
-    // Verificar contenido religioso con lógica mejorada
-    if (this.#filterConfig.filterReligiousContent) {
-      const religiousResult = this.#checkReligiousContent(channel, channelText);
-      if (religiousResult.isReligious) {
+    try {
+      // Obtener texto combinado del canal para análisis
+      const channelText = extractChannelText(channel);
+      
+      // Verificar contenido religioso con lógica mejorada
+      if (this.#filterConfig.filterReligiousContent) {
+        const religiousResult = checkReligiousContent(channel, channelText, this.#religiousPatterns);
+        if (religiousResult.isReligious) {
+          return false;
+        }
+      }
+
+      if (this.#filterConfig.filterAdultContent && containsAdultContent(channel, channelText, this.#adultPatterns)) {
         return false;
       }
-    }
 
-    if (this.#filterConfig.filterAdultContent && this.#containsAdultContent(channelText)) {
-      return false;
-    }
-
-    if (this.#filterConfig.filterPoliticalContent && this.#containsPoliticalContent(channelText)) {
-      return false;
-    }
-
-    return true;
-  }
-
-  /**
-   * Extrae texto relevante del canal para análisis
-   * @private
-   * @param {Object} channel
-   * @returns {string}
-   */
-  #getChannelText(channel) {
-    const textParts = [];
-    
-    // Agregar nombre del canal
-    if (channel.name) {
-      textParts.push(channel.name);
-    }
-    
-    // Agregar título si existe
-    if (channel.title) {
-      textParts.push(channel.title);
-    }
-    
-    // Agregar descripción si existe
-    if (channel.description) {
-      textParts.push(channel.description);
-    }
-    
-    // Agregar categoría si existe
-    if (channel.category) {
-      textParts.push(channel.category);
-    }
-    
-    // Agregar grupo si existe
-    if (channel.group) {
-      textParts.push(channel.group);
-    }
-    
-    // Agregar géneros si existen
-    if (Array.isArray(channel.genres)) {
-      textParts.push(...channel.genres);
-    }
-    
-    // Agregar URL/dominio para análisis de contenido
-    if (channel.url) {
-      try {
-        // Extraer dominio de la URL
-        const url = new URL(channel.url);
-        const domain = url.hostname.toLowerCase();
-        textParts.push(domain);
-        
-        // También agregar la URL completa para análisis más detallado
-        textParts.push(channel.url.toLowerCase());
-      } catch (error) {
-        // Si la URL no es válida, agregar como texto plano
-        textParts.push(channel.url.toLowerCase());
+      if (this.#filterConfig.filterPoliticalContent && containsPoliticalContent(channel, channelText, this.#politicalPatterns)) {
+        return false;
       }
+
+      return true;
+    } catch (error) {
+      console.warn(`Error al evaluar canal ${channel?.name || 'desconocido'}:`, error.message);
+      return true; // En caso de error, mantener el canal por seguridad
     }
-    
-    // Agregar stream URL si es diferente de la URL principal
-    if (channel.stream && channel.stream !== channel.url) {
-      try {
-        const streamUrl = new URL(channel.stream);
-        const streamDomain = streamUrl.hostname.toLowerCase();
-        textParts.push(streamDomain);
-        textParts.push(channel.stream.toLowerCase());
-      } catch (error) {
-        textParts.push(channel.stream.toLowerCase());
-      }
-    }
-    
-    return textParts.join(' ').toLowerCase();
   }
 
-  /**
-    * Verifica si el canal contiene contenido religioso con lógica mejorada
-    * @private
-    * @param {Object} channel
-    * @param {string} text
-    * @returns {Object}
-    */
-   #checkReligiousContent(channel, text) {
-     // Lista de excepciones conocidas que no deben ser filtradas
-     const exceptions = ['telefe', 'telefonica', 'telefilm', 'telefutura'];
-     
-     // Verificar si el canal está en la lista de excepciones
-     const channelName = (channel.name || '').toLowerCase();
-     if (exceptions.some(exception => channelName.includes(exception))) {
-       return { isReligious: false, reason: 'exception' };
-     }
-     
-     // Verificar patrones religiosos con mayor precisión
-     const hasReligiousPattern = this.#matchesPatterns(text, this.#religiousPatterns);
-     
-     return {
-       isReligious: hasReligiousPattern,
-       reason: hasReligiousPattern ? 'pattern_match' : 'no_match'
-     };
-   }
+
+
+
+
+
 
   /**
-   * Verifica si el texto contiene contenido religioso
-   * @private
-   * @param {string} text
-   * @returns {boolean}
-   */
-  #containsReligiousContent(text) {
-    return this.#matchesPatterns(text, this.#religiousPatterns);
-  }
-
-  /**
-   * Verifica si el texto contiene contenido adulto
-   * @private
-   * @param {string} text
-   * @returns {boolean}
-   */
-  #containsAdultContent(text) {
-    return this.#matchesPatterns(text, this.#adultPatterns);
-  }
-
-  /**
-   * Verifica si el texto contiene contenido político
-   * @private
-   * @param {string} text
-   * @returns {boolean}
-   */
-  #containsPoliticalContent(text) {
-    return this.#matchesPatterns(text, this.#politicalPatterns);
-  }
-
-  /**
-   * Verifica si el texto coincide con alguno de los patrones
-   * @private
-   * @param {string} text
-   * @param {RegExp[]} patterns
-   * @returns {boolean}
-   */
-  #matchesPatterns(text, patterns) {
-    if (!text || !Array.isArray(patterns)) {
-      return false;
-    }
-
-    return patterns.some(pattern => pattern.test(text));
-  }
-
-  /**
-   * Obtiene estadísticas de filtrado
-   * @param {Array} originalChannels - Canales originales
-   * @param {Array} filteredChannels - Canales después del filtrado
-   * @returns {Object}
+   * Obtiene estadísticas detalladas de filtrado
+   * Delega el cálculo a funciones auxiliares siguiendo el principio de responsabilidad única
+   * @param {Channel[]} originalChannels - Canales originales antes del filtrado
+   * @param {Channel[]} filteredChannels - Canales después del filtrado
+   * @returns {FilterStats} Estadísticas detalladas de filtrado
+   * @throws {Error} Si los parámetros no son arrays válidos o ocurre un error en el cálculo
+   * @example
+   * const stats = service.getFilterStats(originalChannels, filteredChannels);
+   * console.log(`Removidos: ${stats.removed} de ${stats.total}`);
    */
   getFilterStats(originalChannels, filteredChannels) {
-    const originalCount = Array.isArray(originalChannels) ? originalChannels.length : 0;
-    const filteredCount = Array.isArray(filteredChannels) ? filteredChannels.length : 0;
-    const removedCount = originalCount - filteredCount;
+    if (!Array.isArray(originalChannels) || !Array.isArray(filteredChannels)) {
+      throw new Error('Los parámetros deben ser arrays válidos');
+    }
 
-    // Contar canales removidos por categoría
-    const removedByCategory = this.#countRemovedByCategory(originalChannels, filteredChannels);
-
-    return {
-      originalChannels: originalCount,
-      filteredChannels: filteredCount,
-      removedChannels: removedCount,
-      removalPercentage: originalCount > 0 ? ((removedCount / originalCount) * 100).toFixed(2) : '0.00',
-      removedByCategory,
-      filtersActive: {
+    try {
+      // Calcular estadísticas por categoría
+      const patterns = {
+        religious: this.#religiousPatterns,
+        adult: this.#adultPatterns,
+        political: this.#politicalPatterns
+      };
+      
+      const removedByCategory = countRemovedByCategory(
+        originalChannels, 
+        filteredChannels, 
+        patterns
+      );
+      
+      const filtersActive = {
         religious: this.#filterConfig.filterReligiousContent,
         adult: this.#filterConfig.filterAdultContent,
         political: this.#filterConfig.filterPoliticalContent
-      }
-    };
-  }
+      };
 
-  /**
-   * Cuenta canales removidos por categoría
-   * @private
-   * @param {Array} originalChannels
-   * @param {Array} filteredChannels
-   * @returns {Object}
-   */
-  #countRemovedByCategory(originalChannels, filteredChannels) {
-    if (!Array.isArray(originalChannels) || !Array.isArray(filteredChannels)) {
-      return { religious: 0, adult: 0, political: 0 };
+      return calculateFilterStats(
+        originalChannels.length,
+        filteredChannels.length,
+        removedByCategory,
+        filtersActive
+      );
+    } catch (error) {
+      throw new Error(`Error al calcular estadísticas: ${error.message}`);
     }
-
-    const filteredIds = new Set(filteredChannels.map(ch => ch.id || ch.name));
-    const removedChannels = originalChannels.filter(ch => !filteredIds.has(ch.id || ch.name));
-
-    let religious = 0;
-    let adult = 0;
-    let political = 0;
-
-    removedChannels.forEach(channel => {
-      const channelText = this.#getChannelText(channel);
-      
-      if (this.#containsReligiousContent(channelText)) religious++;
-      if (this.#containsAdultContent(channelText)) adult++;
-      if (this.#containsPoliticalContent(channelText)) political++;
-    });
-
-    return { religious, adult, political };
   }
 
+
+
   /**
-   * Verifica si los filtros están activos
-   * @returns {boolean}
+   * Verifica si hay filtros activos
+   * Implementa el principio de consulta sin efectos secundarios
+   * @returns {boolean} true si al menos un filtro está activo, false en caso contrario
+   * @example
+   * if (service.hasActiveFilters()) {
+   *   console.log('Filtros activos detectados');
+   * }
    */
   hasActiveFilters() {
-    return this.#filterConfig.filterReligiousContent || 
-           this.#filterConfig.filterAdultContent || 
-           this.#filterConfig.filterPoliticalContent;
+    return hasActiveFilters(this.#filterConfig);
   }
 
   /**
    * Obtiene la configuración actual de filtros
-   * @returns {Object}
+   * Retorna una representación inmutable de la configuración
+   * @returns {FilterConfig} Configuración actual de filtros (copia inmutable)
+   * @example
+   * const config = service.getFilterConfiguration();
+   * console.log('Filtro religioso:', config.filterReligiousContent);
    */
   getFilterConfiguration() {
-    return {
-      religious: {
-        enabled: this.#filterConfig.filterReligiousContent,
-        keywordCount: this.#filterConfig.religiousKeywords?.length || 0
-      },
-      adult: {
-        enabled: this.#filterConfig.filterAdultContent,
-        keywordCount: this.#filterConfig.adultKeywords?.length || 0
-      },
-      political: {
-        enabled: this.#filterConfig.filterPoliticalContent,
-        keywordCount: this.#filterConfig.politicalKeywords?.length || 0
-      }
-    };
+    return createFilterConfiguration(this.#filterConfig);
   }
 }
 
