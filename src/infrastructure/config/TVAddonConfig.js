@@ -7,9 +7,6 @@ import crypto from 'crypto';
 import { Channel } from '../../domain/entities/Channel.js';
 import { EnvLoader } from './EnvLoader.js';
 
-// Asegurar que las variables de entorno estén cargadas
-EnvLoader.getInstance();
-
 /**
  * Configuración centralizada del addon de TV IPTV
  * Todos los valores son configurables via variables de entorno

@@ -16,8 +16,7 @@ import { isIP, isIPv4, isIPv6 } from 'net';
 import { URL } from 'url';
 import { EnvLoader } from '../infrastructure/config/EnvLoader.js';
 
-// Asegurar que las variables de entorno estén cargadas
-EnvLoader.getInstance();
+// Las variables de entorno ya están cargadas desde index.js
 
 /**
  * Carga la lista de canales prohibidos desde variables de entorno

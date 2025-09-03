@@ -82,8 +82,5 @@ class EnvLoader {
   }
 }
 
-// Cargar automáticamente al importar el módulo
-EnvLoader.getInstance();
-
 export { EnvLoader };
 export default EnvLoader;

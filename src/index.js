@@ -6,6 +6,10 @@
 import pkg from 'stremio-addon-sdk';
 const { addonBuilder, serveHTTP } = pkg;
 
+// Cargar variables de entorno al inicio
+import { EnvLoader } from './infrastructure/config/EnvLoader.js';
+EnvLoader.getInstance();
+
 // Configuración e infraestructura
 import { TVAddonConfig } from './infrastructure/config/TVAddonConfig.js';
 // Removed unused import M3UParserService

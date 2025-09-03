@@ -6,8 +6,7 @@
 
 import { EnvLoader } from '../infrastructure/config/EnvLoader.js';
 
-// Asegurar que las variables de entorno estén cargadas
-EnvLoader.getInstance();
+// Las variables de entorno ya están cargadas desde index.js
 
 // Función para cargar canales permitidos desde variables de entorno
 function loadAllowedChannelsFromEnv() {
