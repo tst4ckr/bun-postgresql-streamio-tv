@@ -329,7 +329,8 @@ export class EnhancedLoggerFactory {
       info: (message, ...args) => enhancedLogger.info(message, ...args),
       warn: (message, ...args) => enhancedLogger.warn(message, ...args),
       error: (message, ...args) => enhancedLogger.error(message, ...args),
-      debug: (message, ...args) => enhancedLogger.debug(message, ...args)
+      debug: (message, ...args) => enhancedLogger.debug(message, ...args),
+      fatal: (message, ...args) => enhancedLogger.error(message, ...args) // Mapear fatal a error
     };
   }
 }

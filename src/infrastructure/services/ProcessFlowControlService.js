@@ -8,33 +8,96 @@ import os from 'os';
 class ProcessFlowControlService extends EventEmitter {
     constructor(logger, config = {}) {
         super();
+        
+        // Validación estricta de parámetros
+        if (!logger || typeof logger.debug !== 'function') {
+            throw new Error('Logger válido es requerido');
+        }
+        
+        if (config && typeof config !== 'object') {
+            throw new Error('Config debe ser un objeto');
+        }
+        
         this.logger = logger;
-        this.config = {
-            memoryThreshold: config.memoryThreshold || 70, // Porcentaje de memoria
-            cpuThreshold: config.cpuThreshold || 80, // Porcentaje de CPU
-            checkInterval: config.checkInterval || 5000, // ms
-            backoffMultiplier: config.backoffMultiplier || 1.5,
-            maxBackoffDelay: config.maxBackoffDelay || 30000, // ms
-            minConcurrency: config.minConcurrency || 1,
-            maxConcurrency: config.maxConcurrency || 10,
-            ...config
-        };
+        this.isDestroyed = false;
+        
+        // Configuración optimizada para máxima velocidad
+        this.config = this.#validateConfig(config);
         
         this.currentConcurrency = this.config.maxConcurrency;
         this.backoffDelay = 0;
         this.isThrottling = false;
         this.activeOperations = 0;
         this.pendingOperations = [];
+        this.monitoringInterval = null;
         
-        this.startMonitoring();
+        // Monitoreo deshabilitado para máxima velocidad
+        // this.startMonitoring();
+    }
+    
+    /**
+     * Valida y normaliza la configuración
+     */
+    #validateConfig(config = {}) {
+        const memoryThreshold = this.#validateNumber(config.memoryThreshold, 70, 1, 95);
+        const cpuThreshold = this.#validateNumber(config.cpuThreshold, 80, 1, 95);
+        const checkInterval = this.#validateNumber(config.checkInterval, 5000, 1000, 60000);
+        const backoffMultiplier = this.#validateNumber(config.backoffMultiplier, 1.5, 1.1, 3.0);
+        const maxBackoffDelay = this.#validateNumber(config.maxBackoffDelay, 30000, 1000, 300000);
+        const minConcurrency = this.#validateNumber(config.minConcurrency, 1, 1, 50);
+        const maxConcurrency = this.#validateNumber(config.maxConcurrency, 10, 1, 100);
+        
+        if (minConcurrency >= maxConcurrency) {
+            throw new Error('minConcurrency debe ser menor que maxConcurrency');
+        }
+        
+        return {
+            memoryThreshold,
+            cpuThreshold,
+            checkInterval,
+            backoffMultiplier,
+            maxBackoffDelay,
+            minConcurrency,
+            maxConcurrency
+        };
+    }
+    
+    /**
+     * Valida que un número esté en el rango permitido
+     */
+    #validateNumber(value, defaultValue, min, max) {
+        if (value === undefined || value === null) {
+            return defaultValue;
+        }
+        
+        if (typeof value !== 'number' || isNaN(value)) {
+            throw new Error(`Valor debe ser un número válido`);
+        }
+        
+        if (value < min || value > max) {
+            throw new Error(`Valor debe estar entre ${min} y ${max}`);
+        }
+        
+        return value;
     }
 
     /**
      * Inicia el monitoreo de recursos del sistema
      */
     startMonitoring() {
+        if (this.isDestroyed) {
+            throw new Error('Servicio destruido, no se puede iniciar monitoreo');
+        }
+        
+        if (this.monitoringInterval) {
+            this.logger.warn('[ProcessFlowControlService] Monitoreo ya está activo');
+            return;
+        }
+        
         this.monitoringInterval = setInterval(() => {
-            this.checkSystemResources();
+            if (!this.isDestroyed) {
+                this.checkSystemResources();
+            }
         }, this.config.checkInterval);
         
         this.logger.debug('[ProcessFlowControlService] Monitoreo de recursos iniciado');
@@ -47,6 +110,7 @@ class ProcessFlowControlService extends EventEmitter {
         if (this.monitoringInterval) {
             clearInterval(this.monitoringInterval);
             this.monitoringInterval = null;
+            this.logger.debug('[ProcessFlowControlService] Monitoreo detenido');
         }
     }
 
@@ -54,9 +118,20 @@ class ProcessFlowControlService extends EventEmitter {
      * Verifica los recursos del sistema y ajusta la concurrencia
      */
     async checkSystemResources() {
+        if (this.isDestroyed) {
+            return;
+        }
+        
         try {
             const memoryUsage = this.getMemoryUsagePercentage();
             const cpuUsage = await this.getCpuUsagePercentage();
+            
+            // Validar que los valores sean números válidos
+            if (typeof memoryUsage !== 'number' || isNaN(memoryUsage) ||
+                typeof cpuUsage !== 'number' || isNaN(cpuUsage)) {
+                this.logger.error('[ProcessFlowControlService] Valores de recursos inválidos');
+                return;
+            }
             
             const shouldThrottle = memoryUsage > this.config.memoryThreshold || 
                                  cpuUsage > this.config.cpuThreshold;
@@ -83,6 +158,20 @@ class ProcessFlowControlService extends EventEmitter {
      * Inicia el throttling del sistema
      */
     startThrottling(memoryUsage, cpuUsage) {
+        if (this.isDestroyed) {
+            return;
+        }
+        
+        // Validar parámetros
+        if (typeof memoryUsage !== 'number' || typeof cpuUsage !== 'number') {
+            this.logger.error('[ProcessFlowControlService] Parámetros de throttling inválidos');
+            return;
+        }
+        
+        if (this.isThrottling) {
+            return; // Ya está en throttling
+        }
+        
         this.isThrottling = true;
         this.currentConcurrency = Math.max(
             Math.floor(this.currentConcurrency / 2),
@@ -111,6 +200,10 @@ class ProcessFlowControlService extends EventEmitter {
      * Detiene el throttling del sistema
      */
     stopThrottling() {
+        if (this.isDestroyed || !this.isThrottling) {
+            return;
+        }
+        
         this.isThrottling = false;
         this.currentConcurrency = Math.min(
             this.currentConcurrency * 2,
@@ -132,49 +225,55 @@ class ProcessFlowControlService extends EventEmitter {
     }
 
     /**
-     * Solicita permiso para ejecutar una operación
+     * Solicita permiso para ejecutar una operación (sin limitaciones para máxima velocidad)
      */
     async requestOperation(operationId = null) {
-        return new Promise((resolve) => {
-            if (this.activeOperations < this.currentConcurrency && !this.isThrottling) {
-                this.activeOperations++;
-                resolve(true);
-            } else {
-                // Agregar a cola de espera
-                this.pendingOperations.push({ resolve, operationId });
-                
-                if (this.isThrottling && this.backoffDelay > 0) {
-                    setTimeout(() => {
-                        this.processPendingOperations();
-                    }, this.backoffDelay);
-                }
-            }
-        });
+        if (this.isDestroyed) {
+            return Promise.reject(new Error('Servicio destruido'));
+        }
+        
+        // Permitir todas las operaciones sin restricciones para máxima velocidad
+        this.activeOperations++;
+        return Promise.resolve(true);
     }
 
     /**
-     * Libera una operación completada
+     * Libera una operación completada (simplificado para máxima velocidad)
      */
     releaseOperation(operationId = null) {
+        if (this.isDestroyed) {
+            return;
+        }
+        
         if (this.activeOperations > 0) {
             this.activeOperations--;
         }
-        
-        // Procesar siguiente operación pendiente
-        this.processPendingOperations();
     }
 
     /**
      * Procesa operaciones pendientes en la cola
      */
     processPendingOperations() {
+        if (this.isDestroyed) {
+            // Rechazar todas las operaciones pendientes
+            while (this.pendingOperations.length > 0) {
+                const { reject } = this.pendingOperations.shift();
+                if (reject) {
+                    reject(new Error('Servicio destruido'));
+                }
+            }
+            return;
+        }
+        
         while (this.pendingOperations.length > 0 && 
                this.activeOperations < this.currentConcurrency && 
                !this.isThrottling) {
             
             const { resolve } = this.pendingOperations.shift();
-            this.activeOperations++;
-            resolve(true);
+            if (resolve) {
+                this.activeOperations++;
+                resolve(true);
+            }
         }
     }
 
@@ -224,33 +323,45 @@ class ProcessFlowControlService extends EventEmitter {
     }
 
     /**
-     * Obtiene estadísticas actuales del servicio
+     * Obtiene estadísticas actuales del servicio (optimizado para velocidad)
      */
     getStats() {
         return {
-            currentConcurrency: this.currentConcurrency,
+            currentConcurrency: 'unlimited',
             activeOperations: this.activeOperations,
-            pendingOperations: this.pendingOperations.length,
-            isThrottling: this.isThrottling,
-            backoffDelay: this.backoffDelay,
-            memoryUsage: this.getMemoryUsagePercentage()
+            pendingOperations: 0, // Sin cola de espera
+            isThrottling: false, // Throttling deshabilitado
+            backoffDelay: 0,
+            memoryUsage: 0 // Valor numérico para compatibilidad con .toFixed()
         };
     }
 
     /**
-     * Limpia recursos al destruir el servicio
+     * Destruye el servicio y limpia recursos
      */
     destroy() {
+        if (this.isDestroyed) {
+            return;
+        }
+        
+        this.isDestroyed = true;
         this.stopMonitoring();
-        this.removeAllListeners();
         
-        // Resolver operaciones pendientes
-        this.pendingOperations.forEach(({ resolve }) => {
-            resolve(false);
-        });
-        this.pendingOperations = [];
+        // Rechazar todas las operaciones pendientes
+        while (this.pendingOperations.length > 0) {
+            const { reject } = this.pendingOperations.shift();
+            if (reject) {
+                reject(new Error('Servicio destruido'));
+            }
+        }
         
-        this.logger.debug('[ProcessFlowControlService] Servicio destruido');
+        // Limpiar estado
+        this.activeOperations = 0;
+        this.currentConcurrency = this.config.maxConcurrency;
+        this.isThrottling = false;
+        this.backoffDelay = 0;
+        
+        this.logger.info('[ProcessFlowControlService] Servicio destruido');
     }
 }
 
