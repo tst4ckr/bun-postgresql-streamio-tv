@@ -5,7 +5,7 @@
 
 import { HttpsToHttpConversionService } from './HttpsToHttpConversionService.js';
 import { StreamHealthService } from './StreamHealthService.js';
-import { getCachedResult } from './StreamValidationService_tools.js';
+import { getCachedResult, setCachedResult, updateStats, updateChannelValidationStatus } from './StreamValidationService_tools.js';
 
 /**
  * Servicio de validación temprana de streams
@@ -113,10 +113,10 @@ export class StreamValidationService {
       }
 
       // Guardar en cache
-      this.#setCachedResult(cacheKey, validationResult);
+      setCachedResult(this.#validationCache, cacheKey, validationResult);
 
       // Actualizar estadísticas
-      this.#updateStats(validationResult, Date.now() - startTime);
+      updateStats(this.#stats, validationResult, Date.now() - startTime);
 
       // Crear canal con estado de validación actualizado
       const resultChannel = validationResult.isValid 
@@ -124,7 +124,7 @@ export class StreamValidationService {
         : channel;
       
       // Actualizar estado de validación usando método disponible o creando nueva instancia
-      const finalChannel = this.#updateChannelValidationStatus(resultChannel, validationResult.isValid);
+      const finalChannel = updateChannelValidationStatus(resultChannel, validationResult.isValid);
 
       return {
         channel: finalChannel,
@@ -137,7 +137,7 @@ export class StreamValidationService {
       this.#logger.warn(`Error validando canal ${channel.id}: ${error.message}`);
       
       // Crear canal con estado de validación falso
-      const failedChannel = this.#updateChannelValidationStatus(channel, false);
+      const failedChannel = updateChannelValidationStatus(channel, false);
       
       return {
         channel: failedChannel,
@@ -345,7 +345,7 @@ export class StreamValidationService {
           results.push(result);
         } catch (error) {
           this.#logger.warn(`Error en worker validando canal ${channel.id}: ${error.message}`);
-          const failedChannel = this.#updateChannelValidationStatus(channel, false);
+          const failedChannel = updateChannelValidationStatus(channel, false);
           results.push({
             channel: failedChannel,
             isValid: false,
@@ -365,77 +365,11 @@ export class StreamValidationService {
 
 
 
-  /**
-   * Guarda resultado en cache
-   * @private
-   * @param {string} key - Clave del cache
-   * @param {Object} result - Resultado a guardar
-   */
-  #setCachedResult(key, result) {
-    this.#validationCache.set(key, {
-      result: {
-        isValid: result.isValid,
-        meta: result.meta
-      },
-      timestamp: Date.now()
-    });
 
-    // Limpiar cache si es muy grande (mantener últimos 1000)
-    if (this.#validationCache.size > 1000) {
-      const entries = Array.from(this.#validationCache.entries());
-      entries.sort((a, b) => a[1].timestamp - b[1].timestamp);
-      
-      // Eliminar los 200 más antiguos
-      for (let i = 0; i < 200; i++) {
-        this.#validationCache.delete(entries[i][0]);
-      }
-    }
-  }
 
-  /**
-   * Actualiza estadísticas de validación
-   * @private
-   * @param {Object} result - Resultado de validación
-   * @param {number} processingTime - Tiempo de procesamiento
-   */
-  #updateStats(result, processingTime) {
-    this.#stats.totalProcessed++;
-    
-    if (result.isValid) {
-      this.#stats.validChannels++;
-    } else {
-      this.#stats.invalidChannels++;
-    }
-    
-    if (result.converted) {
-      this.#stats.httpsConverted++;
-    }
-    
-    if (result.isValid && result.converted) {
-      this.#stats.httpWorking++;
-    }
-  }
 
-  /**
-   * Actualiza el estado de validación del canal de manera segura
-   * @param {Object} channel - Canal a actualizar
-   * @param {boolean} isValid - Estado de validación
-   * @returns {Object} Canal con estado actualizado
-   */
-  #updateChannelValidationStatus(channel, isValid) {
-    // Si el canal tiene el método withValidationStatus, usarlo
-    if (typeof channel.withValidationStatus === 'function') {
-      return channel.withValidationStatus(isValid);
-    }
-    
-    // Si no tiene el método, crear una nueva instancia con las propiedades actualizadas
-    return {
-      ...channel,
-      validationStatus: isValid ? 'valid' : 'invalid',
-      isActive: isValid,
-      lastValidated: new Date().toISOString()
-    };
-  }
+
+
 
   /**
    * Resetea estadísticas
