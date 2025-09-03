@@ -56,10 +56,6 @@ FILTER_POLITICAL_CONTENT=false
 RELIGIOUS_KEYWORDS=jesus,cristo,dios,iglesia,church,christian
 ADULT_KEYWORDS=xxx,porn,adult,+18
 POLITICAL_KEYWORDS=politica,political,gobierno,president
-
-# Configuración avanzada
-FILTER_SENSITIVITY=medium
-FILTER_MATCH_MODE=partial
 ```
 
 ### Configuración Programática

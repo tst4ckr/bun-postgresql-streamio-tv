@@ -96,62 +96,31 @@ STREAM_CACHE_MAX_AGE=300     # Cache de streams (5 min)
 # CATALOG_CACHE_MAX_AGE removed - catalog functionality disabled
 ```
 
-#### 🔊 Validación Avanzada de Audio/Video
+#### 🔊 Validación de Streams
 ```bash
-# Habilitar validación de calidad
-ENABLE_QUALITY_VALIDATION=true
-AUDIO_VALIDATION_ENABLED=true
-VIDEO_VALIDATION_ENABLED=true
+# Validación al inicio
+VALIDATE_STREAMS_ON_STARTUP=true
+STREAM_VALIDATION_TIMEOUT=45
+STREAM_VALIDATION_MAX_RETRIES=3
+VALIDATION_BATCH_SIZE=25
+MAX_VALIDATION_CONCURRENCY=5
 
-# Configuración de timeouts
-QUALITY_VALIDATION_TIMEOUT=15000
-QUALITY_SAMPLE_DURATION=5000
-
-# Bitrates mínimos
-MIN_AUDIO_BITRATE=32000
-MIN_VIDEO_BITRATE=100000
-```
-
-#### 📊 Monitoreo Continuo
-```bash
-# Habilitar monitoreo continuo
-ENABLE_CONTINUOUS_MONITORING=false
-MONITORING_INTERVAL=60000
-
-# Umbrales de alerta
-MONITORING_ALERT_THRESHOLD=3
-MONITORING_FAILURE_RATE_THRESHOLD=0.5
-```
-
-#### 🔄 Sistema de Fallback
-```bash
-# Habilitar fallback automático
-ENABLE_FALLBACK=true
-MAX_FALLBACK_ATTEMPTS=3
-FALLBACK_TIMEOUT=15000
-FALLBACK_QUALITY_ORDER=HD,SD,Auto
+# Conversión HTTPS a HTTP
+CONVERT_HTTPS_TO_HTTP=true
+VALIDATE_HTTP_CONVERSION=true
 ```
 
 #### 🛡️ Filtros de Contenido
 ```bash
-# Habilitar filtros de contenido
-ENABLE_CONTENT_FILTERS=true
-
-# Filtro de contenido religioso
+# Filtros de contenido por categoría
 FILTER_RELIGIOUS_CONTENT=true
-RELIGIOUS_KEYWORDS=iglesia,pastor,dios,jesus,cristo,biblia,gospel,cristiano,catolico,evangelico
-
-# Filtro de contenido adulto
 FILTER_ADULT_CONTENT=true
-ADULT_KEYWORDS=xxx,adult,porn,sexy,hot,+18,adulto,erotico,sexual
+FILTER_POLITICAL_CONTENT=true
 
-# Filtro de contenido político
-FILTER_POLITICAL_CONTENT=false
-POLITICAL_KEYWORDS=politica,gobierno,presidente,elecciones,congreso,senado,diputado
-
-# Configuración de sensibilidad
-FILTER_SENSITIVITY=medium  # low, medium, high
-FILTER_MATCH_MODE=partial  # exact, partial, fuzzy
+# Keywords para filtros
+RELIGIOUS_KEYWORDS=jesus,cristo,dios,iglesia,cristian,catolica,evangelica,santo,santa,san,church,christian,catholic,evangelical,bible,faith,priest,pastor,gospel,fe,cristo,biblia,pastor,evangelio,misa,oracion,bendicion
+ADULT_KEYWORDS=xxx,porn,adult,sexy,hot,erotic,nude,+18,adulto,erotico,sexual,porno,caliente,desnudo,sensual
+POLITICAL_KEYWORDS=politica,political,gobierno,president,congreso,senado,elecciones,diputado,ministro,alcalde,gobernador,partido,campaign,election,congress,senate,mayor,governor
 ```
 
 Ver `.env.example` para todas las opciones disponibles.
