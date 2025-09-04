@@ -96,7 +96,7 @@ export class TVAddonConfig {
         // Archivo CSV local adicional
         localChannelsCsv: process.env.LOCAL_CHANNELS_CSV || '',
         // Archivo CSV de canales validados
-        validatedChannelsCsv: process.env.VALIDATED_CHANNELS_CSV || 'tv.csv',
+        validatedChannelsCsv: process.env.VALIDATED_CHANNELS_CSV || 'data/tv.csv',
         // Configuración del modo automático
         autoM3uUrl: process.env.AUTO_M3U_URL || null
       },
