@@ -25,7 +25,7 @@ export class ChannelRepositoryFactory {
    */
   static async createRepository(config, logger) {
     const { dataSources } = config;
-    logger.info(`ChannelRepositoryFactory: Creando repositorio para fuente -> ${dataSources.channelsSource}`);
+    logger.info(`Creando repositorio para fuente: ${dataSources.channelsSource}`);
 
     let repository;
 
@@ -74,15 +74,15 @@ export class ChannelRepositoryFactory {
         // El archivo CSV adicional se maneja automáticamente por HybridChannelRepository
         // a través de config.dataSources.localChannelsCsv - NO agregarlo a M3U
         if (dataSources.localChannelsCsv) {
-          logger.info(`Archivo CSV adicional configurado: ${dataSources.localChannelsCsv}`);
+          logger.info(`CSV adicional configurado: ${dataSources.localChannelsCsv}`);
         }
         
         const allM3uSources = [...remoteM3uUrls, ...localM3uFiles];
         
         if (allM3uSources.length === 0) {
-          logger.warn('Repositorio híbrido configurado pero sin fuentes M3U válidas, usando solo CSV');
+          logger.warn('Repositorio híbrido sin fuentes M3U, usando solo CSV');
         } else {
-          logger.info(`Repositorio híbrido configurado con ${remoteM3uUrls.length} URLs remotas y ${localM3uFiles.length} archivos locales`);
+          logger.info(`Repositorio híbrido: ${remoteM3uUrls.length} URLs remotas, ${localM3uFiles.length} archivos locales`);
         }
         
         repository = new HybridChannelRepository(
@@ -108,7 +108,7 @@ export class ChannelRepositoryFactory {
     }
 
     const channelCount = await repository.getChannelsCount();
-    logger.info(`Repositorio "${dataSources.channelsSource}" creado e inicializado con ${channelCount} canales.`);
+    logger.info(`Repositorio "${dataSources.channelsSource}" inicializado con ${channelCount} canales.`);
 
     return repository;
   }

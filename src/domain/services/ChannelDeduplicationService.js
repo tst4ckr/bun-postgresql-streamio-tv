@@ -190,10 +190,10 @@ export class ChannelDeduplicationService {
     const ignoredCount = channels.length - filteredChannels.length;
     
     if (ignoredCount > 0) {
-      this.#logger.info(`📋 Canales ignorados de deduplicación: ${ignoredCount}`);
+      this.#logger.info(`Ignorando ${ignoredCount} canales en deduplicación`);
     }
 
-    this.#logger.info(`🔍 Iniciando deduplicación de ${filteredChannels.length} canales`);
+    this.#logger.info(`Deduplicando ${filteredChannels.length} canales`);
 
     try {
       const deduplicatedChannels = await this.#performDeduplication(filteredChannels);
@@ -204,7 +204,7 @@ export class ChannelDeduplicationService {
       this.#metrics.duplicatesRemoved = this.#metrics.duplicatesFound;
 
       const stats = this.#metrics.getStats();
-      this.#logger.info(`✅ Deduplicación completada: ${deduplicatedChannels.length} canales únicos (${stats.duplicatesRemoved} duplicados removidos)`);
+      this.#logger.info(`Deduplicación: ${deduplicatedChannels.length} únicos, ${stats.duplicatesRemoved} removidos`);
       
       if (this.#config.enableMetrics) {
         this.#logDetailedStats(stats);
@@ -215,7 +215,7 @@ export class ChannelDeduplicationService {
         metrics: stats
       };
     } catch (error) {
-      this.#logger.error('Error durante deduplicación:', error);
+      this.#logger.error('Error en deduplicación:', error);
       throw error;
     }
   }
@@ -296,7 +296,7 @@ export class ChannelDeduplicationService {
               resolution.strategy === 'numbered_hd_upgrade' || 
               resolution.strategy === 'hd_upgrade_by_object') {
             this.#metrics.addHdUpgrade();
-            this.#logger.info(`🔄 Canal actualizado a HD: ${channel.name} (${existingChannel.quality?.value || 'SD'} → ${channel.quality?.value || 'HD'})`);
+            this.#logger.info(`Canal actualizado a HD: ${channel.name} (${existingChannel.quality?.value || 'SD'} → ${channel.quality?.value || 'HD'})`);
           }
         }
       } else {
@@ -356,7 +356,7 @@ export class ChannelDeduplicationService {
               resolution.strategy === 'numbered_hd_upgrade' || 
               resolution.strategy === 'hd_upgrade_by_object') {
             this.#metrics.addHdUpgrade();
-            this.#logger.info(`🔄 Canal actualizado a HD: ${channel.name} (${existingChannel.quality?.value || 'SD'} → ${channel.quality?.value || 'HD'})`);
+            this.#logger.info(`Canal actualizado a HD: ${channel.name} (${existingChannel.quality?.value || 'SD'} → ${channel.quality?.value || 'HD'})`);
           }
         } else {
           // Mantener el canal existente, ignorar el nuevo

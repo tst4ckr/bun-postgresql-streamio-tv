@@ -58,7 +58,7 @@ export class ValidatedChannelsCsvService {
     }
 
     if (validatedChannels.length === 0) {
-      this.#logger.warn('No hay canales validados para escribir al CSV');
+      this.#logger.warn('No hay canales validados para escribir');
       return;
     }
 
@@ -75,10 +75,10 @@ export class ValidatedChannelsCsvService {
       // Escribir al archivo
       await csvWriter.writeRecords(csvData);
 
-      this.#logger.info(`✅ ${validatedChannels.length} canales validados escritos a: ${this.#csvFilePath}`);
+      this.#logger.info(`✅ ${validatedChannels.length} canales validados escritos en: ${this.#csvFilePath}`);
       
     } catch (error) {
-      this.#logger.error('Error escribiendo canales validados al CSV:', error);
+      this.#logger.error('Error al escribir CSV:', error);
       throw new Error(`Error escribiendo CSV: ${error.message}`);
     }
   }
@@ -186,7 +186,7 @@ export class ValidatedChannelsCsvService {
         path: this.#csvFilePath
       };
     } catch (error) {
-      this.#logger.debug(`No se pudo obtener estadísticas del CSV: ${error.message}`);
+      this.#logger.debug(`Estadísticas de CSV no disponibles: ${error.message}`);
       return null;
     }
   }
@@ -198,11 +198,11 @@ export class ValidatedChannelsCsvService {
   async deleteCsvFile() {
     try {
       await fs.unlink(this.#csvFilePath);
-      this.#logger.info(`Archivo CSV eliminado: ${this.#csvFilePath}`);
+      this.#logger.info(`CSV eliminado: ${this.#csvFilePath}`);
       return true;
     } catch (error) {
       if (error.code !== 'ENOENT') {
-        this.#logger.error(`Error eliminando CSV: ${error.message}`);
+        this.#logger.error(`Error al eliminar CSV: ${error.message}`);
       }
       return false;
     }

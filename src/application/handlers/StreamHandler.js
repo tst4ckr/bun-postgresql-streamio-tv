@@ -47,18 +47,18 @@ export class StreamHandler {
       const startTime = Date.now();
       
       try {
-        this.#logger.info(`Stream request: ${JSON.stringify(args)}`);
+        this.#logger.info(`Petición de stream: ${JSON.stringify(args)}`);
         
         const result = await this.#handleStreamRequest(args);
         
         const duration = Date.now() - startTime;
-        this.#logger.info(`Stream request completed in ${duration}ms`);
+        this.#logger.info(`Petición completada en ${duration}ms`);
         
         return result;
         
       } catch (error) {
         const duration = Date.now() - startTime;
-        this.#logger.error(`Stream request failed in ${duration}ms:`, error);
+        this.#logger.error(`Petición fallida en ${duration}ms:`, error);
         
         return this.#createErrorResponse(error);
       }
@@ -90,13 +90,13 @@ export class StreamHandler {
     const channel = await this.#getChannel(id, userConfig);
     
     if (!channel) {
-      this.#logger.warn(`Canal no encontrado: ${id}`);
+      this.#logger.warn(`Canal no hallado: ${id}`);
       return this.#createEmptyResponse();
     }
 
     // Validar que el canal tenga stream válido
     if (!channel.isValidStream()) {
-      this.#logger.warn(`Canal con stream inválido: ${id}`);
+      this.#logger.warn(`Stream inválido: ${id}`);
       return this.#createEmptyResponse();
     }
 
@@ -117,10 +117,10 @@ export class StreamHandler {
    */
   #validateStreamRequest(args) {
     if (!args?.type || typeof args.type !== 'string') {
-      throw new Error('Tipo de contenido requerido');
+      throw new Error('Tipo de contenido inválido');
     }
     if (!args.id || typeof args.id !== 'string') {
-      throw new Error('ID de contenido requerido');
+      throw new Error('ID de contenido inválido');
     }
   }
 
@@ -423,7 +423,7 @@ export class StreamHandler {
     
     // Verificar estado de inicialización si está disponible
     if (this.#channelService.isInitialized !== undefined && !this.#channelService.isInitialized) {
-      throw new Error('Repositorio de canales no está inicializado');
+      throw new Error('Repositorio no inicializado');
     }
   }
 
@@ -447,7 +447,7 @@ export class StreamHandler {
    */
   #createErrorResponse(error) {
     // No exponer detalles internos del error a Stremio
-    this.#logger.error('Error en stream handler:', error);
+    this.#logger.error('Error en handler:', error);
     
     return {
       streams: [],

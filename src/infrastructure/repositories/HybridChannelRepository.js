@@ -103,7 +103,7 @@ export class HybridChannelRepository extends ChannelRepository {
       this.#additionalCsvRepositories.push(
         new CSVChannelRepository(config.dataSources.localChannelsCsv, config, logger)
       );
-      this.#logger.info(`Repositorio CSV adicional creado: ${config.dataSources.localChannelsCsv}`);
+      this.#logger.info(`CSV adicional creado: ${config.dataSources.localChannelsCsv}`);
     }
     
     // Separar URLs remotas de archivos M3U locales y crear repositorios apropiados
@@ -116,7 +116,7 @@ export class HybridChannelRepository extends ChannelRepository {
     m3uSources.filter(source => source).forEach(source => {
       // Verificar si es archivo CSV (no debe procesarse como M3U)
       if (source.toLowerCase().endsWith('.csv')) {
-        this.#logger.warn(`Archivo CSV detectado en fuentes M3U, omitiendo: ${source}`);
+        this.#logger.warn(`CSV en fuentes M3U, omitiendo: ${source}`);
         return;
       }
       
@@ -161,7 +161,7 @@ export class HybridChannelRepository extends ChannelRepository {
       return [];
     }
 
-    this.#logger.info(`🤖 Procesando fuente automática desde: ${autoM3uUrl}`);
+    this.#logger.info(`Procesando fuente automática: ${autoM3uUrl}`);
     
     try {
       // 1. Descargar contenido M3U principal
@@ -177,7 +177,7 @@ export class HybridChannelRepository extends ChannelRepository {
       }
 
       const m3uContent = await response.text();
-      this.#logger.info(`M3U descargado: ${m3uContent.length} caracteres`);
+      this.#logger.info(`M3U descargado: ${m3uContent.length} chars`);
 
       // 2. Parsear contenido M3U
       const parsedChannels = await this.#m3uParser.parseM3U(m3uContent);
@@ -185,24 +185,24 @@ export class HybridChannelRepository extends ChannelRepository {
 
       // 3. Filtrar URLs válidas para procesamiento
       const filteredChannels = filterChannelsByPlayAndPublicIP(parsedChannels, this.#logger);
-      this.#logger.info(`Canales filtrados (URLs válidas): ${filteredChannels.length}`);
+      this.#logger.info(`Canales filtrados (URL válidas): ${filteredChannels.length}`);
 
       // 4. Extraer URLs únicas de playlist
       const playlistUrls = generatePlaylistUrls(filteredChannels, this.#logger);
-      this.#logger.info(`📋 URLs de playlist generadas: ${playlistUrls.length}`);
+      this.#logger.info(`URLs de playlist generadas: ${playlistUrls.length}`);
 
       // 5. Procesar cada URL de playlist como fuente M3U independiente
       const allChannels = await processPlaylistUrls(playlistUrls, this.#config, this.#logger, this.#m3uParser, this.#playlistErrorStats, () => { this.#playlistErrorStats = resetPlaylistErrorStats(); }, (index, url, errorMessage) => trackPlaylistError(this.#playlistErrorStats, index, url, errorMessage, this.#logger), () => logPlaylistErrorStats(this.#playlistErrorStats, this.#logger));
-      this.#logger.info(`📺 Total de canales procesados desde playlists: ${allChannels.length}`);
+      this.#logger.info(`Total canales de playlists: ${allChannels.length}`);
 
       // 6. Eliminar duplicados (lógica del modo automático)
       const uniqueChannels = removeDuplicateChannels(allChannels, this.#logger);
-      this.#logger.info(`🔄 Canales únicos después de deduplicación: ${uniqueChannels.length}`);
+      this.#logger.info(`Canales únicos (deduplicados): ${uniqueChannels.length}`);
 
       return uniqueChannels;
       
     } catch (error) {
-      this.#logger.error(`Error procesando fuente automática: ${error.message}`);
+      this.#logger.error(`Error en fuente automática: ${error.message}`);
       return [];
     }
   }
@@ -219,12 +219,12 @@ export class HybridChannelRepository extends ChannelRepository {
    */
   async initialize() {
     if (this.#isInitialized) {
-      this.#logger.warn('Repositorio híbrido ya inicializado');
+      this.#logger.warn('Repositorio híbrido ya inicializado.');
       return;
     }
 
     if (this.#isInitializing) {
-      this.#logger.info('Inicialización en progreso, esperando...');
+      this.#logger.info('Inicialización en curso, esperando...');
       // Esperar hasta que termine la inicialización
       while (this.#isInitializing && !this.#isInitialized) {
         await new Promise(resolve => setTimeout(resolve, 100));
@@ -239,7 +239,7 @@ export class HybridChannelRepository extends ChannelRepository {
       // 1. Cargar canales del CSV principal primero
       await this.#csvRepository.initialize();
       const csvChannels = await this.#csvRepository.getAllChannelsUnfiltered();
-      this.#logger.info(`Cargados ${csvChannels.length} canales desde CSV principal`);
+      this.#logger.info(`Cargados ${csvChannels.length} canales de CSV principal`);
       
       // 2. Cargar canales de CSVs adicionales
       const additionalCsvChannels = [];
@@ -249,16 +249,16 @@ export class HybridChannelRepository extends ChannelRepository {
           await additionalCsvRepo.initialize();
           const channels = await additionalCsvRepo.getAllChannelsUnfiltered();
           additionalCsvChannels.push(...channels);
-          this.#logger.info(`CSV adicional ${i + 1}: ${channels.length} canales cargados`);
+          this.#logger.info(`CSV adicional ${i + 1}: ${channels.length} canales`);
         } catch (error) {
-          this.#logger.error(`Error cargando CSV adicional ${i + 1}:`, error);
+          this.#logger.error(`Error en CSV adicional ${i + 1}: ${error.message}`);
           // Continuar con los siguientes archivos aunque uno falle
         }
       }
       
       // 3. Combinar todos los canales CSV (principal + adicionales)
       const allCsvChannels = [...csvChannels, ...additionalCsvChannels];
-      this.#logger.info(`🔄 Procesando ${csvChannels.length} canales CSV principales + ${additionalCsvChannels.length} canales CSV adicionales = ${allCsvChannels.length} canales CSV totales`);
+      this.#logger.info(`Procesando ${allCsvChannels.length} canales CSV (principales y adicionales)`);
       
       // 4. Inicializar mapa con canales CSV (prioridad absoluta)
       this.#channels = [...allCsvChannels];
@@ -269,12 +269,12 @@ export class HybridChannelRepository extends ChannelRepository {
       const { autoM3uUrl } = this.#config.dataSources;
       let automaticChannels = [];
       if (autoM3uUrl) {
-        this.#logger.info('🤖 Procesando fuente automática (AUTO_M3U_URL)...');
+        this.#logger.info('Procesando fuente automática (AUTO_M3U_URL)...');
         try {
           automaticChannels = await this.#processAutomaticSource();
-          this.#logger.info(`📺 Canales procesados desde fuente automática: ${automaticChannels.length}`);
+          this.#logger.info(`Canales de fuente automática: ${automaticChannels.length}`);
         } catch (error) {
-          this.#logger.error(`Error procesando fuente automática: ${error.message}`);
+          this.#logger.error(`Error en fuente automática: ${error.message}`);
         }
       }
 
@@ -286,7 +286,7 @@ export class HybridChannelRepository extends ChannelRepository {
         
         // Saltar si es la misma URL que AUTO_M3U_URL ya procesada
         if (autoM3uUrl && m3uUrl === autoM3uUrl) {
-          this.#logger.debug(`M3U ${i + 1}: Saltando URL duplicada con AUTO_M3U_URL`);
+          this.#logger.debug(`M3U ${i + 1}: Saltando URL duplicada (AUTO_M3U_URL)`);
           continue;
         }
         
@@ -294,9 +294,9 @@ export class HybridChannelRepository extends ChannelRepository {
           await m3uRepo.initialize();
           const m3uChannels = await m3uRepo.getAllChannelsUnfiltered();
           allM3uChannels.push(...m3uChannels);
-          this.#logger.info(`M3U ${i + 1}: ${m3uChannels.length} canales cargados`);
+          this.#logger.info(`M3U ${i + 1}: ${m3uChannels.length} canales`);
         } catch (error) {
-          this.#logger.error(`Error cargando M3U ${i + 1}:`, error);
+          this.#logger.error(`Error en M3U ${i + 1}: ${error.message}`);
           // Continuar con las siguientes fuentes aunque una falle
         }
       }
@@ -305,7 +305,7 @@ export class HybridChannelRepository extends ChannelRepository {
       let processedM3uChannels = allM3uChannels;
       
       if (this.#httpsToHttpService.isEnabled() && allM3uChannels.length > 0) {
-        this.#logger.info(`🔄 Iniciando conversión HTTPS→HTTP para ${allM3uChannels.length} canales M3U con ${this.#config.validation?.maxValidationConcurrency || 5} workers (optimizado para alta latencia)`);
+        this.#logger.info(`Iniciando conversión HTTPS→HTTP para ${allM3uChannels.length} canales M3U...`);
         
         try {
           const conversionResult = await this.#httpsToHttpService.processChannels(allM3uChannels, {
@@ -318,27 +318,27 @@ export class HybridChannelRepository extends ChannelRepository {
           processedM3uChannels = conversionResult.processed;
           
           this.#logger.info(
-            `✅ Conversión HTTPS→HTTP completada: ${conversionResult.stats.total} procesados, ${conversionResult.stats.converted} convertidos, ${conversionResult.stats.httpWorking} (${(conversionResult.stats.httpWorking/conversionResult.stats.total*100).toFixed(1)}%) funcionales HTTP`
+            `Conversión HTTPS→HTTP: ${conversionResult.stats.converted} convertidos, ${conversionResult.stats.httpWorking} funcionales`
           );
           
           if (conversionResult.stats.failed > 0) {
-            this.#logger.warn(`${conversionResult.stats.failed} canales fallaron conversión/validación`);
+            this.#logger.warn(`${conversionResult.stats.failed} canales fallaron conversión`);
           }
           
         } catch (error) {
-          this.#logger.error('Error durante conversión HTTPS→HTTP:', error);
+          this.#logger.error(`Error en conversión HTTPS→HTTP: ${error.message}`);
           // En caso de error, continuar con canales originales
           processedM3uChannels = allM3uChannels;
         }
       } else {
-        this.#logger.info('🔄 Conversión HTTPS→HTTP deshabilitada, usando canales originales');
+        this.#logger.info('Conversión HTTPS→HTTP deshabilitada.');
       }
       
       // 5. Validación temprana de streams M3U procesados (CSV tiene prioridad absoluta)
       let validatedM3uChannels = processedM3uChannels;
       
       if (this.#streamValidationService.isEnabled()) {
-        this.#logger.info(`🔍 Iniciando validación temprana de ${processedM3uChannels.length} canales M3U (CSV exento)...`);
+        this.#logger.info(`Iniciando validación temprana de ${processedM3uChannels.length} canales M3U...`);
         
         const validationResult = await this.#streamValidationService.validateChannelsBatch(
           processedM3uChannels,
@@ -353,10 +353,10 @@ export class HybridChannelRepository extends ChannelRepository {
         const invalidM3uChannels = validationResult.invalidChannels;
         
         this.#logger.info(
-          `✅ Validación M3U completada: ${validM3uChannels.length} válidos, ${invalidM3uChannels.length} inválidos de ${processedM3uChannels.length} totales`
+          `Validación M3U: ${validM3uChannels.length} válidos, ${invalidM3uChannels.length} inválidos`
         );
         this.#logger.info(
-          `📋 Canales CSV preservados: ${allCsvChannels.length} (prioridad absoluta, sin validación)`
+          `Canales CSV preservados: ${allCsvChannels.length} (prioridad absoluta)`
         );
         
         // Usar solo canales M3U válidos para deduplicación
@@ -368,7 +368,7 @@ export class HybridChannelRepository extends ChannelRepository {
         });
         
       } else {
-        this.#logger.info('🔄 Validación temprana deshabilitada, usando todos los canales');
+        this.#logger.info('Validación temprana deshabilitada.');
       }
       
       // 5. Deduplicación inteligente con prioridad CSV absoluta
@@ -510,7 +510,7 @@ export class HybridChannelRepository extends ChannelRepository {
           processedM3uChannels = conversionResult.processed;
           
           this.#logger.info(
-            `✅ Conversión refresco completada: ${conversionResult.stats.total} procesados, ${conversionResult.stats.httpWorking} (${(conversionResult.stats.httpWorking/conversionResult.stats.total*100).toFixed(1)}%) funcionales`
+            `✅ Conversión refresco completada: ${conversionResult.stats.total} procesados, ${conversionResult.stats.httpWorking} (${(conversionResult.stats.httpWorking/conversionResult.stats.total*100).toFixed(1)}%) funcionales HTTP`
           );
           
         } catch (error) {

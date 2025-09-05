@@ -77,7 +77,7 @@ export class AutomaticChannelRepository extends ChannelRepository {
       this.#isInitialized = true;
       this.#lastLoadTime = new Date();
       
-      this.#logger.info(`Repositorio automático inicializado con ${this.#channels.length} canales únicos`);
+      this.#logger.info(`Repositorio automático inicializado con ${this.#channels.length} canales`);
     } catch (error) {
       this.#logger.error('Error inicializando repositorio automático:', error);
       throw new RepositoryError(`Error inicializando repositorio automático: ${error.message}`);
@@ -99,7 +99,7 @@ export class AutomaticChannelRepository extends ChannelRepository {
       throw new Error('AUTO_M3U_URL no configurada');
     }
 
-    this.#logger.info(`🤖 Iniciando proceso automático desde: ${autoM3uUrl}`);
+    this.#logger.info(`Iniciando proceso automático desde: ${autoM3uUrl}`);
     
     try {
       // 1. Descargar contenido M3U principal
@@ -115,7 +115,7 @@ export class AutomaticChannelRepository extends ChannelRepository {
       }
 
       const m3uContent = await response.text();
-      this.#logger.info(`M3U descargado: ${m3uContent.length} caracteres`);
+      this.#logger.info(`M3U descargado: ${m3uContent.length} bytes`);
 
       // 2. Parsear contenido M3U
       const parsedChannels = await this.#m3uParser.parseM3U(m3uContent);
@@ -123,32 +123,32 @@ export class AutomaticChannelRepository extends ChannelRepository {
 
       // 3. Filtrar URLs que cumplan criterios (con /play/ e IP pública)
       const filteredChannels = this.#filterChannelsByPlayAndPublicIP(parsedChannels);
-      this.#logger.info(`Canales filtrados (con /play/ e IP pública): ${filteredChannels.length}`);
+      this.#logger.info(`Canales filtrados (/play/ y IP pública): ${filteredChannels.length}`);
 
       // 4. Extraer URLs únicas de playlist
       const playlistUrls = this.#generatePlaylistUrls(filteredChannels);
-      this.#logger.info(`📋 URLs de playlist generadas: ${playlistUrls.length}`);
+      this.#logger.info(`Playlists generadas: ${playlistUrls.length}`);
 
       // 5. Procesar cada URL de playlist como fuente M3U independiente
       const allChannels = await this.#processPlaylistUrls(playlistUrls);
-      this.#logger.info(`📺 Total de canales procesados desde playlists: ${allChannels.length}`);
+      this.#logger.info(`Canales procesados desde playlists: ${allChannels.length}`);
 
       // 6. Aplicar deduplicación final
       const uniqueChannels = this.#removeDuplicates(allChannels);
-      this.#logger.info(`Canales únicos finales: ${uniqueChannels.length}`);
+      this.#logger.info(`Canales únicos: ${uniqueChannels.length}`);
 
       // 7. Validar conectividad antes del filtro inteligente (si está habilitado)
       let channelsToFilter = uniqueChannels;
       if (this.#shouldValidateBeforeFiltering()) {
         const validationResult = await this.#validateChannelsBeforeFiltering(uniqueChannels);
         channelsToFilter = validationResult.validChannels;
-        this.#logger.info(`Validación previa al filtrado: ${validationResult.validChannels.length}/${uniqueChannels.length} canales válidos`);
+        this.#logger.info(`Validación pre-filtrado: ${validationResult.validChannels.length}/${uniqueChannels.length} canales válidos`);
       }
 
       // 8. Aplicar filtro inteligente de canales permitidos
       const allowedFilteredChannels = filterAllowedChannels(channelsToFilter);
       const removedByFilter = channelsToFilter.length - allowedFilteredChannels.length;
-      this.#logger.info(`Filtro inteligente de canales aplicado: ${removedByFilter} canales removidos`);
+      this.#logger.info(`Filtro inteligente: ${removedByFilter} canales removidos`);
       
       // 9. Validar conectividad de canales removidos por filtro (si está habilitado)
       if (this.#shouldValidateFilteredChannels() && removedByFilter > 0) {
@@ -161,7 +161,7 @@ export class AutomaticChannelRepository extends ChannelRepository {
       const bannedRemovedCount = beforeBannedCount - bannedFilteredChannels.length;
       
       if (bannedRemovedCount > 0) {
-        this.#logger.info(`Filtro de canales prohibidos aplicado: ${bannedRemovedCount} canales removidos`);
+        this.#logger.info(`Filtro de prohibidos: ${bannedRemovedCount} canales removidos`);
       }
 
       // 11. Validar conectividad de canales finales después del filtrado (si está habilitado)
@@ -300,7 +300,7 @@ export class AutomaticChannelRepository extends ChannelRepository {
     
     this.#resetPlaylistErrorStats();
     this.#playlistErrorStats.totalPlaylists = playlistUrls.length;
-    this.#logger.info(`🔄 Procesando ${playlistUrls.length} playlists con máximo ${maxConcurrent} concurrentes...`);
+    this.#logger.info(`Procesando ${playlistUrls.length} playlists (max ${maxConcurrent} concurrentes)`);
     
     // Procesar en lotes para controlar la concurrencia
     for (let i = 0; i < playlistUrls.length; i += maxConcurrent) {
@@ -309,7 +309,7 @@ export class AutomaticChannelRepository extends ChannelRepository {
         const globalIndex = i + index + 1;
         
         try {
-          this.#logger.debug(`📋 Procesando playlist ${globalIndex}/${playlistUrls.length}: ${playlistUrl}`);
+          this.#logger.debug(`Procesando playlist ${globalIndex}/${playlistUrls.length}: ${playlistUrl}`);
           
           // Descargar playlist M3U
           const response = await fetch(playlistUrl, {
@@ -333,11 +333,11 @@ export class AutomaticChannelRepository extends ChannelRepository {
           const channels = await this.#m3uParser.parseM3U(m3uContent);
           
           if (channels.length > 0) {
-            this.#logger.debug(`✅ Playlist ${globalIndex} procesada: ${channels.length} canales`);
+            this.#logger.debug(`Playlist ${globalIndex} OK: ${channels.length} canales`);
             this.#playlistErrorStats.successfulPlaylists++;
             return channels;
           } else {
-            this.#logger.debug(`⚠️ Playlist ${globalIndex} sin canales válidos`);
+            this.#logger.debug(`Playlist ${globalIndex} sin canales válidos`);
             this.#playlistErrorStats.successfulPlaylists++;
             return [];
           }
@@ -363,7 +363,7 @@ export class AutomaticChannelRepository extends ChannelRepository {
     }
     
     this.#logPlaylistErrorStats();
-    this.#logger.info(`✅ Procesamiento de playlists completado: ${allChannels.length} canales totales`);
+    this.#logger.info(`Procesamiento de playlists completado: ${allChannels.length} canales totales`);
     return allChannels;
   }
 
@@ -416,13 +416,13 @@ export class AutomaticChannelRepository extends ChannelRepository {
    * @returns {Promise<{validChannels: Channel[], invalidChannels: Channel[], stats: Object}>}
    */
   async #validateChannelsBeforeFiltering(channels) {
-    this.#logger.info(`🔍 Iniciando validación previa al filtrado de ${channels.length} canales...`);
+    this.#logger.info(`Validando ${channels.length} canales antes de filtrar...`);
     
     const startTime = Date.now();
     const result = await this.#streamValidationService.validateChannelsBatch(channels);
     const duration = ((Date.now() - startTime) / 1000).toFixed(1);
     
-    this.#logger.info(`Validación previa completada: ${result.validChannels.length}/${channels.length} OK (${(result.validChannels.length/channels.length*100).toFixed(1)}%) en ${duration}s`);
+    this.#logger.info(`Validación previa: ${result.validChannels.length}/${channels.length} OK (${(result.validChannels.length/channels.length*100).toFixed(1)}%) en ${duration}s`);
     
     return result;
   }
@@ -441,7 +441,7 @@ export class AutomaticChannelRepository extends ChannelRepository {
       return;
     }
     
-    this.#logger.info(`🔍 Validando conectividad de ${removedChannels.length} canales removidos por filtro...`);
+    this.#logger.info(`Validando ${removedChannels.length} canales removidos por filtro...`);
     
     const startTime = Date.now();
     const result = await this.#streamValidationService.validateChannelsBatch(removedChannels);
@@ -450,14 +450,14 @@ export class AutomaticChannelRepository extends ChannelRepository {
     const validRemovedCount = result.validChannels.length;
     const invalidRemovedCount = result.invalidChannels.length;
     
-    this.#logger.info(`📊 Canales removidos por filtro - Válidos: ${validRemovedCount} (${(validRemovedCount/removedChannels.length*100).toFixed(1)}%) - Inválidos: ${invalidRemovedCount} (${(invalidRemovedCount/removedChannels.length*100).toFixed(1)}%) en ${duration}s`);
+    this.#logger.info(`Canales removidos - Válidos: ${validRemovedCount} (${(validRemovedCount/removedChannels.length*100).toFixed(1)}%) - Inválidos: ${invalidRemovedCount} (${(invalidRemovedCount/removedChannels.length*100).toFixed(1)}%) en ${duration}s`);
     
     if (validRemovedCount > 0) {
-       this.#logger.warn(`⚠️  Se removieron ${validRemovedCount} canales válidos por el filtro inteligente`);
+       this.#logger.warn(`Se removieron ${validRemovedCount} canales válidos por el filtro`);
        
        // Log de algunos ejemplos de canales válidos removidos
        const examples = result.validChannels.slice(0, 5).map(ch => ch.name || ch.title || 'Sin nombre');
-       this.#logger.warn(`Ejemplos de canales válidos removidos: ${examples.join(', ')}${result.validChannels.length > 5 ? '...' : ''}`);
+       this.#logger.warn(`Ejemplos de removidos válidos: ${examples.join(', ')}${result.validChannels.length > 5 ? '...' : ''}`);
      }
    }
 
@@ -467,7 +467,7 @@ export class AutomaticChannelRepository extends ChannelRepository {
     * @returns {Promise<{validChannels: Channel[], invalidChannels: Channel[], stats: Object}>}
     */
    async #validateChannelsAfterFiltering(channels) {
-     this.#logger.info(`🔍 Validando conectividad de ${channels.length} canales finales después del filtrado...`);
+     this.#logger.info(`Validando ${channels.length} canales después de filtrar...`);
      
      const startTime = Date.now();
      const result = await this.#streamValidationService.validateChannelsBatch(channels);
@@ -477,14 +477,14 @@ export class AutomaticChannelRepository extends ChannelRepository {
      const invalidCount = result.invalidChannels.length;
      const successRate = ((validCount / channels.length) * 100).toFixed(1);
      
-     this.#logger.info(`📊 Validación post-filtrado completada: ${validCount}/${channels.length} válidos (${successRate}%) en ${duration}s`);
+     this.#logger.info(`Validación post-filtrado: ${validCount}/${channels.length} válidos (${successRate}%) en ${duration}s`);
      
      if (invalidCount > 0) {
-       this.#logger.warn(`⚠️  Se encontraron ${invalidCount} canales inválidos en el resultado final`);
+       this.#logger.warn(`Se encontraron ${invalidCount} canales inválidos en el resultado`);
        
        // Log de algunos ejemplos de canales inválidos
        const examples = result.invalidChannels.slice(0, 3).map(ch => ch.name || ch.title || 'Sin nombre');
-       this.#logger.warn(`Ejemplos de canales inválidos: ${examples.join(', ')}${result.invalidChannels.length > 3 ? '...' : ''}`);
+       this.#logger.warn(`Ejemplos de inválidos: ${examples.join(', ')}${result.invalidChannels.length > 3 ? '...' : ''}`);
      }
      
      return result;

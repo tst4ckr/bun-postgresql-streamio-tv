@@ -45,16 +45,16 @@ export class LocalM3UChannelRepository extends ChannelRepository {
 
   async initialize() {
     if (this.#isInitialized) {
-      this.#logger.warn('Repositorio M3U Local ya inicializado');
+      this.#logger.warn('Repositorio M3U local ya inicializado.');
       return;
     }
     try {
-      this.#logger.info(`Cargando canales desde archivo M3U local: ${this.#m3uFilePath}`);
+      this.#logger.info(`Cargando M3U local: ${this.#m3uFilePath}`);
       await this.#loadAndParseM3U();
       this.#isInitialized = true;
-      this.#logger.info(`Repositorio M3U Local inicializado con ${this.#channels.length} canales`);
+      this.#logger.info(`Repositorio M3U local inicializado: ${this.#channels.length} canales`);
     } catch (error) {
-      throw new RepositoryError(`Error inicializando repositorio M3U local: ${error.message}`, error);
+      throw new RepositoryError(`Error inicializando M3U local: ${error.message}`, error);
     }
   }
 
@@ -68,7 +68,7 @@ export class LocalM3UChannelRepository extends ChannelRepository {
       const content = await fs.readFile(this.#m3uFilePath, 'utf-8');
       
       if (!content.trim()) {
-        this.#logger.warn(`Archivo M3U local está vacío: ${this.#m3uFilePath}`);
+        this.#logger.warn(`M3U local vacío: ${this.#m3uFilePath}`);
         this.#channels = [];
         this.#channelMap.clear();
         return;
@@ -88,22 +88,22 @@ export class LocalM3UChannelRepository extends ChannelRepository {
       this.#channels.forEach(channel => this.#channelMap.set(channel.id, channel));
       
       this.#lastLoadTime = new Date();
-      this.#logger.info(`M3U local cargado: ${this.#channels.length} canales válidos desde ${this.#m3uFilePath}${bannedRemovedCount > 0 ? ` (${bannedRemovedCount} canales prohibidos removidos)` : ''}`);
+      this.#logger.info(`M3U local cargado: ${this.#channels.length} canales desde ${this.#m3uFilePath}${bannedRemovedCount > 0 ? ` (${bannedRemovedCount} prohibidos)` : ''}`);
 
     } catch (error) {
       if (error.code === 'ENOENT') {
-        this.#logger.warn(`Archivo M3U local no encontrado: ${this.#m3uFilePath}`);
+        this.#logger.warn(`M3U local no encontrado: ${this.#m3uFilePath}`);
         this.#channels = [];
         this.#channelMap.clear();
         return;
       }
       
-      this.#logger.error(`Error al leer o parsear archivo M3U local ${this.#m3uFilePath}`, error);
+      this.#logger.error(`Error leyendo M3U local ${this.#m3uFilePath}: ${error.message}`);
       
       if (this.#channels.length === 0) {
-        throw new RepositoryError(`No se pudo cargar el archivo M3U local.`, error);
+        throw new RepositoryError(`No se pudo cargar M3U local.`, error);
       } else {
-        this.#logger.warn('No se pudo refrescar el archivo M3U local. Se usarán los datos cacheados.');
+        this.#logger.warn('No se pudo refrescar M3U local, usando caché.');
       }
     }
   }
@@ -159,7 +159,7 @@ export class LocalM3UChannelRepository extends ChannelRepository {
 
   async #refreshIfNeeded() {
     if (await this.#needsRefresh()) {
-      this.#logger.info('Refrescando canales desde archivo M3U local...');
+      this.#logger.info('Refrescando M3U local...');
       await this.#loadAndParseM3U();
     }
   }
@@ -184,7 +184,7 @@ export class LocalM3UChannelRepository extends ChannelRepository {
       
       // Log de estadísticas de filtrado
       if (filterResult.removedChannels.length > 0) {
-        this.#logger.info(`Filtros de contenido aplicados: ${filterResult.removedChannels.length} canales removidos de ${originalCount}`);
+        this.#logger.info(`Filtros de contenido: ${filterResult.removedChannels.length} canales removidos`);
         this.#logger.debug('Canales removidos por categoría:', {
           religioso: filterResult.removedByCategory.religious,
           adulto: filterResult.removedByCategory.adult,
@@ -200,7 +200,7 @@ export class LocalM3UChannelRepository extends ChannelRepository {
     const bannedRemovedCount = beforeBannedCount - afterBannedCount;
     
     if (bannedRemovedCount > 0) {
-      this.#logger.info(`Filtros de canales prohibidos aplicados: ${bannedRemovedCount} canales removidos de ${beforeBannedCount}`);
+      this.#logger.info(`Filtros de prohibidos: ${bannedRemovedCount} canales removidos`);
     }
     
     return channels;
@@ -238,7 +238,7 @@ export class LocalM3UChannelRepository extends ChannelRepository {
     const bannedRemovedCount = beforeBannedCount - afterBannedCount;
     
     if (bannedRemovedCount > 0) {
-      this.#logger.info(`Filtros de canales prohibidos aplicados: ${bannedRemovedCount} canales removidos de ${beforeBannedCount}`);
+      this.#logger.info(`Filtros de prohibidos: ${bannedRemovedCount} canales removidos`);
     }
     
     return channels;
@@ -262,7 +262,7 @@ export class LocalM3UChannelRepository extends ChannelRepository {
     const bannedRemovedCount = beforeBannedCount - afterBannedCount;
     
     if (bannedRemovedCount > 0) {
-      this.#logger.info(`Filtros de canales prohibidos aplicados: ${bannedRemovedCount} canales removidos de ${beforeBannedCount}`);
+      this.#logger.info(`Filtros de prohibidos: ${bannedRemovedCount} canales removidos`);
     }
     
     return channels;
@@ -304,7 +304,7 @@ export class LocalM3UChannelRepository extends ChannelRepository {
     const bannedRemovedCount = beforeBannedCount - afterBannedCount;
     
     if (bannedRemovedCount > 0) {
-      this.#logger.info(`Filtros de canales prohibidos aplicados: ${bannedRemovedCount} canales removidos de ${beforeBannedCount}`);
+      this.#logger.info(`Filtros de prohibidos: ${bannedRemovedCount} canales removidos`);
     }
     
     return channels;
@@ -355,7 +355,7 @@ export class LocalM3UChannelRepository extends ChannelRepository {
     const bannedRemovedCount = beforeBannedCount - afterBannedCount;
     
     if (bannedRemovedCount > 0) {
-      this.#logger.info(`Filtros de canales prohibidos aplicados: ${bannedRemovedCount} canales removidos de ${beforeBannedCount}`);
+      this.#logger.info(`Filtros de prohibidos: ${bannedRemovedCount} canales removidos`);
     }
     
     return channels.slice(skip, skip + limit);
@@ -394,7 +394,7 @@ export class LocalM3UChannelRepository extends ChannelRepository {
   }
 
   async refreshFromRemote() {
-    this.#logger.info('Forzando refresco desde archivo M3U local...');
+    this.#logger.info('Forzando refresco de M3U local...');
     await this.#loadAndParseM3U();
   }
 
@@ -411,12 +411,12 @@ export class LocalM3UChannelRepository extends ChannelRepository {
   async markChannelAsValidated(channelId) {
     this.#validatedChannels.set(channelId, new Date());
     this.#deactivatedChannels.delete(channelId);
-    this.#logger.debug(`Canal local M3U ${channelId} marcado como validado`);
+    this.#logger.debug(`Canal M3U local ${channelId} validado`);
   }
 
   async deactivateChannel(channelId, reason) {
     this.#deactivatedChannels.add(channelId);
-    this.#logger.info(`Canal local M3U ${channelId} desactivado: ${reason}`);
+    this.#logger.info(`Canal M3U local ${channelId} desactivado: ${reason}`);
   }
 
   async getDeactivationStats() {

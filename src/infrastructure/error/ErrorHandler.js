@@ -132,7 +132,7 @@ export class ErrorHandler {
       ErrorHandler.#instance.handleAsyncError(error, context);
     } else {
       // Fallback si no hay instancia disponible
-      console.error(`[${context}] Error:`, error.message);
+      console.error(`[${context}] Error: ${error.message}`);
       if (error.stack) {
         console.error(error.stack);
       }
@@ -192,7 +192,7 @@ export class ErrorHandler {
    */
   handleGracefulShutdown(signal) {
     if (typeof signal !== 'string') {
-      throw new TypeError('Signal debe ser string');
+      throw new TypeError('La señal debe ser un string');
     }
     
     this.#gracefulShutdown(signal);
@@ -205,7 +205,7 @@ export class ErrorHandler {
    */
   #gracefulShutdown(reason) {
     try {
-      this.#logger.info(`Iniciando cierre graceful por: ${reason}`);
+      this.#logger.info(`Cierre graceful por: ${reason}`);
       
       // Dar tiempo para que las operaciones en curso terminen
       setTimeout(() => {
@@ -214,7 +214,7 @@ export class ErrorHandler {
       }, 5000);
     } catch (shutdownError) {
       // Usar logging de fallback si el logger principal falla
-      fallbackErrorLogging(`Error durante cierre graceful: ${shutdownError.message}`);
+      fallbackErrorLogging(`Error en cierre graceful: ${shutdownError.message}`);
       process.exit(1);
     }
   }
@@ -250,7 +250,7 @@ export class ErrorHandler {
    */
   handleAsyncError(error, context = 'unknown', metadata = {}) {
     if (!(error instanceof Error)) {
-      throw new TypeError('Error debe ser instancia de Error');
+      throw new TypeError('El error debe ser una instancia de Error');
     }
     
     const errorInfo = formatError(error, context, metadata);
@@ -287,13 +287,13 @@ export class ErrorHandler {
    */
   handleValidationError(error, context = {}) {
     if (!(error instanceof ValidationError)) {
-      throw new TypeError('Error debe ser instancia de ValidationError');
+      throw new TypeError('El error debe ser una instancia de ValidationError');
     }
     
     this.#trackError('validation', error);
     
     const errorInfo = formatError(error, context);
-    this.#logger.warn('Error de validación', errorInfo);
+    this.#logger.warn('Error de validación:', errorInfo);
     
     return createValidationErrorResponse(error);
   }
@@ -323,13 +323,13 @@ export class ErrorHandler {
    */
   handleConfigurationError(error, context = {}) {
     if (!(error instanceof ConfigurationError)) {
-      throw new TypeError('Error debe ser instancia de ConfigurationError');
+      throw new TypeError('El error debe ser una instancia de ConfigurationError');
     }
     
     this.#trackError('configuration', error);
     
     const errorInfo = formatError(error, context);
-    this.#logger.error('Error de configuración', errorInfo);
+    this.#logger.error('Error de configuración:', errorInfo);
     
     return createConfigurationErrorResponse(error);
   }
@@ -345,7 +345,7 @@ export class ErrorHandler {
   handleAddonError(error, handlerType, args, startTime) {
     const duration = Date.now() - startTime;
     
-    this.#logger.error(`${handlerType} request failed in ${duration}ms:`, {
+    this.#logger.error(`Fallo en ${handlerType} (${duration}ms):`, {
       error: error.message,
       stack: this.#config.isDevelopment() ? error.stack : undefined,
       args: args
@@ -400,12 +400,12 @@ export class ErrorHandler {
           throw new ValidationError(`Argumentos de ${handlerType} inválidos`);
         }
 
-        this.#logger.debug(`${handlerType} request: ${JSON.stringify(args)}`);
+        this.#logger.debug(`Request ${handlerType}: ${JSON.stringify(args)}`);
         
         const result = await handler(args);
         
         const duration = Date.now() - startTime;
-        this.#logger.debug(`${handlerType} request completed in ${duration}ms`);
+        this.#logger.debug(`Request ${handlerType} completado en ${duration}ms`);
         
         // Validar respuesta antes de enviar
         this.#validateAddonResponse(result, handlerType);

@@ -261,7 +261,7 @@ export function trackPlaylistError(playlistErrorStats, index, url, errorMessage,
   const currentCount = playlistErrorStats.errorsByType.get(errorType) || 0;
   playlistErrorStats.errorsByType.set(errorType, currentCount + 1);
   
-  logger.warn(`❌ Error procesando playlist ${index} (${url}): ${errorMessage}`);
+  logger.warn(`Error procesando playlist ${index} (${url}): ${errorMessage}`);
 }
 
 /**
@@ -271,7 +271,7 @@ export function trackPlaylistError(playlistErrorStats, index, url, errorMessage,
  */
 export function logPlaylistErrorStats(playlistErrorStats, logger) {
   if (playlistErrorStats.failedPlaylists > 0) {
-    logger.warn(`📊 Resumen de errores de playlist: ${playlistErrorStats.failedPlaylists} de ${playlistErrorStats.totalPlaylists} playlists fallaron`);
+    logger.warn(`Resumen errores playlist: ${playlistErrorStats.failedPlaylists}/${playlistErrorStats.totalPlaylists} fallaron`);
     
     // Log errores por tipo
     for (const [type, count] of playlistErrorStats.errorsByType) {
@@ -283,7 +283,7 @@ export function logPlaylistErrorStats(playlistErrorStats, logger) {
     const examples = playlistErrorStats.errors.slice(0, maxExamples);
     logger.warn(`   Ejemplos de errores:`);
     examples.forEach(error => {
-      logger.warn(`     • Playlist ${error.index}: ${error.error}`);
+      logger.warn(`     - Playlist ${error.index}: ${error.error}`);
     });
     
     if (playlistErrorStats.errors.length > maxExamples) {
@@ -353,7 +353,7 @@ export async function processPlaylistUrls(
   
   resetPlaylistErrorStats();
   playlistErrorStats.totalPlaylists = playlistUrls.length;
-  logger.info(`🔄 Procesando ${playlistUrls.length} playlists con máximo ${maxConcurrent} concurrentes...`);
+  logger.info(`Procesando ${playlistUrls.length} playlists (máx. ${maxConcurrent} concurrentes)...`);
   
   // Procesar en lotes para controlar la concurrencia
   for (let i = 0; i < playlistUrls.length; i += maxConcurrent) {
@@ -362,7 +362,7 @@ export async function processPlaylistUrls(
       const globalIndex = i + index + 1;
       
       try {
-        logger.debug(`📋 Procesando playlist ${globalIndex}/${playlistUrls.length}: ${playlistUrl}`);
+        logger.debug(`Procesando playlist ${globalIndex}/${playlistUrls.length}: ${playlistUrl}`);
         
         // Descargar playlist M3U con timeout configurable para servidores lentos
         const playlistTimeout = config.validation?.playlistFetchTimeout || 180000; // 3 minutos por defecto
@@ -387,11 +387,11 @@ export async function processPlaylistUrls(
         const channels = await m3uParser.parseM3U(m3uContent);
         
         if (channels.length > 0) {
-          logger.debug(`✅ Playlist ${globalIndex} procesada: ${channels.length} canales`);
+          logger.debug(`Playlist ${globalIndex} procesada: ${channels.length} canales`);
           playlistErrorStats.successfulPlaylists++;
           return channels;
         } else {
-          logger.debug(`⚠️ Playlist ${globalIndex} sin canales válidos`);
+          logger.debug(`Playlist ${globalIndex} sin canales válidos`);
           playlistErrorStats.successfulPlaylists++;
           return [];
         }
@@ -417,6 +417,6 @@ export async function processPlaylistUrls(
   }
   
   logPlaylistErrorStats();
-  logger.info(`✅ Procesamiento de playlists completado: ${allChannels.length} canales totales`);
+  logger.info(`Procesamiento de playlists completado: ${allChannels.length} canales`);
   return allChannels;
 }

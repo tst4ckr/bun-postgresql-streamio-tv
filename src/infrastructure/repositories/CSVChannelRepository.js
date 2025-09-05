@@ -62,10 +62,10 @@ export class CSVChannelRepository extends ChannelRepository {
     }
 
     try {
-      this.#logger.info(`Cargando canales desde CSV: ${this.#filePath}`);
+      this.#logger.info(`Cargando canales desde: ${this.#filePath}`);
       await this.#loadChannelsFromCSV();
       this.#isInitialized = true;
-      this.#logger.info(`Repositorio CSV inicializado con ${this.#channels.length} canales`);
+      this.#logger.info(`Repositorio CSV inicializado: ${this.#channels.length} canales`);
       
     } catch (error) {
       throw new RepositoryError(`Error inicializando repositorio CSV: ${error.message}`, error);
@@ -105,7 +105,7 @@ export class CSVChannelRepository extends ChannelRepository {
 
             // Aplicar filtros de configuración
             if (!this.#passesConfigFilters(channel)) {
-              this.#logger.debug(`Canal filtrado por configuración: ${channel.id}`);
+              this.#logger.debug(`Canal filtrado por config: ${channel.id}`);
               return;
             }
 
@@ -118,7 +118,7 @@ export class CSVChannelRepository extends ChannelRepository {
                   processedUrls.add(channel.streamUrl);
                   this.#logger.debug(`Stream activo agregado: ${channel.streamUrl}`);
                 } else {
-                  this.#logger.warn(`Stream descartado - no disponible: ${channel.streamUrl}`);
+                  this.#logger.warn(`Stream no disponible, descartado: ${channel.streamUrl}`);
                 }
               })
               .catch(error => {
@@ -149,7 +149,7 @@ export class CSVChannelRepository extends ChannelRepository {
               this.#channelMap = filteredChannelMap;
               this.#lastLoadTime = new Date();
               
-              this.#logger.info(`CSV cargado: ${filteredChannels.length} canales válidos (${bannedCount} canales prohibidos removidos)`);
+              this.#logger.info(`CSV cargado: ${filteredChannels.length} canales (${bannedCount} prohibidos)`);
               resolve();
             })
             .catch(error => {
@@ -311,7 +311,7 @@ export class CSVChannelRepository extends ChannelRepository {
       if (removedCount > 0) {
         const originalChannels = this.#channels.slice(0, beforeCount);
         const stats = this.#contentFilter.getFilterStats(originalChannels, channels);
-        this.#logger.info(`Filtros de contenido aplicados: ${removedCount} canales removidos`, {
+        this.#logger.info(`Filtros de contenido: ${removedCount} canales removidos`, {
           religious: stats.removedByCategory.religious,
           adult: stats.removedByCategory.adult,
           political: stats.removedByCategory.political
@@ -326,7 +326,7 @@ export class CSVChannelRepository extends ChannelRepository {
     const bannedRemovedCount = beforeBannedCount - afterBannedCount;
     
     if (bannedRemovedCount > 0) {
-      this.#logger.info(`Filtros de canales prohibidos aplicados: ${bannedRemovedCount} canales removidos de ${beforeBannedCount}`);
+      this.#logger.info(`Filtro de prohibidos: ${bannedRemovedCount} canales removidos de ${beforeBannedCount}`);
     }
     
     return channels;
@@ -369,7 +369,7 @@ export class CSVChannelRepository extends ChannelRepository {
     const bannedRemovedCount = beforeBannedCount - afterBannedCount;
     
     if (bannedRemovedCount > 0) {
-      this.#logger.info(`Filtros de canales prohibidos aplicados: ${bannedRemovedCount} canales removidos de ${beforeBannedCount}`);
+      this.#logger.info(`Filtro de prohibidos: ${bannedRemovedCount} canales removidos de ${beforeBannedCount}`);
     }
     
     return filteredChannels;
@@ -399,7 +399,7 @@ export class CSVChannelRepository extends ChannelRepository {
     const bannedRemovedCount = beforeBannedCount - afterBannedCount;
     
     if (bannedRemovedCount > 0) {
-      this.#logger.info(`Filtros de canales prohibidos aplicados: ${bannedRemovedCount} canales removidos de ${beforeBannedCount}`);
+      this.#logger.info(`Filtro de prohibidos: ${bannedRemovedCount} canales removidos de ${beforeBannedCount}`);
     }
     
     return filteredChannels;

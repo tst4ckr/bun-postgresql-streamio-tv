@@ -48,18 +48,18 @@ class TVIPTVAddon {
     this.#logger = this.#createLogger();
     this.#errorHandler = new ErrorHandler(this.#logger, this.#config);
     this.#securityMiddleware = new SecurityMiddleware(this.#config, this.#logger);
-    this.#logger.info('Inicializando TV IPTV Addon...');
+    this.#logger.info('Iniciando Addon...');
   }
 
 
   async initialize() {
     if (this.#isInitialized) {
-      this.#logger.warn('Addon ya inicializado');
+      this.#logger.warn('Addon inicializado');
       return;
     }
 
     try {
-      this.#logger.info('Configuración cargada:', this.#config.toJSON());
+      this.#logger.info('Configuración:', this.#config.toJSON());
 
       await this.#initializeChannelRepository();
       await this.#initializeServices();
@@ -74,10 +74,10 @@ class TVIPTVAddon {
       }
 
       this.#isInitialized = true;
-      this.#logger.info('Addon inicializado correctamente');
+      this.#logger.info('Addon listo');
 
     } catch (error) {
-      this.#logger.error('Error inicializando addon:', error); // ERROR: Fallo en inicialización
+      this.#logger.error('Error de inicialización:', error); // ERROR: Fallo en inicialización
       throw error;
     }
   }
@@ -91,17 +91,15 @@ class TVIPTVAddon {
     const addonInterface = this.#addonBuilder.getInterface();
     const { server } = this.#config;
 
-    this.#logger.info(`Iniciando servidor en puerto ${server.port}...`);
+    this.#logger.info(`Servidor en puerto ${server.port}`);
 
     const serverOptions = this.#securityMiddleware.configureServerOptions();
     serveHTTP(addonInterface, serverOptions);
 
-    this.#logger.info(`✅ Addon iniciado en: ${this.#config.getBaseUrl()}`);
-    this.#logger.info(`📺 Manifest: ${this.#config.getBaseUrl()}/manifest.json`);
-    this.#logger.info(`🔗 Instalar addon: ${this.#config.getBaseUrl()}/manifest.json`);
+    this.#logger.info(`Addon iniciado: ${this.#config.getBaseUrl()}`);
+    this.#logger.info(`Manifest: ${this.#config.getBaseUrl()}/manifest.json`);
+    this.#logger.info(`Instalar: ${this.#config.getBaseUrl()}/install`);
     
-
-
   }
 
 
@@ -119,13 +117,13 @@ class TVIPTVAddon {
 
 
   async #initializeChannelRepository() {
-    this.#logger.info(`Inicializando repositorio a través de Factory...`);
+    this.#logger.info(`Creando repositorio...`);
     this.#channelRepository = await ChannelRepositoryFactory.createRepository(this.#config, this.#logger);
   }
 
 
   async #initializeServices() {
-    this.#logger.info('Inicializando servicios de aplicación...');
+    this.#logger.info('Iniciando servicios...');
 
     // Usar directamente el repositorio como servicio de canales
     this.#channelService = this.#channelRepository;
@@ -142,35 +140,35 @@ class TVIPTVAddon {
       this.#logger
     );
 
-    this.#logger.info('Servicios de aplicación inicializados');
+    this.#logger.info('Servicios listos');
   }
 
   async #generateValidatedChannelsCsv() {
     try {
-      this.#logger.info('Generando archivo CSV con canales validados...');
+      this.#logger.info('Creando CSV de canales...');
       
       const csvService = new ValidatedChannelsCsvService(this.#config, this.#logger);
       const channels = await this.#channelRepository.getAllChannels();
       
       await csvService.writeValidatedChannels(channels);
       
-      this.#logger.info(`Archivo CSV generado exitosamente: ${this.#config.dataSources.validatedChannelsCsv}`);
+      this.#logger.info(`CSV creado: ${this.#config.dataSources.validatedChannelsCsv}`);
     } catch (error) {
-      this.#logger.error('Error generando archivo CSV de canales validados:', error);
+      this.#logger.error('Error al crear CSV:', error);
       throw error;
     }
   }
 
 
   #createAddonBuilder() {
-    this.#logger.info('Creando builder del addon...');
+    this.#logger.info('Creando builder...');
 
     const manifest = this.#config.generateManifest();
-    this.#logger.debug('Manifest generado:', manifest);
+    this.#logger.debug('Manifest:', manifest);
 
     this.#addonBuilder = new addonBuilder(manifest);
     
-    this.#logger.info(`Addon builder creado: ${manifest.name} v${manifest.version}`);
+    this.#logger.info(`Builder creado: ${manifest.name} v${manifest.version}`);
   }
 
   #configureHandlers() {
@@ -199,7 +197,7 @@ class TVIPTVAddon {
     
     this.#addonBuilder.defineStreamHandler(streamHandler.createAddonHandler());
 
-    this.#logger.info('Handlers configurados correctamente');
+    this.#logger.info('Handlers listos');
   }
 
 
@@ -234,7 +232,7 @@ class TVIPTVAddon {
       const channels = await this.#channelRepository.getAllChannels();
       
       if (!channels?.length) {
-        this.#logger.warn('No se encontraron canales para validar');
+        this.#logger.warn('Sin canales para validar');
         return;
       }
       
@@ -245,10 +243,10 @@ class TVIPTVAddon {
       const successRate = total > 0 ? ((ok / total) * 100).toFixed(1) : '0.0';
       const duration = ((Date.now() - startTime) / 1000).toFixed(1);
       
-      this.#logger.info(`Validación completada: ${ok}/${total} OK (${successRate}%) en ${duration}s`);
+      this.#logger.info(`Validación: ${ok}/${total} OK (${successRate}%) en ${duration}s`);
       
     } catch (error) {
-      this.#logger.error('Error validando streams:', error);
+      this.#logger.error('Error de validación:', error);
     }
   }
 
@@ -267,7 +265,7 @@ async function main() {
     const addon = new TVIPTVAddon();
     await addon.start();
   } catch (error) {
-    console.error('❌ Error fatal al iniciar el addon:', error.message || error);
+    console.error('❌ Error fatal:', error.message || error);
     if (process.env.NODE_ENV === 'development') {
       console.error('Stack trace:', error.stack);
     }

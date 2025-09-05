@@ -94,15 +94,15 @@ export class Channel {
    */
   #validateRequiredFields({ id, name, streamUrl }) {
     if (!id || typeof id !== 'string' || id.trim().length === 0) {
-      throw new Error('El ID del canal es requerido y debe ser una cadena no vacía');
+      throw new Error('El ID del canal es requerido');
     }
 
     if (!name || typeof name !== 'string' || name.trim().length === 0) {
-      throw new Error('El nombre del canal es requerido y debe ser una cadena no vacía');
+      throw new Error('El nombre del canal es requerido');
     }
 
     if (!streamUrl || typeof streamUrl !== 'string' || streamUrl.trim().length === 0) {
-      throw new Error('La URL del stream es requerida y debe ser una cadena no vacía');
+      throw new Error('La URL del stream es requerida');
     }
   }
 
@@ -113,27 +113,27 @@ export class Channel {
   #validateBusinessRules({ id, name, streamUrl, type, genre }) {
     // Validar formato del ID
     if (!this.#isValidChannelId(id)) {
-      throw new Error('El ID del canal debe tener el formato correcto (tv_ o ch_ seguido de caracteres válidos)');
+      throw new Error('El ID del canal no tiene un formato válido (ej: tv_ o ch_)');
     }
 
     // Validar URL del stream
     if (!this.#isValidStreamUrl(streamUrl)) {
-      throw new Error('La URL del stream no tiene un formato válido');
+      throw new Error('La URL del stream no es válida');
     }
 
     // Validar tipo
     if (!Object.values(Channel.TYPES).includes(type)) {
-      throw new Error(`Tipo de canal inválido: ${type}. Debe ser uno de: ${Object.values(Channel.TYPES).join(', ')}`);
+      throw new Error(`Tipo de canal inválido: ${type}`);
     }
 
     // Validar género
     if (!Object.values(Channel.GENRES).includes(genre)) {
-      throw new Error(`Género inválido: ${genre}. Valores válidos: ${Object.values(Channel.GENRES).join(', ')}`);
+      throw new Error(`Género inválido: ${genre}`);
     }
 
     // Validar longitud del nombre
     if (name.length > 100) {
-      throw new Error('El nombre del canal no puede exceder 100 caracteres');
+      throw new Error('El nombre del canal excede los 100 caracteres');
     }
   }
 

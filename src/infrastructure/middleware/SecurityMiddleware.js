@@ -32,17 +32,17 @@ export class SecurityMiddleware {
 
     if (this.#config.server.enableHelmet) {
       middlewares.push(this.#createHelmetMiddleware());
-      this.#logger.info('Helmet configurado con políticas de seguridad avanzadas');
+      this.#logger.info('Helmet con políticas de seguridad avanzadas activado');
     }
 
     if (this.#config.server.enableCors) {
       middlewares.push(this.#createCorsMiddleware());
-      this.#logger.info('CORS configurado con políticas de origen seguras');
+      this.#logger.info('CORS con políticas de origen seguras activado');
     }
 
     if (this.#config.server.rateLimitRequestsPerMinute > 0) {
       middlewares.push(this.#createRateLimitMiddleware());
-      this.#logger.info(`Rate limiting configurado: ${this.#config.server.rateLimitRequestsPerMinute} requests/minuto`);
+      this.#logger.info(`Rate limiting activado: ${this.#config.server.rateLimitRequestsPerMinute} req/min`);
     }
 
     return middlewares;
@@ -64,9 +64,9 @@ export class SecurityMiddleware {
     const staticDir = path.join(process.cwd(), 'static');
     if (fs.existsSync(staticDir)) {
       serverOptions.static = '/static';
-      this.#logger.info('Directorio static configurado para servir archivos estáticos');
+      this.#logger.info('Directorio static para archivos estáticos configurado');
     } else {
-      this.#logger.info('Directorio static no encontrado, omitiendo configuración de archivos estáticos');
+      this.#logger.info('Directorio static no encontrado, omitiendo configuración');
     }
 
     // Aplicar middleware si existe
@@ -74,7 +74,7 @@ export class SecurityMiddleware {
       serverOptions.middleware = middlewares;
     }
 
-    this.#logger.info(`Opciones del servidor configuradas para puerto ${serverOptions.port}`);
+    this.#logger.info(`Opciones de servidor configuradas para puerto ${serverOptions.port}`);
     return serverOptions;
   }
 
@@ -174,7 +174,7 @@ export class SecurityMiddleware {
       windowMs: 60 * 1000, // 1 minuto
       max: this.#config.server.rateLimitRequestsPerMinute,
       message: {
-        error: 'Demasiadas solicitudes desde esta IP, intenta de nuevo en un minuto.',
+        error: 'Demasiadas solicitudes, intenta de nuevo en un minuto.',
         retryAfter: 60
       },
       standardHeaders: true,

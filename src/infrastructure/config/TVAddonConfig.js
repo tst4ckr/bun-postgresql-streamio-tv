@@ -267,33 +267,33 @@ export class TVAddonConfig {
 
     // Validar configuración del servidor
     if (server.port < 1 || server.port > 65535) {
-      throw new Error('Puerto del servidor debe estar entre 1 y 65535');
+      throw new Error('Puerto del servidor inválido');
     }
 
     // Validar configuración del addon
     if (!addon.id || !addon.name) {
-      throw new Error('ID y nombre del addon son requeridos');
+      throw new Error('ID y nombre del addon requeridos');
     }
 
     // Validar ID del addon
     if (!this.#isValidAddonId(addon.id)) {
-      throw new Error('ID del addon debe seguir el formato: org.domain.addon-name');
+      throw new Error('ID de addon con formato inválido');
     }
 
     // Validar fuente de datos
     const validSources = (process.env.VALID_SOURCES || 'csv,m3u,remote_m3u,hybrid,automatic').split(',');
     if (!validSources.includes(dataSources.channelsSource)) {
-      throw new Error(`Fuente de canales inválida. Valores válidos: ${validSources.join(', ')}`);
+      throw new Error(`Fuente de canales inválida. Usar: ${validSources.join(', ')}`);
     }
 
     // Validar URLs si son necesarias
     if (dataSources.channelsSource.includes('m3u') && !dataSources.m3uUrl) {
-      throw new Error('URL de M3U es requerida para fuentes remotas');
+      throw new Error('URL M3U requerida para fuentes remotas');
     }
 
     // Validar configuración del modo automático
     if (dataSources.channelsSource === 'automatic' && !dataSources.autoM3uUrl) {
-      throw new Error('AUTO_M3U_URL es requerida para el modo automático');
+      throw new Error('URL M3U automática requerida');
     }
   }
 

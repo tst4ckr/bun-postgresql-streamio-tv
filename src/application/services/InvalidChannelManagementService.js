@@ -29,7 +29,7 @@ export class InvalidChannelManagementService {
    */
   async processValidationResults(validationResults) {
     if (!this.isEnabled()) {
-      this.#logger.debug('Desactivación automática de canales inválidos está deshabilitada');
+      this.#logger.debug('Desactivación automática deshabilitada');
       return { validated: 0, deactivated: 0, errors: [] };
     }
 
@@ -50,7 +50,7 @@ export class InvalidChannelManagementService {
           channelName: result.name,
           error: error.message
         });
-        this.#logger.error(`Error procesando canal ${result.id}:`, error);
+        this.#logger.error(`Error en canal ${result.id}:`, error);
       }
     });
 
@@ -69,7 +69,7 @@ export class InvalidChannelManagementService {
    */
   async deactivateChannel(channelId, reason = 'Manual deactivation') {
     if (!this.isEnabled()) {
-      this.#logger.warn(`Intento de desactivar canal ${channelId} pero REMOVE_INVALID_STREAMS está deshabilitado`);
+      this.#logger.warn(`No se puede desactivar ${channelId}: REMOVE_INVALID_STREAMS deshabilitado`);
       return false;
     }
 
@@ -85,7 +85,7 @@ export class InvalidChannelManagementService {
       
       return true;
     } catch (error) {
-      this.#logger.error(`Error desactivando canal ${channelId}:`, error);
+      this.#logger.error(`Error al desactivar ${channelId}:`, error);
       throw error;
     }
   }
@@ -98,7 +98,7 @@ export class InvalidChannelManagementService {
   async markChannelAsValidated(channelId) {
     try {
       await this.#channelRepository.markChannelAsValidated(channelId);
-      this.#logger.debug(`Canal ${channelId} marcado como validado`);
+      this.#logger.debug(`Canal ${channelId} validado`);
       
       this.#emitChannelEvent('channel.validated', {
         channelId,
@@ -107,7 +107,7 @@ export class InvalidChannelManagementService {
       
       return true;
     } catch (error) {
-      this.#logger.error(`Error marcando canal ${channelId} como validado:`, error);
+      this.#logger.error(`Error al validar ${channelId}:`, error);
       throw error;
     }
   }
@@ -131,7 +131,7 @@ export class InvalidChannelManagementService {
    */
   async #markChannelAsValid(result) {
     await this.#channelRepository.markChannelAsValidated(result.id);
-    this.#logger.debug(`Canal ${result.id} (${result.name}) marcado como válido`);
+    this.#logger.debug(`Canal ${result.id} validado`);
   }
 
   /**
@@ -142,7 +142,7 @@ export class InvalidChannelManagementService {
   async #deactivateInvalidChannel(result) {
     const reason = this.#extractFailureReason(result);
     await this.#channelRepository.deactivateChannel(result.id, reason);
-    this.#logger.info(`Canal ${result.id} (${result.name}) desactivado: ${reason}`);
+    this.#logger.info(`Canal ${result.id} desactivado: ${reason}`);
   }
 
   /**
@@ -163,12 +163,12 @@ export class InvalidChannelManagementService {
   #logProcessingResults(stats) {
     if (stats.validated > 0 || stats.deactivated > 0) {
       this.#logger.info(
-        `Procesamiento de validación completado: ${stats.validated} validados, ${stats.deactivated} desactivados`
+        `Validación: ${stats.validated} OK, ${stats.deactivated} desactivados`
       );
     }
 
     if (stats.errors.length > 0) {
-      this.#logger.warn(`${stats.errors.length} errores durante el procesamiento de canales`);
+      this.#logger.warn(`${stats.errors.length} errores en procesamiento`);
     }
   }
 

@@ -53,7 +53,7 @@ export class CatalogHandler {
       const allChannels = await this.#csvRepository.getAllChannels();
       
       if (!allChannels || allChannels.length === 0) {
-        this.#logger.warn('No se encontraron canales en tv.csv');
+        this.#logger.warn('No hay canales en tv.csv');
         return { metas: [] };
       }
 
@@ -74,7 +74,7 @@ export class CatalogHandler {
       // Convertir canales a formato meta de Stremio
       const metas = paginatedChannels.map(channel => channel.toMetaPreview());
 
-      this.#logger.info(`Catálogo '${id}' servido: ${metas.length} elementos (total: ${filteredChannels.length})`);
+      this.#logger.info(`Catálogo '${id}': ${metas.length} de ${filteredChannels.length}`);
       
       return {
         metas,
@@ -82,7 +82,7 @@ export class CatalogHandler {
       };
 
     } catch (error) {
-      this.#logger.error('Error en CatalogHandler:', error);
+      this.#logger.error('Error de catálogo:', error);
       return this.#errorHandler.handleError(error, 'catalog');
     }
   }
@@ -240,7 +240,7 @@ export class CatalogHandler {
         byQuality: this.#groupByQuality(allChannels)
       };
     } catch (error) {
-      this.#logger.error('Error obteniendo estadísticas del catálogo:', error);
+      this.#logger.error('Error de estadísticas:', error);
       return {
         total: 0,
         byCountry: {},
