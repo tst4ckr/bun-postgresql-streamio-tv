@@ -314,11 +314,10 @@ export class HybridChannelRepository extends ChannelRepository {
             onlyWorkingHttp: true
           });
           
-          // Usar solo canales que pasaron la conversión/validación
           processedM3uChannels = conversionResult.processed;
           
           this.#logger.info(
-            `Conversión HTTPS→HTTP: ${conversionResult.stats.converted} convertidos, ${conversionResult.stats.httpWorking} funcionales`
+            `Conversión HTTPS→HTTP: ${conversionResult.stats.total} procesados, ${conversionResult.stats.httpWorking} funcionales`
           );
           
           if (conversionResult.stats.failed > 0) {
@@ -359,7 +358,6 @@ export class HybridChannelRepository extends ChannelRepository {
           `Canales CSV preservados: ${allCsvChannels.length} (prioridad absoluta)`
         );
         
-        // Usar solo canales M3U válidos para deduplicación
         validatedM3uChannels = validM3uChannels;
         
         // Marcar solo canales M3U inválidos como desactivados
@@ -395,7 +393,6 @@ export class HybridChannelRepository extends ChannelRepository {
       
       // Actualizar canales y mapa con resultados filtrados
       this.#channels = finalFilteredChannels;
-      this.#channelMap.clear();
       this.#channels.forEach(channel => {
         this.#channelMap.set(channel.id, channel);
       });
@@ -407,7 +404,7 @@ export class HybridChannelRepository extends ChannelRepository {
       const hdUpgrades = metrics.hdUpgrades;
       
       this.#logger.info(
-        `📊 Deduplicación completada: ${allCsvChannels.length} CSV (preservados) + ${m3uAdded} M3U (validados) = ${this.#channels.length} canales finales (${m3uDuplicates} duplicados omitidos, ${hdUpgrades} actualizados a HD${allowedRemovedCount > 0 ? `, ${allowedRemovedCount} canales no permitidos removidos` : ''}${bannedRemovedCount > 0 ? `, ${bannedRemovedCount} canales prohibidos removidos` : ''})`
+        `📊 Deduplicación completada: ${allCsvChannels.length} CSV (preservados) + ${m3uAdded} M3U (validados) = ${this.#channels.length} canales (${m3uDuplicates} duplicados omitidos, ${hdUpgrades} actualizados a HD${allowedRemovedCount > 0 ? `, ${allowedRemovedCount} canales no permitidos removidos` : ''}${bannedRemovedCount > 0 ? `, ${bannedRemovedCount} canales prohibidos removidos` : ''})`
       );
       
       this.#lastLoadTime = new Date();
@@ -428,12 +425,12 @@ export class HybridChannelRepository extends ChannelRepository {
    */
   async #refreshAllSources() {
     try {
-      this.#logger.info('Refrescando todas las fuentes del repositorio híbrido...');
+      this.#logger.info('Refrescando todas las fuentes...');
       
       // 1. Refrescar CSV principal
       await this.#csvRepository.refreshFromRemote();
       const csvChannels = await this.#csvRepository.getAllChannelsUnfiltered();
-      this.#logger.info(`Refrescados ${csvChannels.length} canales desde CSV principal`);
+      this.#logger.info(`CSV principal refrescado: ${csvChannels.length} canales`);
       
       // 2. Refrescar CSVs adicionales
       const additionalCsvChannels = [];
@@ -443,44 +440,42 @@ export class HybridChannelRepository extends ChannelRepository {
           await additionalCsvRepo.refreshFromRemote();
           const channels = await additionalCsvRepo.getAllChannelsUnfiltered();
           additionalCsvChannels.push(...channels);
-          this.#logger.info(`CSV adicional ${i + 1}: ${channels.length} canales refrescados`);
+          this.#logger.info(`CSV adicional ${i + 1} refrescado: ${channels.length} canales`);
         } catch (error) {
           this.#logger.error(`Error refrescando CSV adicional ${i + 1}:`, error);
-          // Continuar con los siguientes archivos aunque uno falle
         }
       }
       
-      // 3. Combinar todos los canales CSV (principal + adicionales)
+      // 3. Combinar canales CSV
       const allCsvChannels = [...csvChannels, ...additionalCsvChannels];
-      this.#logger.info(`🔄 Procesando ${csvChannels.length} canales CSV principales + ${additionalCsvChannels.length} canales CSV adicionales = ${allCsvChannels.length} canales CSV totales`);
+      this.#logger.info(`Procesando ${allCsvChannels.length} canales CSV refrescados`);
       
-      // 4. Reinicializar con todos los canales CSV
+      // 4. Reinicializar con canales CSV
       this.#channels = [...allCsvChannels];
       this.#channelMap.clear();
       allCsvChannels.forEach(channel => this.#channelMap.set(channel.id, channel));
       
-      // Procesar AUTO_M3U_URL en modo automático si está configurado
+      // 5. Procesar fuente automática
       const { autoM3uUrl } = this.#config.dataSources;
       let automaticChannels = [];
       if (autoM3uUrl) {
-        this.#logger.info('🤖 Refrescando fuente automática (AUTO_M3U_URL)...');
+        this.#logger.info('Refrescando fuente automática...');
         try {
           automaticChannels = await this.#processAutomaticSource();
-          this.#logger.info(`📺 Canales refrescados desde fuente automática: ${automaticChannels.length}`);
+          this.#logger.info(`Fuente automática refrescada: ${automaticChannels.length} canales`);
         } catch (error) {
           this.#logger.error(`Error refrescando fuente automática: ${error.message}`);
         }
       }
 
-      // Cargar todos los canales M3U para procesamiento
+      // 6. Cargar canales M3U
       const allM3uChannels = [...automaticChannels];
       for (let i = 0; i < this.#m3uRepositories.length; i++) {
         const m3uRepo = this.#m3uRepositories[i];
         const m3uUrl = m3uRepo.url;
         
-        // Saltar si es la misma URL que AUTO_M3U_URL ya procesada
         if (autoM3uUrl && m3uUrl === autoM3uUrl) {
-          this.#logger.debug(`Refresco M3U ${i + 1}: Saltando URL duplicada con AUTO_M3U_URL`);
+          this.#logger.debug(`Refresco M3U ${i + 1}: Saltando URL duplicada (automática)`);
           continue;
         }
         
@@ -488,48 +483,48 @@ export class HybridChannelRepository extends ChannelRepository {
           await m3uRepo.refreshFromRemote();
           const m3uChannels = await m3uRepo.getAllChannelsUnfiltered();
           allM3uChannels.push(...m3uChannels);
-          this.#logger.debug(`Refresco M3U ${i + 1}: ${m3uChannels.length} canales cargados`);
+          this.#logger.debug(`Refresco M3U ${i + 1}: ${m3uChannels.length} canales`);
         } catch (error) {
-          this.#logger.error(`Error refrescando fuente M3U ${i + 1}:`, error);
+          this.#logger.error(`Error refrescando M3U ${i + 1}:`, error);
         }
       }
       
-      // Aplicar conversión HTTPS→HTTP durante refresco ANTES de deduplicación
+      // 7. Aplicar conversión HTTPS→HTTP
       let processedM3uChannels = allM3uChannels;
       
       if (this.#httpsToHttpService.isEnabled() && allM3uChannels.length > 0) {
-        this.#logger.info(`🔄 Conversión HTTPS→HTTP durante refresco: ${allM3uChannels.length} canales M3U`);
+        this.#logger.info(`Conversión HTTPS→HTTP en refresco para ${allM3uChannels.length} canales M3U`);
         
         try {
           const conversionResult = await this.#httpsToHttpService.processChannels(allM3uChannels, {
-            concurrency: this.#config.validation?.maxValidationConcurrency || 5, // Optimizado para alta latencia
-            showProgress: false, // Menos verbose durante refresco
+            concurrency: this.#config.validation?.maxValidationConcurrency || 5,
+            showProgress: false,
             onlyWorkingHttp: true
           });
           
           processedM3uChannels = conversionResult.processed;
           
           this.#logger.info(
-            `✅ Conversión refresco completada: ${conversionResult.stats.total} procesados, ${conversionResult.stats.httpWorking} (${(conversionResult.stats.httpWorking/conversionResult.stats.total*100).toFixed(1)}%) funcionales HTTP`
+            `Conversión en refresco: ${conversionResult.stats.total} procesados, ${conversionResult.stats.httpWorking} (${(conversionResult.stats.httpWorking/conversionResult.stats.total*100).toFixed(1)}%) funcionales`
           );
           
         } catch (error) {
-          this.#logger.error('Error durante conversión HTTPS→HTTP en refresco:', error);
+          this.#logger.error('Error en conversión HTTPS→HTTP durante refresco:', error);
           processedM3uChannels = allM3uChannels;
         }
       }
       
-      // Validación temprana M3U durante refresco (CSV preservado)
+      // 8. Validación temprana M3U
       let validatedM3uChannels = processedM3uChannels;
       
       if (this.#streamValidationService.isEnabled()) {
-        this.#logger.info(`🔍 Validación temprana durante refresco: ${processedM3uChannels.length} canales M3U (CSV exento)`);
+        this.#logger.info(`Validación temprana en refresco para ${processedM3uChannels.length} canales M3U`);
         
         const validationResult = await this.#streamValidationService.validateChannelsBatch(
           processedM3uChannels,
           {
             concurrency: this.#config.validation?.earlyValidationConcurrency || 15,
-            showProgress: false // Menos verbose durante refresco
+            showProgress: false
           }
         );
         
@@ -537,19 +532,17 @@ export class HybridChannelRepository extends ChannelRepository {
         const invalidM3uChannels = validationResult.invalidChannels;
         
         this.#logger.info(
-          `✅ Refresco M3U validado: ${validM3uChannels.length} válidos, ${invalidM3uChannels.length} inválidos`
+          `Refresco M3U validado: ${validM3uChannels.length} válidos, ${invalidM3uChannels.length} inválidos`
         );
         this.#logger.info(
-          `📋 Canales CSV preservados durante refresco: ${allCsvChannels.length}`
+          `Canales CSV preservados en refresco: ${allCsvChannels.length}`
         );
         
         validatedM3uChannels = validM3uChannels;
         
-        // Actualizar solo canales M3U desactivados
-        // Limpiar solo los IDs de M3U, preservar cualquier estado de CSV
         const csvChannelIds = new Set(allCsvChannels.map(ch => ch.id));
         const currentDeactivated = Array.from(this.#deactivatedChannels)
-          .filter(id => csvChannelIds.has(id)); // Preservar estados CSV
+          .filter(id => csvChannelIds.has(id));
         
         this.#deactivatedChannels.clear();
         currentDeactivated.forEach(id => this.#deactivatedChannels.add(id));
@@ -559,47 +552,40 @@ export class HybridChannelRepository extends ChannelRepository {
         });
       }
       
-      // 5. Deduplicación inteligente con prioridad CSV absoluta
+      // 9. Deduplicación y filtrado
       this.#channels = [];
       this.#channelMap.clear();
       
-      // Combinar todos los canales para deduplicación centralizada
       const allChannels = [...allCsvChannels, ...validatedM3uChannels];
       
-      // Aplicar deduplicación centralizada
       const deduplicationResult = await this.#deduplicationService.deduplicateChannels(allChannels);
       
-      // Aplicar filtro inteligente de canales permitidos
       const beforeAllowedCount = deduplicationResult.channels.length;
       const allowedFilteredChannels = filterAllowedChannels(deduplicationResult.channels);
       const afterAllowedCount = allowedFilteredChannels.length;
       const allowedRemovedCount = beforeAllowedCount - afterAllowedCount;
       
-      // Aplicar filtro de canales prohibidos
       const beforeBannedCount = allowedFilteredChannels.length;
       const finalFilteredChannels = filterBannedChannels(allowedFilteredChannels);
       const afterBannedCount = finalFilteredChannels.length;
       const bannedRemovedCount = beforeBannedCount - afterBannedCount;
       
-      // Actualizar canales y mapa con resultados filtrados
       this.#channels = finalFilteredChannels;
-      this.#channelMap.clear();
       this.#channels.forEach(channel => {
         this.#channelMap.set(channel.id, channel);
       });
       
-      // Extraer métricas para logging
       const metrics = deduplicationResult.metrics;
       const m3uAdded = this.#channels.length - allCsvChannels.length;
       const m3uDuplicates = metrics.duplicatesRemoved;
       const hdUpgrades = metrics.hdUpgrades;
       
       this.#logger.info(
-        `📊 Refresco completado: ${allCsvChannels.length} CSV (preservados) + ${m3uAdded} M3U (validados) = ${this.#channels.length} canales finales (${m3uDuplicates} duplicados omitidos, ${hdUpgrades} actualizados a HD${allowedRemovedCount > 0 ? `, ${allowedRemovedCount} canales no permitidos removidos` : ''}${bannedRemovedCount > 0 ? `, ${bannedRemovedCount} canales prohibidos removidos` : ''})`
+        `Refresco y deduplicación: ${allCsvChannels.length} CSV + ${m3uAdded} M3U = ${this.#channels.length} canales (${m3uDuplicates} duplicados, ${hdUpgrades} HD actualizados${allowedRemovedCount > 0 ? `, ${allowedRemovedCount} no permitidos` : ''}${bannedRemovedCount > 0 ? `, ${bannedRemovedCount} prohibidos` : ''})`
       );
       
       this.#lastLoadTime = new Date();
-      this.#logger.info(`🎯 Refresco completado: ${this.#channels.length} canales válidos y únicos`);
+      this.#logger.info(`Refresco completado: ${this.#channels.length} canales`);
       
     } catch (error) {
       this.#logger.error('Error refrescando fuentes:', error);
@@ -671,65 +657,56 @@ export class HybridChannelRepository extends ChannelRepository {
     await this.#refreshIfNeeded();
     let activeChannels = this.#filterActiveChannels([...this.#channels]);
     
-    // Aplicar conversión HTTPS a HTTP si está habilitada
     if (this.#httpsToHttpService.isEnabled()) {
-      this.#logger.info('Aplicando conversión HTTPS a HTTP y validación de streams...');
+      this.#logger.info('Aplicando conversión HTTPS a HTTP y validación...');
       
       try {
-        // Separar canales CSV de canales M3U para preservar CSV
         const csvChannelIds = new Set((await this.#csvRepository.getAllChannelsUnfiltered()).map(ch => ch.id));
         const csvChannels = activeChannels.filter(ch => csvChannelIds.has(ch.id));
         const m3uChannels = activeChannels.filter(ch => !csvChannelIds.has(ch.id));
         
-        this.#logger.info(`🔄 Procesando ${m3uChannels.length} canales M3U (${csvChannels.length} canales CSV preservados)`);
+        this.#logger.info(`Procesando ${m3uChannels.length} canales M3U (${csvChannels.length} CSV preservados)`);
         
-        // Procesar solo canales M3U con validación HTTP
         const conversionResult = await this.#httpsToHttpService.processChannels(m3uChannels, {
-          concurrency: this.#config.validation?.maxValidationConcurrency || 5, // Optimizado para alta latencia
+          concurrency: this.#config.validation?.maxValidationConcurrency || 5,
           showProgress: true,
           onlyWorkingHttp: true
         });
         
-        // Log estadísticas de conversión
-        this.#logger.info(`Conversión HTTPS a HTTP completada: ${conversionResult.stats.total} canales M3U procesados, ${conversionResult.stats.converted} convertidos, ${conversionResult.stats.httpWorking} validados`);
+        this.#logger.info(`Conversión HTTPS a HTTP: ${conversionResult.stats.total} procesados, ${conversionResult.stats.converted} convertidos, ${conversionResult.stats.httpWorking} validados`);
         
         if (conversionResult.stats.failed > 0) {
-          this.#logger.warn(`${conversionResult.stats.failed} canales M3U fallaron en la conversión/validación`);
+          this.#logger.warn(`${conversionResult.stats.failed} canales M3U fallaron conversión/validación`);
         }
         
-        // Combinar canales CSV preservados + canales M3U validados
         activeChannels = [...csvChannels, ...conversionResult.processed];
-        this.#logger.info(`📋 Resultado final: ${csvChannels.length} canales CSV preservados + ${conversionResult.processed.length} canales M3U validados = ${activeChannels.length} canales totales`);
+        this.#logger.info(`Resultado: ${csvChannels.length} CSV + ${conversionResult.processed.length} M3U validados = ${activeChannels.length} canales`);
         
       } catch (error) {
-        this.#logger.error('Error durante conversión HTTPS a HTTP:', error);
-        // En caso de error, continuar con canales originales
+        this.#logger.error('Error en conversión HTTPS a HTTP:', error);
       }
     }
     
-    // Aplicar filtros de contenido si están activos
     if (this.#contentFilter.hasActiveFilters()) {
       const filteredChannels = this.#contentFilter.filterChannels(activeChannels);
       
-      // Log estadísticas de filtrado
       const stats = this.#contentFilter.getFilterStats(activeChannels, filteredChannels);
-      this.#logger.info(`Filtros de contenido aplicados: ${stats.removedChannels} canales removidos (${stats.removalPercentage}%)`);
+      this.#logger.info(`Filtros de contenido: ${stats.removedChannels} removidos (${stats.removalPercentage}%)`);
       
       if (stats.removedChannels > 0) {
-        this.#logger.debug(`Canales removidos por categoría: religioso=${stats.removedByCategory.religious}, adulto=${stats.removedByCategory.adult}, político=${stats.removedByCategory.political}`);
+        this.#logger.debug(`Removidos por categoría: religioso=${stats.removedByCategory.religious}, adulto=${stats.removedByCategory.adult}, político=${stats.removedByCategory.political}`);
       }
       
       activeChannels = filteredChannels;
     }
     
-    // Aplicar filtrado de canales prohibidos (BANNED_CHANNELS)
     const beforeBannedCount = activeChannels.length;
     const finalChannels = filterBannedChannels(activeChannels);
     const afterBannedCount = finalChannels.length;
     const bannedRemovedCount = beforeBannedCount - afterBannedCount;
     
     if (bannedRemovedCount > 0) {
-      this.#logger.info(`Filtros de canales prohibidos aplicados: ${bannedRemovedCount} canales removidos de ${beforeBannedCount}`);
+      this.#logger.info(`Filtros de canales prohibidos: ${bannedRemovedCount} removidos de ${beforeBannedCount}`);
     }
     
     return finalChannels;

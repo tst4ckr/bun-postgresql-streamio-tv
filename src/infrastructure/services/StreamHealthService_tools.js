@@ -178,7 +178,7 @@ export function createChannelWorker(checkChannelFn, logger, incrementCompleted, 
       return result;
     } catch (error) {
       const completed = incrementCompleted();
-      logger.error(`Error validando canal ${channel.id}: ${error.message}`);
+      logger.error(`Error validando ${channel.id}: ${error.message}`);
       
       const errorResult = {
         id: channel.id,

@@ -95,7 +95,7 @@ export class StreamHealthService {
       // Implementar retry con backoff exponencial optimizado para alta latencia
       if (retryCount < maxRetries && isRetryableError(error)) {
         const backoffMs = calculateBackoffTime(retryCount);
-        this.#logger.debug(`Reintentando validación de ${channelId || 'stream'} en ${backoffMs}ms (intento ${retryCount + 1}/${maxRetries + 1}) - Optimizado para alta latencia`);
+        this.#logger.debug(`Reintentando validación de ${channelId || 'stream'} en ${backoffMs}ms (intento ${retryCount + 1}/${maxRetries + 1})`);
         
         await createDelay(backoffMs);
         return this.checkStream(url, channelId, retryCount + 1);
@@ -126,7 +126,7 @@ export class StreamHealthService {
       };
     } catch (error) {
       // Manejo explícito de errores para evitar promesas rechazadas no manejadas
-      this.#logger.warn(`Error validando canal ${channel.id} (${channel.name}): ${error.message}`);
+      this.#logger.warn(`Error validando canal ${channel.id}: ${error.message}`);
       return {
         id: channel.id,
         name: channel.name,
@@ -156,7 +156,7 @@ export class StreamHealthService {
     const baseConcurrency = this.#config.validation.concurrency || 5;
     const concurrency = calculateConcurrencyLimit(baseConcurrency, channels.length);
     
-    this.#logger.info(`Iniciando validación de ${channels.length} canales con concurrencia ${concurrency} - Optimizado para alta latencia`);
+    this.#logger.info(`Iniciando validación de ${channels.length} canales con concurrencia ${concurrency}`);
     
     const results = [];
     let completed = 0;
@@ -177,7 +177,7 @@ export class StreamHealthService {
       results.push(...batchResults);
     }
 
-    this.#logger.info(`Validación completada: ${results.filter(r => r.ok).length}/${channels.length} canales válidos`);
+    this.#logger.info(`Validación completada: ${results.filter(r => r.ok).length}/${channels.length} válidos`);
     return results;
   }
 
@@ -203,7 +203,7 @@ export class StreamHealthService {
       return createValidationReport([], 0, 0);
     }
 
-    this.#logger.info(`🚀 Iniciando validación por lotes: ${channels.length} canales, lotes de ${batchSize}, concurrencia ${concurrency}`);
+    this.#logger.info(`Iniciando validación por lotes: ${channels.length} canales, lotes de ${batchSize}, concurrencia ${concurrency}`);
     
     const allResults = [];
     let totalOk = 0;
@@ -214,7 +214,7 @@ export class StreamHealthService {
       const currentBatch = i / batchSize + 1;
       const batch = channels.slice(i, i + batchSize);
       
-      this.#logger.info(`📦 Procesando lote ${currentBatch}/${totalBatches} (${batch.length} canales)`);
+      this.#logger.info(`Procesando lote ${currentBatch}/${totalBatches}: ${batch.length} canales`);
       
       try {
         const batchResults = await this.checkChannels(batch, (progress) => {
@@ -238,16 +238,16 @@ export class StreamHealthService {
         totalOk += batchOk;
         totalFail += batchFail;
         
-        this.#logger.info(`✅ Lote ${currentBatch} completado: ${batchOk}/${batch.length} válidos`);
+        this.#logger.info(`Lote ${currentBatch} completado: ${batchOk}/${batch.length} válidos`);
         
         // Pausa entre lotes para evitar sobrecarga del sistema
         if (currentBatch < totalBatches && pauseBetweenBatches > 0) {
-          this.#logger.debug(`⏸️ Pausa de ${pauseBetweenBatches}ms antes del siguiente lote`);
+          this.#logger.debug(`Pausa de ${pauseBetweenBatches}ms antes del siguiente lote`);
           await createDelay(pauseBetweenBatches);
         }
         
       } catch (error) {
-        this.#logger.error(`❌ Error en lote ${currentBatch}: ${error.message}`);
+        this.#logger.error(`Error en lote ${currentBatch}: ${error.message}`);
         
         // Marcar todos los canales del lote como fallidos
         const failedBatchResults = batch.map(channel => ({
@@ -264,7 +264,7 @@ export class StreamHealthService {
     }
 
     const finalResult = createValidationReport(allResults, totalOk, totalFail, totalBatches);
-    this.#logger.info(`🎯 Validación por lotes completada: ${totalOk}/${allResults.length} canales válidos (${finalResult.successRate}%)`);
+    this.#logger.info(`Validación por lotes completada: ${totalOk}/${allResults.length} válidos (${finalResult.successRate}%)`);
     
     return finalResult;
   }

@@ -49,11 +49,11 @@ export class HttpsToHttpConversionService {
     
     // Escuchar eventos de throttling
     this.#flowControlService.on('throttlingStarted', (data) => {
-      this.#logger.warn(`[HttpsToHttpConversionService] 🚨 Throttling activado - Reduciendo concurrencia a ${data.newConcurrency}`);
+      this.#logger.warn(`[HttpsToHttpConversionService] Throttling activado - Reduciendo concurrencia a ${data.newConcurrency}`);
     });
     
     this.#flowControlService.on('throttlingStopped', (data) => {
-      this.#logger.info(`[HttpsToHttpConversionService] ✅ Throttling desactivado - Concurrencia restaurada a ${data.newConcurrency}`);
+      this.#logger.info(`[HttpsToHttpConversionService] Throttling desactivado - Concurrencia restaurada a ${data.newConcurrency}`);
     });
   }
 
@@ -153,7 +153,7 @@ export class HttpsToHttpConversionService {
     } = options;
 
     if (!this.isEnabled()) {
-      this.#logger.info('🔄 Conversión HTTPS a HTTP deshabilitada');
+      this.#logger.info('Conversión HTTPS a HTTP deshabilitada');
       return {
         processed: channels,
         stats: createInitialStats(channels.length)
@@ -169,7 +169,7 @@ export class HttpsToHttpConversionService {
     const stats = createInitialStats(total);
 
     if (showProgress) {
-      this.#logger.info(`🔄 Iniciando conversión HTTPS→HTTP de ${total} canales con control de flujo dinámico...`);
+      this.#logger.info(`Iniciando conversión HTTPS→HTTP de ${total} canales...`);
     }
 
     const worker = async (workerId) => {
@@ -210,7 +210,7 @@ export class HttpsToHttpConversionService {
             meta: { error: error.message }
           });
 
-          this.#logger.warn(`❌ Error procesando canal ${channel.id}: ${error.message}`);
+          this.#logger.warn(`Error procesando ${channel.id}: ${error.message}`);
         } finally {
           // Liberar operación
           this.#flowControlService.releaseOperation(`worker-${workerId}`);
@@ -228,7 +228,7 @@ export class HttpsToHttpConversionService {
     if (showProgress) {
       const httpSuccessRate = calculateSuccessRate(stats.httpWorking, stats.total);
       this.#logger.info(
-        `✅ Conversión completada: ${stats.converted} convertidos, ${stats.httpWorking}/${stats.total} (${httpSuccessRate}%) HTTP funcionales`
+        `Conversión completada: ${stats.converted} convertidos, ${stats.httpWorking}/${stats.total} (${httpSuccessRate}%) HTTP funcionales`
       );
     }
 
@@ -250,7 +250,7 @@ export class HttpsToHttpConversionService {
     } = options;
 
     if (!this.isEnabled()) {
-      this.#logger.info('🔄 Conversión HTTPS a HTTP deshabilitada');
+      this.#logger.info('Conversión HTTPS a HTTP deshabilitada');
       return { processed: [], stats: createInitialStats(0) };
     }
 
@@ -260,7 +260,7 @@ export class HttpsToHttpConversionService {
     const globalStats = createInitialStats(0);
 
     if (showProgress) {
-      this.#logger.info(`🔄 Iniciando conversión HTTPS→HTTP por lotes (tamaño: ${batchSize})...`);
+      this.#logger.info(`Iniciando conversión HTTPS→HTTP por lotes (tamaño: ${batchSize})...`);
     }
 
     while (true) {
@@ -274,7 +274,7 @@ export class HttpsToHttpConversionService {
       batchCount++;
       
       if (showProgress) {
-        this.#logger.info(`📦 Procesando lote ${batchCount}: ${channels.length} canales`);
+        this.#logger.info(`Procesando lote ${batchCount}: ${channels.length} canales`);
       }
 
       // Procesar lote actual
@@ -295,7 +295,7 @@ export class HttpsToHttpConversionService {
       if (showProgress) {
         const batchHttpRate = calculateSuccessRate(batchResult.stats.httpWorking, batchResult.stats.total);
         this.#logger.info(
-          `✅ Lote ${batchCount}: ${batchResult.stats.httpWorking}/${batchResult.stats.total} (${batchHttpRate}%) HTTP funcionales`
+          `Lote ${batchCount}: ${batchResult.stats.httpWorking}/${batchResult.stats.total} (${batchHttpRate}%) HTTP funcionales`
         );
       }
 
@@ -311,7 +311,7 @@ export class HttpsToHttpConversionService {
     if (showProgress) {
       const overallHttpRate = calculateSuccessRate(globalStats.httpWorking, globalStats.total);
       this.#logger.info(
-        `🎯 Conversión completa: ${globalStats.httpWorking}/${globalStats.total} (${overallHttpRate}%) HTTP funcionales en ${batchCount} lotes`
+        `Conversión total: ${globalStats.httpWorking}/${globalStats.total} (${overallHttpRate}%) HTTP funcionales en ${batchCount} lotes`
       );
     }
 

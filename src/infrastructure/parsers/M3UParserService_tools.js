@@ -84,7 +84,7 @@ export const MetadataExtractor = {
       metadata.name = nameMatch ? nameMatch[1].trim() : metadata.tvgName || 'Canal Desconocido';
 
     } catch (error) {
-      console.warn(`Error extrayendo metadatos de: ${extinf}`);
+      console.warn(`Error extrayendo metadatos: ${extinf}`);
       metadata.name = 'Canal Desconocido';
     }
 
@@ -374,7 +374,7 @@ export const EntryProcessor = {
 
         // Verificar límite máximo
         if (entries.length >= maxChannels) {
-          console.warn(`Límite máximo de canales alcanzado: ${maxChannels}`);
+          console.warn(`Límite de canales alcanzado: ${maxChannels}`);
           break;
         }
       }

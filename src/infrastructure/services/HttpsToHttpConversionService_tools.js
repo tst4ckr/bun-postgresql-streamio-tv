@@ -87,13 +87,13 @@ export function updateProcessingStats(currentStats, channelResult) {
  * @returns {string} Mensaje de progreso formateado
  * 
  * @example
- * formatProgressMessage(50, 100, 30); // "📊 Progreso: 50/100 (50.0%) - HTTP funcional: 30 (60.0%)"
+ * formatProgressMessage(50, 100, 30); // "Progreso: 50/100 (50.0%) - HTTP funcional: 30 (60.0%)"
  */
 export function formatProgressMessage(completed, total, httpWorking) {
   const percentage = ((completed / total) * 100).toFixed(1);
   const httpSuccessRate = httpWorking > 0 ? ((httpWorking / completed) * 100).toFixed(1) : '0.0';
   
-  return `📊 Progreso: ${completed}/${total} (${percentage}%) - HTTP funcional: ${httpWorking} (${httpSuccessRate}%)`;
+  return `Progreso: ${completed}/${total} (${percentage}%) - HTTP funcional: ${httpWorking} (${httpSuccessRate}%)`;
 }
 
 /**

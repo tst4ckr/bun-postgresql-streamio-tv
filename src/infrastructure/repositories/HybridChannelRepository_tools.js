@@ -246,7 +246,6 @@ export function trackPlaylistError(playlistErrorStats, index, url, errorMessage,
     timestamp: new Date()
   });
   
-  // Categorizar errores por tipo
   let errorType = 'unknown';
   if (errorMessage.includes('HTTP')) {
     errorType = 'http_error';
@@ -261,7 +260,7 @@ export function trackPlaylistError(playlistErrorStats, index, url, errorMessage,
   const currentCount = playlistErrorStats.errorsByType.get(errorType) || 0;
   playlistErrorStats.errorsByType.set(errorType, currentCount + 1);
   
-  logger.warn(`Error procesando playlist ${index} (${url}): ${errorMessage}`);
+  logger.warn(`Error en playlist ${index} (${url}): ${errorMessage}`);
 }
 
 /**
@@ -271,23 +270,23 @@ export function trackPlaylistError(playlistErrorStats, index, url, errorMessage,
  */
 export function logPlaylistErrorStats(playlistErrorStats, logger) {
   if (playlistErrorStats.failedPlaylists > 0) {
-    logger.warn(`Resumen errores playlist: ${playlistErrorStats.failedPlaylists}/${playlistErrorStats.totalPlaylists} fallaron`);
+    logger.warn(`Resumen de errores: ${playlistErrorStats.failedPlaylists}/${playlistErrorStats.totalPlaylists} playlists fallaron`);
     
-    // Log errores por tipo
     for (const [type, count] of playlistErrorStats.errorsByType) {
-      logger.warn(`   - ${type}: ${count} errores`);
+      logger.warn(`  - ${type}: ${count}`);
     }
     
-    // Log algunos ejemplos de errores
     const maxExamples = 3;
     const examples = playlistErrorStats.errors.slice(0, maxExamples);
-    logger.warn(`   Ejemplos de errores:`);
-    examples.forEach(error => {
-      logger.warn(`     - Playlist ${error.index}: ${error.error}`);
-    });
-    
-    if (playlistErrorStats.errors.length > maxExamples) {
-      logger.warn(`     ... y ${playlistErrorStats.errors.length - maxExamples} errores más`);
+    if (examples.length > 0) {
+      logger.warn(`  Ejemplos:`);
+      examples.forEach(error => {
+        logger.warn(`    - Playlist ${error.index}: ${error.error}`);
+      });
+      
+      if (playlistErrorStats.errors.length > maxExamples) {
+        logger.warn(`    ... y ${playlistErrorStats.errors.length - maxExamples} más`);
+      }
     }
   }
 }
@@ -349,23 +348,21 @@ export async function processPlaylistUrls(
   logPlaylistErrorStats
 ) {
   const allChannels = [];
-  const maxConcurrent = 5; // Limitar concurrencia para evitar sobrecarga
+  const maxConcurrent = 5;
   
   resetPlaylistErrorStats();
   playlistErrorStats.totalPlaylists = playlistUrls.length;
-  logger.info(`Procesando ${playlistUrls.length} playlists (máx. ${maxConcurrent} concurrentes)...`);
+  logger.info(`Procesando ${playlistUrls.length} playlists (lotes de ${maxConcurrent})...`);
   
-  // Procesar en lotes para controlar la concurrencia
   for (let i = 0; i < playlistUrls.length; i += maxConcurrent) {
     const batch = playlistUrls.slice(i, i + maxConcurrent);
     const batchPromises = batch.map(async (playlistUrl, index) => {
       const globalIndex = i + index + 1;
       
       try {
-        logger.debug(`Procesando playlist ${globalIndex}/${playlistUrls.length}: ${playlistUrl}`);
+        logger.debug(`Procesando ${globalIndex}/${playlistUrls.length}: ${playlistUrl}`);
         
-        // Descargar playlist M3U con timeout configurable para servidores lentos
-        const playlistTimeout = config.validation?.playlistFetchTimeout || 180000; // 3 minutos por defecto
+        const playlistTimeout = config.validation?.playlistFetchTimeout || 180000;
         const response = await fetch(playlistUrl, {
           timeout: playlistTimeout,
           headers: {
@@ -374,49 +371,45 @@ export async function processPlaylistUrls(
         });
         
         if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          throw new Error(`HTTP ${response.status}`);
         }
         
         const m3uContent = await response.text();
         
         if (!m3uContent || m3uContent.trim().length === 0) {
-          throw new Error('Contenido M3U vacío');
+          throw new Error('Contenido vacío');
         }
         
-        // Parsear contenido M3U
         const channels = await m3uParser.parseM3U(m3uContent);
         
         if (channels.length > 0) {
-          logger.debug(`Playlist ${globalIndex} procesada: ${channels.length} canales`);
+          logger.debug(`Playlist ${globalIndex}: ${channels.length} canales`);
           playlistErrorStats.successfulPlaylists++;
           return channels;
         } else {
-          logger.debug(`Playlist ${globalIndex} sin canales válidos`);
+          logger.debug(`Playlist ${globalIndex}: sin canales`);
           playlistErrorStats.successfulPlaylists++;
           return [];
         }
         
       } catch (error) {
-        trackPlaylistError(globalIndex, playlistUrl, error.message);
+        trackPlaylistError(playlistErrorStats, globalIndex, playlistUrl, error.message, logger);
         return [];
       }
     });
     
-    // Esperar que termine el lote actual
     const batchResults = await Promise.all(batchPromises);
     
-    // Agregar todos los canales del lote
     for (const channels of batchResults) {
       allChannels.push(...channels);
     }
     
-    // Pequeña pausa entre lotes para no sobrecargar los servidores
     if (i + maxConcurrent < playlistUrls.length) {
       await new Promise(resolve => setTimeout(resolve, 1000));
     }
   }
   
-  logPlaylistErrorStats();
-  logger.info(`Procesamiento de playlists completado: ${allChannels.length} canales`);
+  logPlaylistErrorStats(playlistErrorStats, logger);
+  logger.info(`Procesamiento de playlists finalizado: ${allChannels.length} canales obtenidos`);
   return allChannels;
 }

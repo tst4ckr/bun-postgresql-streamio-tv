@@ -153,5 +153,5 @@ export function getCacheInfo(validationCache, cacheTimeout) {
  */
 export function clearCache(validationCache, logger) {
   validationCache.clear();
-  logger.info('🗑️ Cache de validación limpiado');
+  logger.info('Cache de validación limpiado');
 }

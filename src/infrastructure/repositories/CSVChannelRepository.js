@@ -57,7 +57,7 @@ export class CSVChannelRepository extends ChannelRepository {
    */
   async initialize() {
     if (this.#isInitialized) {
-      this.#logger.warn('Repositorio CSV ya inicializado');
+      this.#logger.warn('Repositorio CSV ya inicializado.');
       return;
     }
 
@@ -68,7 +68,7 @@ export class CSVChannelRepository extends ChannelRepository {
       this.#logger.info(`Repositorio CSV inicializado: ${this.#channels.length} canales`);
       
     } catch (error) {
-      throw new RepositoryError(`Error inicializando repositorio CSV: ${error.message}`, error);
+      throw new RepositoryError(`Error inicializando repositorio CSV: ${error.message}`);
     }
   }
 
@@ -90,7 +90,7 @@ export class CSVChannelRepository extends ChannelRepository {
           try {
             // Validar fila
             if (!this.#isValidCSVRow(row)) {
-              this.#logger.warn(`Fila CSV inválida ignorada:`, row);
+              this.#logger.warn('Fila CSV inválida ignorada:', row);
               return;
             }
 
@@ -116,19 +116,19 @@ export class CSVChannelRepository extends ChannelRepository {
                   channels.push(channel);
                   channelMap.set(channel.id, channel);
                   processedUrls.add(channel.streamUrl);
-                  this.#logger.debug(`Stream activo agregado: ${channel.streamUrl}`);
+                  this.#logger.debug(`Stream activo: ${channel.streamUrl}`);
                 } else {
-                  this.#logger.warn(`Stream no disponible, descartado: ${channel.streamUrl}`);
+                  this.#logger.warn(`Stream no disponible: ${channel.streamUrl}`);
                 }
               })
               .catch(error => {
-                this.#logger.error(`Error verificando disponibilidad de ${channel.streamUrl}:`, error.message);
+                this.#logger.error(`Error verificando disponibilidad de ${channel.streamUrl}: ${error.message}`);
               });
             
             pendingChecks.push(checkPromise);
 
           } catch (error) {
-            this.#logger.error(`Error procesando fila CSV:`, error, row);
+            this.#logger.error('Error procesando fila CSV:', error, row);
           }
         })
         .on('end', () => {
@@ -153,11 +153,11 @@ export class CSVChannelRepository extends ChannelRepository {
               resolve();
             })
             .catch(error => {
-              reject(new RepositoryError(`Error en verificaciones asíncronas: ${error.message}`, error));
+              reject(new RepositoryError(`Error en verificaciones asíncronas: ${error.message}`));
             });
         })
         .on('error', (error) => {
-          reject(new RepositoryError(`Error leyendo archivo CSV: ${error.message}`, error));
+          reject(new RepositoryError(`Error leyendo archivo CSV: ${error.message}`));
         });
     });
   }
@@ -311,7 +311,7 @@ export class CSVChannelRepository extends ChannelRepository {
       if (removedCount > 0) {
         const originalChannels = this.#channels.slice(0, beforeCount);
         const stats = this.#contentFilter.getFilterStats(originalChannels, channels);
-        this.#logger.info(`Filtros de contenido: ${removedCount} canales removidos`, {
+        this.#logger.info(`Filtros de contenido: ${removedCount} removidos`, {
           religious: stats.removedByCategory.religious,
           adult: stats.removedByCategory.adult,
           political: stats.removedByCategory.political
@@ -326,7 +326,7 @@ export class CSVChannelRepository extends ChannelRepository {
     const bannedRemovedCount = beforeBannedCount - afterBannedCount;
     
     if (bannedRemovedCount > 0) {
-      this.#logger.info(`Filtro de prohibidos: ${bannedRemovedCount} canales removidos de ${beforeBannedCount}`);
+      this.#logger.info(`Filtro de prohibidos: ${bannedRemovedCount} removidos de ${beforeBannedCount}`);
     }
     
     return channels;

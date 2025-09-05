@@ -61,11 +61,11 @@ export class StreamValidationService {
     
     // Escuchar eventos de throttling
     this.#flowControlService.on('throttlingStarted', (data) => {
-      this.#logger.warn(`[StreamValidationService] 🚨 Throttling activado - Reduciendo concurrencia a ${data.newConcurrency}`);
+      this.#logger.warn(`Validación: Throttling activado -> Concurrencia: ${data.newConcurrency}`);
     });
     
     this.#flowControlService.on('throttlingStopped', (data) => {
-      this.#logger.info(`[StreamValidationService] ✅ Throttling desactivado - Concurrencia restaurada a ${data.newConcurrency}`);
+      this.#logger.info(`Validación: Throttling desactivado -> Concurrencia: ${data.newConcurrency}`);
     });
   }
 
@@ -156,7 +156,7 @@ export class StreamValidationService {
       };
 
     } catch (error) {
-      this.#logger.warn(`Error validando canal ${channel.id}: ${error.message}`);
+      this.#logger.warn(`Error validando ${channel.id}: ${error.message}`);
       
       // Crear canal con estado de validación falso
       const failedChannel = updateChannelValidationStatus(channel, false);
@@ -264,7 +264,7 @@ export class StreamValidationService {
    */
   async validateChannelsBatch(channels, options = {}) {
     if (!this.isEnabled()) {
-      this.#logger.info('🔄 Validación temprana deshabilitada, retornando canales sin validar');
+      this.#logger.info('Validación temprana deshabilitada, retornando canales sin validar');
       return {
         validChannels: channels,
         invalidChannels: [],
@@ -283,7 +283,7 @@ export class StreamValidationService {
     const total = channels.length;
     
     if (showProgress) {
-      this.#logger.info(`🔍 Iniciando validación temprana de ${total} canales con ${concurrency} workers...`);
+      this.#logger.info(`Iniciando validación temprana de ${total} canales con ${concurrency} workers...`);
     }
 
     // Resetear estadísticas para este lote
@@ -307,7 +307,7 @@ export class StreamValidationService {
           : '0.0';
         
         this.#logger.info(
-          `📊 Progreso validación: ${processed}/${total} (${percentage}%) - Válidos: ${this.#stats.validChannels} (${validRate}%)`
+          `Progreso validación: ${processed}/${total} (${percentage}%) - Válidos: ${this.#stats.validChannels} (${validRate}%)`
         );
       }
 
@@ -325,12 +325,12 @@ export class StreamValidationService {
       const avgTime = total > 0 ? (totalTime / total).toFixed(0) : '0';
       
       this.#logger.info(
-        `✅ Validación completada: ${this.#stats.validChannels}/${total} (${validRate}%) válidos en ${(totalTime/1000).toFixed(1)}s (${avgTime}ms/canal)`
+        `Validación completada: ${this.#stats.validChannels}/${total} (${validRate}%) válidos en ${(totalTime/1000).toFixed(1)}s (${avgTime}ms/canal)`
       );
       
       if (this.#stats.cacheHits > 0) {
         const cacheRate = ((this.#stats.cacheHits / total) * 100).toFixed(1);
-        this.#logger.info(`💾 Cache hits: ${this.#stats.cacheHits} (${cacheRate}%)`);
+        this.#logger.info(`Cache hits: ${this.#stats.cacheHits} (${cacheRate}%)`);
       }
     }
 
@@ -372,7 +372,7 @@ export class StreamValidationService {
           const result = await this.validateChannel(channel);
           results.push(result);
         } catch (error) {
-          this.#logger.warn(`Error en worker validando canal ${channel.id}: ${error.message}`);
+          this.#logger.warn(`Error en worker validando ${channel.id}: ${error.message}`);
           const failedChannel = updateChannelValidationStatus(channel, false);
           results.push({
             channel: failedChannel,

@@ -90,7 +90,7 @@ class ProcessFlowControlService extends EventEmitter {
         }
         
         if (this.monitoringInterval) {
-            this.logger.warn('[ProcessFlowControlService] Monitoreo ya está activo');
+            this.logger.warn('Control de flujo: Monitoreo ya activo');
             return;
         }
         
@@ -100,7 +100,7 @@ class ProcessFlowControlService extends EventEmitter {
             }
         }, this.config.checkInterval);
         
-        this.logger.debug('[ProcessFlowControlService] Monitoreo de recursos iniciado');
+        this.logger.debug('Control de flujo: Monitoreo iniciado');
     }
 
     /**
@@ -110,7 +110,7 @@ class ProcessFlowControlService extends EventEmitter {
         if (this.monitoringInterval) {
             clearInterval(this.monitoringInterval);
             this.monitoringInterval = null;
-            this.logger.debug('[ProcessFlowControlService] Monitoreo detenido');
+            this.logger.debug('Control de flujo: Monitoreo detenido');
         }
     }
 
@@ -129,7 +129,7 @@ class ProcessFlowControlService extends EventEmitter {
             // Validar que los valores sean números válidos
             if (typeof memoryUsage !== 'number' || isNaN(memoryUsage) ||
                 typeof cpuUsage !== 'number' || isNaN(cpuUsage)) {
-                this.logger.error('[ProcessFlowControlService] Valores de recursos inválidos');
+                this.logger.error('Control de flujo: Valores de recursos inválidos');
                 return;
             }
             
@@ -150,7 +150,7 @@ class ProcessFlowControlService extends EventEmitter {
             });
             
         } catch (error) {
-            this.logger.error('[ProcessFlowControlService] Error en verificación de recursos:', error);
+            this.logger.error('Control de flujo: Error en verificación de recursos:', error);
         }
     }
 
@@ -164,7 +164,7 @@ class ProcessFlowControlService extends EventEmitter {
         
         // Validar parámetros
         if (typeof memoryUsage !== 'number' || typeof cpuUsage !== 'number') {
-            this.logger.error('[ProcessFlowControlService] Parámetros de throttling inválidos');
+            this.logger.error('Control de flujo: Parámetros de throttling inválidos');
             return;
         }
         
@@ -184,9 +184,9 @@ class ProcessFlowControlService extends EventEmitter {
         );
         
         this.logger.warn(
-            `[ProcessFlowControlService] 🚨 Throttling activado - ` +
-            `Memoria: ${memoryUsage.toFixed(1)}%, CPU: ${cpuUsage.toFixed(1)}% - ` +
-            `Concurrencia reducida a ${this.currentConcurrency}`
+            `Control de flujo: Throttling activado - ` +
+            `Mem: ${memoryUsage.toFixed(1)}%, CPU: ${cpuUsage.toFixed(1)}% -> ` +
+            `Concurrencia: ${this.currentConcurrency}`
         );
         
         this.emit('throttlingStarted', {
@@ -212,8 +212,8 @@ class ProcessFlowControlService extends EventEmitter {
         this.backoffDelay = 0;
         
         this.logger.info(
-            `[ProcessFlowControlService] ✅ Throttling desactivado - ` +
-            `Concurrencia restaurada a ${this.currentConcurrency}`
+            `Control de flujo: Throttling desactivado -> ` +
+            `Concurrencia: ${this.currentConcurrency}`
         );
         
         this.emit('throttlingStopped', {
@@ -361,7 +361,7 @@ class ProcessFlowControlService extends EventEmitter {
         this.isThrottling = false;
         this.backoffDelay = 0;
         
-        this.logger.info('[ProcessFlowControlService] Servicio destruido');
+        this.logger.info('Control de flujo: Servicio destruido');
     }
 }
 

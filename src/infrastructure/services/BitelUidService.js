@@ -128,14 +128,14 @@ export class BitelUidService {
       const processedUrl = this.#tools.buildUrlWithUid(streamUrl, uid);
       
       if (this.#logger.debug) {
-        this.#logger.debug(`URL BITEL procesada para ${channelId}: ${processedUrl}`);
+        this.#logger.debug(`URL BITEL: ${channelId} -> ${processedUrl}`);
       }
       
       return processedUrl;
       
     } catch (error) {
       // LÓGICA DE NEGOCIO: Manejo robusto de errores
-      this.#logger.warn(`Error procesando URL Bitel ${streamUrl}: ${error.message}. Usando URL original.`);
+      this.#logger.warn(`Error en URL Bitel ${streamUrl}: ${error.message}. Usando original.`);
       this.#stats = this.#tools.incrementCounter(this.#stats, 'errors');
       return streamUrl; // Fallback a URL original
     }
@@ -153,7 +153,7 @@ export class BitelUidService {
       this.#lastGenerationTime.delete(channelId);
       
       if (this.#logger.debug) {
-        this.#logger.debug(`Cache limpiado para canal ${channelId}`);
+        this.#logger.debug(`Cache limpiado: ${channelId}`);
       }
       
       return {
@@ -169,7 +169,7 @@ export class BitelUidService {
       this.#lastGenerationTime.clear();
       
       if (this.#logger.debug) {
-        this.#logger.debug(`Cache de UIDs completamente limpiado (${channelCount} canales)`);
+        this.#logger.debug(`Cache limpiado: ${channelCount} canales`);
       }
       
       return {
@@ -240,7 +240,7 @@ export class BitelUidService {
     this.#stats = this.#tools.incrementCounter(this.#stats, 'totalGenerations');
     
     if (this.#logger.debug) {
-      const logMessage = this.#tools.createUidLogMessage('Regenerado forzado', channelId, newUid);
+      const logMessage = this.#tools.createUidLogMessage('Regenerado', channelId, newUid);
       this.#logger.debug(logMessage);
     }
     
